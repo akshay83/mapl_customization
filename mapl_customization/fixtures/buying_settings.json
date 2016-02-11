@@ -1,0 +1,15 @@
+[
+ {
+  "allow_multiple_items": 0, 
+  "buying_price_list": "Standard Buying", 
+  "docstatus": 0, 
+  "doctype": "Buying Settings", 
+  "maintain_same_rate": 1, 
+  "modified": "2016-02-09 22:35:11.315879", 
+  "name": "Buying Settings", 
+  "po_required": "No", 
+  "pr_required": "No", 
+  "supp_master_name": "Naming Series", 
+  "supplier_type": null
+ }
+]
