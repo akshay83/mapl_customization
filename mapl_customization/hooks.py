@@ -17,7 +17,6 @@ doc_events = {
 		"validate" : "mapl_customization.customizations_for_mapl.utils.purchase_receipt_validate"
 	},
 	"Journal Entry" : {
-		"on_trash" : "mapl_customization.customizations_for_mapl.utils.check_receipt_in_journal_entry",
 		"before_cancel" : "mapl_customization.customizations_for_mapl.utils.check_receipt_in_journal_entry"
 	}
 }

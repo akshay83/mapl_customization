@@ -56,5 +56,5 @@ def purchase_receipt_validate(doc, method):
 				frappe.throw("Check Entered Serial Nos Values")
 
 def check_receipt_in_journal_entry(doc, method):
-	if (doc.receipt_link):
-		frappe.throw("Cannot Cancel/Delete - Linked With a Receipt");
+	if (doc.receipt_link or doc.payment_link):
+		frappe.throw("Cannot Cancel/Delete - Linked With a Receipt/Payments");

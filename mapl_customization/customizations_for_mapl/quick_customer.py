@@ -40,13 +40,16 @@ def validate(args):
 
 def make_customer(args):
 	validate(args)
+	customer_keys = args.keys()
 	customer_doc = frappe.new_doc("Customer")
 	customer_doc.customer_name = args["customer_name"]
 	customer_doc.customer_group = args["customer_group"]
 	customer_doc.territory = args["territory"]
 	customer_doc.customer_type = args["customer_type"]
+	customer_doc.tax_id = args["tax_id"] if "tax_id" in customer_keys else None
+	customer_doc.pan_no = args["pan_no"] if "pan_no" in customer_keys else None
 	customer_doc.primary_contact_no = args["primary_contact_no"]
-	customer_doc.secondary_contact_no = args["secondary_contact_no"] if "secondary_contact_no" in args.keys() else None
+	customer_doc.secondary_contact_no = args["secondary_contact_no"] if "secondary_contact_no" in customer_keys else None
 	customer_doc.save()
 	return customer_doc
 
