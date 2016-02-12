@@ -2,6 +2,15 @@ import frappe
 import json
 
 @frappe.whitelist()
+def fetch_address_details_payments_receipts(party, party_type, party_address = None):
+	if (not party_address):
+		party_address = frappe.db.get_value("Address", {party_type.lower(): party, "is_primary_address":1}, "name")
+
+	from erpnext.utilities.doctype.address.address import get_address_display
+	return get_address_display(party_address)
+	
+
+@frappe.whitelist()
 def validate_input_serial(args,rows,is_vehicle=1):
 	if isinstance(args, basestring):
 		args = json.loads(args)
