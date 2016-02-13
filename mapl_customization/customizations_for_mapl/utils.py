@@ -2,10 +2,16 @@ import frappe
 import json
 
 @frappe.whitelist()
-def fetch_address_details_payments_receipts(party, party_type, party_address = None):
-	if (not party_address):
-		party_address = frappe.db.get_value("Address", {party_type.lower(): party, "is_primary_address":1}, "name")
+def get_primary_billing_address(party, party_type):
+	party_address = frappe.db.get_value("Address", { 
+			party_type.lower(): party, 
+			"is_primary_address":1,
+			"address_type":"Billing"
+			}, "name")
+	return party_address
 
+@frappe.whitelist()
+def fetch_address_details_payments_receipts(party_address):
 	from erpnext.utilities.doctype.address.address import get_address_display
 	return get_address_display(party_address)
 	
