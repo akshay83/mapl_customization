@@ -1,6 +1,15 @@
 import frappe
 import json
 
+
+@frappe.whitelist()
+def get_party_name(party, party_type):
+	doc = frappe.get_doc(party_type, party)
+	if (party_type == "Customer"):
+		return doc.customer_name
+	else:
+		return doc.supplier_name
+
 @frappe.whitelist()
 def get_primary_billing_address(party, party_type):
 	party_address = frappe.db.get_value("Address", { 
@@ -38,7 +47,7 @@ def validate_input_serial(args,rows,is_vehicle=1):
 			if "key_no_"+rows not in serial_keys:
 				frappe.throw("Check Key No At Row "+rows)
 
-		if is_vehicle!=0:
+		if is_vehicle==0:
 			if "chassis_no_"+rows not in serial_keys:
 				frappe.throw("Check Serial No At Row "+rows)
 

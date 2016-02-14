@@ -1,0 +1,19 @@
+{
+ "add_total_row": 0, 
+ "apply_user_permissions": 0, 
+ "creation": "2016-02-14 13:17:04.430917", 
+ "disabled": 0, 
+ "docstatus": 0, 
+ "doctype": "Report", 
+ "idx": 0, 
+ "is_standard": "Yes", 
+ "modified": "2016-02-14 14:31:43.182765", 
+ "modified_by": "Administrator", 
+ "module": "Customizations for MAPL", 
+ "name": "Finance Outstanding", 
+ "owner": "Administrator", 
+ "query": "select sales.name as `Invoice No`,sales.`posting_date`,sales.`customer_name`,sales.`hypothecation`,sales.`outstanding_amount` as `Invoice Amount`,sales.`paid_amount`,(select ifnull(sum(debit),0)-ifnull(sum(credit),0) from `tabGL Entry` where `party`=sales.`customer` and `party_type`='Customer') as `Current Customer Balance` from `tabSales Invoice` as sales where sales.`docstatus`=1 and sales.`hypothecation` is not null", 
+ "ref_doctype": "Sales Invoice", 
+ "report_name": "Finance Outstanding", 
+ "report_type": "Query Report"
+}
