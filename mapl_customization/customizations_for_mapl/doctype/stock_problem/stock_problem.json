@@ -288,7 +288,7 @@
  "issingle": 0, 
  "istable": 0, 
  "max_attachments": 0, 
- "modified": "2016-02-10 22:35:52.337506", 
+ "modified": "2016-02-14 14:49:22.493431", 
  "modified_by": "Administrator", 
  "module": "Customizations for MAPL", 
  "name": "Stock Problem", 
@@ -321,5 +321,5 @@
  "search_fields": "item, problem, serial_no", 
  "sort_field": "modified", 
  "sort_order": "DESC", 
- "title_field": "naming_series"
+ "title_field": ""
 }

@@ -574,7 +574,7 @@
    "unique": 0
   }, 
   {
-   "allow_on_submit": 0, 
+   "allow_on_submit": 1, 
    "bold": 0, 
    "collapsible": 0, 
    "fieldname": "letter_head", 
@@ -622,7 +622,7 @@
    "unique": 0
   }, 
   {
-   "allow_on_submit": 0, 
+   "allow_on_submit": 1, 
    "bold": 0, 
    "collapsible": 0, 
    "fieldname": "print_heading", 
@@ -681,7 +681,7 @@
  "issingle": 0, 
  "istable": 0, 
  "max_attachments": 0, 
- "modified": "2016-02-14 13:21:17.011664", 
+ "modified": "2016-02-14 18:23:04.749157", 
  "modified_by": "Administrator", 
  "module": "Customizations for MAPL", 
  "name": "Payments", 
