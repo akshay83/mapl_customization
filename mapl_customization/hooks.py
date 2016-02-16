@@ -10,7 +10,7 @@ app_color = "#589494"
 app_email = "mehta.akshay@gmail.com"
 app_version = "0.0.1"
 app_license = "MIT"
-fixtures = ["Custom Field", "Property Setter", "Stock Settings", "Selling Settings","Buying Settings","Custom Script"]
+fixtures = ["Custom Field", "Property Setter", "Stock Settings", "Selling Settings","Buying Settings","Custom Script", "Print Format"]
 doc_events = {
 	"Purchase Receipt" : {
 		"on_submit" : "mapl_customization.customizations_for_mapl.utils.purchase_receipt_on_submit",

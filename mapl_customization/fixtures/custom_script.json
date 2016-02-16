@@ -21,9 +21,9 @@
   "docstatus": 0, 
   "doctype": "Custom Script", 
   "dt": "Sales Invoice", 
-  "modified": "2016-02-09 22:29:46.145366", 
+  "modified": "2016-02-16 12:46:06.628828", 
   "name": "Sales Invoice-Client", 
-  "script": "cur_frm.add_fetch('item_code','is_vehicle','is_vehicle');", 
+  "script": "cur_frm.add_fetch('item_code','is_vehicle','is_vehicle');\nfrappe.ui.form.on(\"Sales Invoice\", \"is_finance\", function (frm) {\n         cur_frm.set_df_property(\"hypothecation\", \"reqd\", frm.doc.is_finance==1);\n         cur_frm.refresh_field(\"hypothecation\");\n});", 
   "script_type": "Client"
  }, 
  {
