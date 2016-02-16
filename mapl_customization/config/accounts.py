@@ -17,6 +17,18 @@ def get_data():
 					"description" : _("Tool to Make Payments.")
 				}
 			]
+		},
+		{
+			"label": _("Standard Reports"),
+			"items": [
+				{
+					"type": "report",
+					"doctype": "Sales Invoice",
+					"is_query_report": True,
+					"name": "Finance Outstanding",
+					"description": "Shows Finance Outstanding"
+				}
+			]
 		}
 	       ]
 
