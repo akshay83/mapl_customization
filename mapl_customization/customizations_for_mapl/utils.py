@@ -82,3 +82,8 @@ def purchase_receipt_validate(doc, method):
 def check_receipt_in_journal_entry(doc, method):
 	if (doc.receipt_link or doc.payment_link):
 		frappe.throw("Cannot Cancel/Delete - Linked With a Receipt/Payments");
+
+@frappe.whitelist()
+def get_customer_balance(customer, company):
+	from erpnext.selling.doctype.customer.customer import get_customer_outstanding
+	return get_customer_outstanding(customer, company)
