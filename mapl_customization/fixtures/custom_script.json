@@ -21,27 +21,27 @@
   "docstatus": 0, 
   "doctype": "Custom Script", 
   "dt": "Sales Invoice", 
-  "modified": "2016-02-18 20:09:29.305435", 
+  "modified": "2016-02-21 17:29:51.649650", 
   "name": "Sales Invoice-Client", 
-  "script": "cur_frm.add_fetch('item_code','is_vehicle','is_vehicle');\ncur_frm.add_fetch('customer','customer_name','customer_name');\nfrappe.ui.form.on(\"Sales Invoice\", \"is_finance\", function (frm) {\n         cur_frm.set_df_property(\"hypothecation\", \"reqd\", frm.doc.is_finance==1);\n         cur_frm.refresh_field(\"hypothecation\");\n});\nfrappe.ui.form.on(\"Sales Invoice\", \"customer\", function (frm) {\n        cur_frm.set_df_property(\"customer_name\", \"hidden\", false);\n             if (frm.doc.customer) {\n\t\tfrappe.call({\n\t\t\tmethod: \"mapl_customization.customizations_for_mapl.utils.get_customer_balance\",\n\t\t\targs: {\n\t\t\t\tcustomer: frm.doc.customer,\n\t\t\t\tcompany: frm.doc.company\n\t\t\t},\n\t\t\tcallback: function(r) {\n\t\t\t\tif(!r.exc && r.message) {\n                                    var alert_msg = frm.doc.customer+\" Current Balance:\";\n                                    if (parseFloat(r.message) > 0) {\n                                          alert_msg = alert_msg+\"<b><span style=\\\"color:red;\\\">\"+parseFloat(r.message)+\" Dr.</span></b>\";\n                                    } else if (parseFloat(r.message) < 0) {\n                                          alert_msg = alert_msg+\"<b><span style=\\\"color:blue;\\\">\"+parseFloat(r.message)+\" Cr.</span></b>\";\n                                    } else {\n                                          alert_msg = alert_msg+\"<b><span style=\\\"color:black;\\\"> 0.00</span></b>\";\n                                    }\n\t\t\t\t\t  \t\t\t\t\t  show_alert(alert_msg, 8);\n\t\t\t\t} else {\n                                          show_alert(frm.doc.customer+\" Current Balance:<b><span style=\\\"color:black;\\\"> 0.00</span></b>\",8);\n                                    }\n\t\t\t}\n\t\t});          \n            }\n});", 
+  "script": "cur_frm.add_fetch('item_code','is_vehicle','is_vehicle');\nfrappe.ui.form.on(\"Sales Invoice\", \"shipping_address_name\", function(frm) {\n    if (!frm.doc.shipping_address_name) {\n       frm.set_value(\"shipping_address\",null);\n    }\n});\nfrappe.ui.form.on(\"Sales Invoice\", \"is_finance\", function (frm) {\n         cur_frm.set_df_property(\"hypothecation\", \"reqd\", frm.doc.is_finance==1);\n         cur_frm.refresh_field(\"hypothecation\");\n});\nfrappe.ui.form.on(\"Sales Invoice\", \"customer\", function (frm) {\n        cur_frm.set_df_property(\"customer_name\", \"hidden\", false);\n             if (frm.doc.customer) {\n\t\tfrappe.call({\n\t\t\tmethod: \"mapl_customization.customizations_for_mapl.utils.get_customer_balance\",\n\t\t\targs: {\n\t\t\t\tcustomer: frm.doc.customer,\n\t\t\t\tcompany: frm.doc.company\n\t\t\t},\n\t\t\tcallback: function(r) {\n\t\t\t\tif(!r.exc && r.message) {\n                                    var alert_msg = frm.doc.customer+\" Current Balance:\";\n                                    if (parseFloat(r.message) > 0) {\n                                          alert_msg = alert_msg+\"<b><span style=\\\"color:red;\\\">\"+parseFloat(r.message)+\" Dr.</span></b>\";\n                                    } else if (parseFloat(r.message) < 0) {\n                                          alert_msg = alert_msg+\"<b><span style=\\\"color:blue;\\\">\"+parseFloat(r.message)+\" Cr.</span></b>\";\n                                    } else {\n                                          alert_msg = alert_msg+\"<b><span style=\\\"color:black;\\\"> 0.00</span></b>\";\n                                    }\n\t\t\t\t\t  \t\t\t\t\t  show_alert(alert_msg, 8);\n\t\t\t\t} else {\n                                          show_alert(frm.doc.customer+\" Current Balance:<b><span style=\\\"color:black;\\\"> 0.00</span></b>\",8);\n                                    }\n\t\t\t}\n\t\t});          \n            }\n});", 
   "script_type": "Client"
  }, 
  {
   "docstatus": 0, 
   "doctype": "Custom Script", 
   "dt": "Stock Problem", 
-  "modified": "2016-02-10 22:59:54.186859", 
+  "modified": "2016-02-21 17:29:28.515063", 
   "name": "Stock Problem-Client", 
-  "script": "frappe.ui.form.on(\"Stock Problem\", \"refresh\", function (frm) {\n   cur_frm.toggle_enable(\"status\",frm.doc.status===\"Open\")\n});", 
+  "script": "frappe.ui.form.on(\"Stock Problem\", \"refresh\", function (frm) {\n   cur_frm.toggle_enable(\"status\",frm.doc.status===\"Open\")\n});\nfrappe.ui.form.on(\"Stock Problem\", \"status\", function (frm) {\n         cur_frm.set_df_property(\"resolution\", \"reqd\", frm.doc.status==\"Closed\");\n});", 
   "script_type": "Client"
  }, 
  {
   "docstatus": 0, 
   "doctype": "Custom Script", 
   "dt": "Delivery Note", 
-  "modified": "2016-02-10 23:16:09.773416", 
+  "modified": "2016-02-21 17:22:45.208358", 
   "name": "Delivery Note-Client", 
-  "script": "cur_frm.add_fetch('item_code','is_vehicle','is_vehicle');", 
+  "script": "cur_frm.add_fetch('item_code','is_vehicle','is_vehicle');\nfrappe.ui.form.on(\"Delivery Note\", \"shipping_address_name\", function(frm) {\n    if (!frm.doc.shipping_address_name) {\n       frm.set_value(\"shipping_address\",null);\n    }\n});", 
   "script_type": "Client"
  }, 
  {
