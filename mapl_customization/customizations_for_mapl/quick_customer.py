@@ -73,11 +73,11 @@ def enter_billing_address(args, customer):
 
 def enter_shipping_address(args, customer):
 	address_keys = args.keys()
-	if ("shipping_address_1" not in address_keys) or ("shipping_address_2" not in address_keys):
+	if ("shipping_address_1" not in address_keys) and ("shipping_address_2" not in address_keys):
 		return
 
 	address_doc = frappe.new_doc("Address")
-	address_doc.is_shipping_address = 1
+	address_doc.is_shipping_address = 1 if "shipping_preferred" in address_keys else 0
 	address_doc.address_type = "Shipping"
 	address_doc.address_line1 = args["shipping_address_1"] if "shipping_address_1" in address_keys else None
 	address_doc.address_line2 = args["shipping_address_2"] if "shipping_address_2" in address_keys else None
