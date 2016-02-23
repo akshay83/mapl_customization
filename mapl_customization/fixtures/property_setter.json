@@ -1630,5 +1630,39 @@
   "property": "_idx", 
   "property_type": "Text", 
   "value": "[\"delivery_to_section\", \"column_break0\", \"title\", \"naming_series\", \"customer\", \"customer_name\", \"customer_address\", \"address_display\", \"contact_display\", \"contact_mobile\", \"contact_email\", \"column_break1\", \"amended_from\", \"company\", \"posting_date\", \"po_no\", \"po_date\", \"is_return\", \"return_against\", \"shipping_address_name\", \"shipping_address\", \"currency_and_price_list\", \"currency\", \"conversion_rate\", \"col_break23\", \"selling_price_list\", \"price_list_currency\", \"plc_conversion_rate\", \"ignore_pricing_rule\", \"items_section\", \"items\", \"packing_list\", \"packed_items\", \"product_bundle_help\", \"section_break_31\", \"base_total\", \"base_net_total\", \"column_break_33\", \"total\", \"net_total\", \"taxes_section\", \"taxes_and_charges\", \"column_break_39\", \"shipping_rule\", \"section_break_41\", \"taxes\", \"other_charges_calculation\", \"section_break_44\", \"base_total_taxes_and_charges\", \"column_break_47\", \"total_taxes_and_charges\", \"section_break_49\", \"apply_discount_on\", \"base_discount_amount\", \"column_break_51\", \"additional_discount_percentage\", \"discount_amount\", \"totals\", \"base_grand_total\", \"base_rounded_total\", \"base_in_words\", \"column_break3\", \"grand_total\", \"rounded_total\", \"in_words\", \"terms_section_break\", \"tc_name\", \"terms\", \"transporter_info\", \"transporter_name\", \"col_break34\", \"lr_no\", \"lr_date\", \"contact_info\", \"territory\", \"customer_group\", \"col_break21\", \"contact_person\", \"more_info\", \"project_name\", \"campaign\", \"source\", \"column_break5\", \"posting_time\", \"fiscal_year\", \"per_billed\", \"printing_details\", \"letter_head\", \"select_print_heading\", \"column_break_88\", \"print_without_amount\", \"section_break_83\", \"status\", \"per_installed\", \"installation_status\", \"column_break_89\", \"to_warehouse\", \"excise_page\", \"instructions\", \"sales_team_section_break\", \"sales_partner\", \"column_break7\", \"commission_rate\", \"total_commission\", \"section_break1\", \"sales_team\"]"
+ }, 
+ {
+  "_assign": null, 
+  "_comments": null, 
+  "_liked_by": null, 
+  "_user_tags": null, 
+  "default_value": null, 
+  "doc_type": "Receipts", 
+  "docstatus": 0, 
+  "doctype": "Property Setter", 
+  "doctype_or_field": "DocField", 
+  "field_name": "naming_series", 
+  "modified": "2016-02-23 15:35:10.483711", 
+  "name": "Receipts-naming_series-default", 
+  "property": "default", 
+  "property_type": "Text", 
+  "value": ""
+ }, 
+ {
+  "_assign": null, 
+  "_comments": null, 
+  "_liked_by": null, 
+  "_user_tags": null, 
+  "default_value": null, 
+  "doc_type": "Receipts", 
+  "docstatus": 0, 
+  "doctype": "Property Setter", 
+  "doctype_or_field": "DocField", 
+  "field_name": "naming_series", 
+  "modified": "2016-02-23 15:35:10.528471", 
+  "name": "Receipts-naming_series-options", 
+  "property": "options", 
+  "property_type": "Text", 
+  "value": "\nREC-\nREC-ALT-"
  }
 ]
