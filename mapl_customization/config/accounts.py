@@ -27,6 +27,13 @@ def get_data():
 					"is_query_report": True,
 					"name": "Finance Outstanding",
 					"description": "Shows Finance Outstanding"
+				},
+				{
+					"type":"report",
+					"doctype": "Sales Invoice",
+					"is_query_report":True,
+					"name":"Sales Taxes Report",
+					"description":"Generates a Report for Different Sales Taxes"
 				}
 			]
 		}
