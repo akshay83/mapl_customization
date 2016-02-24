@@ -15,7 +15,7 @@ def select_customer_supplier_query(doctype, txt, searchfield, start, page_len, f
 		return supplier_query(doctype, txt, searchfield, start, page_len, filters)
 
 def mapl_address_query (doctype, txt, searchfield, start, page_len, filters):
-	fields = ["name","customer_name","address_line1", "address_line2"]
+	fields = ["name","customer_name","supplier_name","address_line1", "address_line2"]
 
 	fields = ", ".join(fields)
 

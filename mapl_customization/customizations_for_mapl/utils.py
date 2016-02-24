@@ -84,6 +84,8 @@ def check_receipt_in_journal_entry(doc, method):
 		frappe.throw("Cannot Cancel/Delete - Linked With a Receipt/Payments");
 
 @frappe.whitelist()
-def get_customer_balance(customer, company):
-	from erpnext.selling.doctype.customer.customer import get_customer_outstanding
-	return get_customer_outstanding(customer, company)
+def get_party_balance(party, party_type, company):
+	outstanding_amount = frappe.db.sql("""select sum(debit) - sum(credit)
+			from `tabGL Entry` where party_type = %s and company=%s
+			and party = %s""", (party_type, company, party))
+	return outstanding_amount

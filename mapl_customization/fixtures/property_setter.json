@@ -1642,11 +1642,11 @@
   "doctype": "Property Setter", 
   "doctype_or_field": "DocField", 
   "field_name": "naming_series", 
-  "modified": "2016-02-23 15:35:10.483711", 
+  "modified": "2016-02-24 14:21:44.763852", 
   "name": "Receipts-naming_series-default", 
   "property": "default", 
   "property_type": "Text", 
-  "value": ""
+  "value": "REC-"
  }, 
  {
   "_assign": null, 
@@ -1659,10 +1659,10 @@
   "doctype": "Property Setter", 
   "doctype_or_field": "DocField", 
   "field_name": "naming_series", 
-  "modified": "2016-02-23 15:35:10.528471", 
+  "modified": "2016-02-24 14:21:44.806441", 
   "name": "Receipts-naming_series-options", 
   "property": "options", 
   "property_type": "Text", 
-  "value": "\nREC-\nREC-ALT-"
+  "value": "REC-"
  }
 ]
