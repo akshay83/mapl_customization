@@ -12,6 +12,18 @@ def get_data():
 					"description" : _("Tool to Keep a Track of Problems in Stock") 
 				}
 			]
+		},
+		{
+			"label": _("Main Reports"),
+			"items" : [
+				{
+					"type": "report",
+					"doctype": "Item",
+					"name": "Monthly Stock Movement",
+					"is_query_report": True,
+					"description": "Shows a Month Wise Movement of a Particular Item"
+				}
+			]
 		}
 	       ]
 
