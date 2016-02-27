@@ -22,6 +22,12 @@ def get_data():
 					"name": "Monthly Stock Movement",
 					"is_query_report": True,
 					"description": "Shows a Month Wise Movement of a Particular Item"
+				},
+				{
+					"type": "report",
+					"doctpye": "Stock Ledger Entry",
+					"name": "Simple Stock Report",
+					"is_query": True
 				}
 			]
 		}
