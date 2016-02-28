@@ -3,6 +3,7 @@
 
 from __future__ import unicode_literals
 import frappe
+import calendar
 from frappe import _
 from frappe.utils import flt, getdate
 from datetime import datetime
@@ -42,37 +43,44 @@ def get_columns(filters):
         {
             "fieldname":"item",
             "fieldtype":"Data",
-            "label":"Item"
+            "label":"Month",
+	    "width":200
         },
         {
             "fieldname":"in_qty",
             "fieldtype":"Float",
-            "label":"In Qty"
+            "label":"In Qty",
+	    "width":80
         },
 	{
 	    "fieldname":"in_value",
 	    "fieldtype":"Currency",
-	    "label":"In Value"
+	    "label":"In Value",
+	    "width":150
 	},
         {
             "fieldname":"out_qty",
             "fieldtype":"Float",
-            "label":"Out Qty"
+            "label":"Out Qty",
+	    "width":80
         },
 	{
 	    "fieldname":"out_value",
 	    "fieldtype":"Currency",
-	    "label":"Out Value"
+	    "label":"Out Value",
+	    "width":150
 	},
         {
             "fieldname":"balance_qty",
             "fieldtype":"Float",
-            "label":"Balance Qty"
+            "label":"Balance Qty",
+	    "width":80
         },
 	{
 	    "fieldname":"balance_value",
 	    "fieldtype":"Currency",
-	    "label":"Balance Value"
+	    "label":"Balance Value",
+	    "width":150
 	}
 	]
 
@@ -128,35 +136,36 @@ def get_data(filters):
 	opening_balance = 0
 	opening_value = 0
 	for o in opening:
-		build_row = {}
-		build_row["item"] = "Opening Balance"
-		build_row["balance_qty"] = o.opening_balance
-		build_row["balance_value"] = o.opening_value
-		opening_balance = o.opening_balance
-		opening_value = o.opening_value
-		data.append(build_row)
-
-	if not opening_balance:
-		opening_balance = 0
-		opening_value = 0
+		if o.opening_balance:
+			build_row = {}
+			build_row["item"] = "Opening Balance"
+			build_row["balance_qty"] = o.opening_balance
+			build_row["balance_value"] = o.opening_value
+			opening_balance = o.opening_balance
+			opening_value = o.opening_value
+			data.append(build_row)
 
 	items = get_current_items(filters)
+
 	previous_balance_qty = 0
 	previous_balance_value = 0
+
 	month_from_date = datetime.strptime(filters.get("fromdate"),"%Y-%m-%d").date()
 	month_to_date = datetime.strptime(filters.get("todate"),"%Y-%m-%d").date()
 	month_diff = relativedelta.relativedelta(month_to_date,month_from_date).months
 	year_diff = relativedelta.relativedelta(month_to_date,month_from_date).years
-	if year_diff:
-		month_diff = month_diff + (year_diff*12)
+	month_diff = month_diff + (year_diff*12)
+
 	month_list = build_months(month_from_date.month,month_from_date.year,month_diff+1)
 	index = 0
+
 	for r in month_list:
-		build_row = {}
-		build_row["in_qty"] = 0
-		build_row["out_qty"] = 0
-		build_row["in_value"] = 0
-		build_row["out_value"] = 0
+		build_row = {
+			"in_qty":0,
+			"out_qty":0,
+			"in_value":0,
+			"out_value":0
+			}
 		build_row["item"] = r
 		for i in items:
 			if i.posting_date.strftime("%B").lower()+" "+str(i.posting_date.year)== \
@@ -172,8 +181,10 @@ def get_data(filters):
 		else:
 			build_row["balance_qty"] = previous_balance_qty+build_row["in_qty"]-build_row["out_qty"]
 			build_row["balance_value"] = previous_balance_value+build_row["in_value"]-build_row["out_value"]
+
 		previous_balance_qty = build_row["balance_qty"]
 		previous_balance_value = build_row["balance_value"]
+
 		data.append(build_row)
 		index = index + 1
 
@@ -182,44 +193,11 @@ def get_data(filters):
 def build_months(start_month, start_year, difference):
 	month_dict = []
 	for m in range(0, difference):
-		if start_month == 1:
-			month_dict.append("January "+str(start_year))
-
-		if start_month == 2:
-			month_dict.append("February "+str(start_year))
-
-		if start_month == 3:
-			month_dict.append("March "+str(start_year))
-
-		if start_month == 4:
-			month_dict.append("April "+str(start_year))
-
-		if start_month == 5:
-			month_dict.append("May "+str(start_year))
-
-		if start_month == 6:
-			month_dict.append("June "+str(start_year))
-
-		if start_month == 7:
-			month_dict.append("July "+str(start_year))
-
-		if start_month == 8:
-			month_dict.append("August "+str(start_year))
-
-		if start_month == 9:
-			month_dict.append("September "+str(start_year))
-
-		if start_month == 10:
-			month_dict.append("October "+str(start_year))
-
-		if start_month == 11:
-			month_dict.append("November "+str(start_year))
-
-		if start_month == 12:
-			month_dict.append("December "+str(start_year))
+		month_dict.append(calendar.month_name[start_month]+" "+str(start_year))
 
 		start_month = start_month + 1
 		if start_month > 12:
 			start_month = 1
 			start_year = start_year + 1
+
 	return month_dict

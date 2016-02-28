@@ -25,9 +25,9 @@ def get_data():
 				},
 				{
 					"type": "report",
-					"doctpye": "Stock Ledger Entry",
+					"doctype": "Stock Ledger Entry",
 					"name": "Simple Stock Report",
-					"is_query": True
+					"is_query_report": True
 				}
 			]
 		}
