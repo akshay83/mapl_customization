@@ -75,8 +75,6 @@ def get_open_conditions(filters):
 	if filters.get("from_date"):
 		conditions += " and posting_date < '%s'" % frappe.db.escape(filters["from_date"])
 
-	conditions = build_for_material_transfer(filters,conditions)
-
 
 	return conditions
 
@@ -99,10 +97,9 @@ def get_conditions(filters):
 	if filters.get("warehouse"):
 		conditions += " and warehouse = '%s'" % frappe.db.escape(filters.get("warehouse"), percent=False)
 
-	conditions = build_for_material_transfer(filters,conditions)
-
 	return conditions
 
+#unsused for now
 def build_for_material_transfer(filters,conditions):
 	if filters.get("remove_material_transfer"):
 		conditions += """ and if (voucher_type='Stock Entry',

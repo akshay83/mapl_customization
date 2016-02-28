@@ -44,12 +44,6 @@ frappe.query_reports['Simple Stock Report'] = {
 					  "options":"Company",
 					  "default":frappe.defaults.get_user_default("Company"),
 					  "width":"150"
-					},
-					{
-					  "fieldname":"remove_material_transfer",
-					  "fieldtype":"Check",
-					  "label":"Remove Material Transfer",
-					  "default":"1"
 					}
 			   ]	
 
