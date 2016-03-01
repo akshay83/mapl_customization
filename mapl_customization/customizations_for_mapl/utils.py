@@ -64,6 +64,7 @@ def purchase_receipt_on_submit(doc,method):
 			for serials in chassis_nos:
 				serial_doc = frappe.get_doc("Serial No",serials)
 				serial_doc.is_vehicle = 1
+				serial_doc.chassis_no = serials
 				serial_doc.engine_no = engine_nos[index]
 				serial_doc.key_no = key_nos[index]
 				serial_doc.save()
