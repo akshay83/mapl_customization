@@ -79,5 +79,14 @@
   "name": "Schemes-Client", 
   "script": "frappe.ui.form.on(\"Schemes\", \"status\", function (frm) {\n         cur_frm.set_df_property(\"closed_on\", \"reqd\", frm.doc.status==\"Settled\");\n});", 
   "script_type": "Client"
+ }, 
+ {
+  "docstatus": 0, 
+  "doctype": "Custom Script", 
+  "dt": "Item", 
+  "modified": "2016-03-02 14:09:10.048501", 
+  "name": "Item-Client", 
+  "script": "frappe.ui.form.on(\"Item\",\"onload\", function(frm) {\n\t\t\treturn frappe.call({\n\t\t\t\tmethod: \"erpnext.controllers.accounts_controller.get_default_taxes_and_charges\",\n\t\t\t\targs: {\n\t\t\t\t\t\"master_doctype\": \"Item Taxes Template\"\n\t\t\t\t},\n\t\t\t\tcallback: function(r) {\n\t\t\t\t\tif(!r.exc) {\n\t\t\t\t\t\tme.frm.set_value(\"taxes\", r.message);\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t});\n\t});\nfrappe.ui.form.on(\"Item\",\"taxes_template\", function(frm) {\n\t\tif(frm.doc.taxes_template) {\n\t\t\treturn frappe.call({\n\t\t\t\tmethod: \"erpnext.controllers.accounts_controller.get_taxes_and_charges\",\n\t\t\t\targs: {\n\t\t\t\t\t\"master_doctype\": \"Item Taxes Template\",\n                                        \"master_name\": frm.doc.taxes_template\n\t\t\t\t},\n\t\t\t\tcallback: function(r) {\n\t\t\t\t\tif(!r.exc) {\n\t\t\t\t\t\tme.frm.set_value(\"taxes\", r.message);\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t});\n\t\t}\n\t});", 
+  "script_type": "Client"
  }
 ]

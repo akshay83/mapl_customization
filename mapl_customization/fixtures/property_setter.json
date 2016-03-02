@@ -348,23 +348,6 @@
   "doc_type": "Item", 
   "docstatus": 0, 
   "doctype": "Property Setter", 
-  "doctype_or_field": "DocType", 
-  "field_name": null, 
-  "modified": "2016-01-31 22:29:27.317643", 
-  "name": "Item-_idx", 
-  "property": "_idx", 
-  "property_type": "Text", 
-  "value": "[\"name_and_description_section\", \"naming_series\", \"item_code\", \"variant_of\", \"item_name\", \"item_group\", \"stock_uom\", \"column_break0\", \"is_stock_item\", \"disabled\", \"is_vehicle\", \"is_outdoor\", \"image\", \"image_view\", \"section_break_11\", \"brand\", \"barcode\", \"description\", \"vehicle_details\", \"engine_cc\", \"wheel_base\", \"inventory\", \"default_warehouse\", \"end_of_life\", \"has_batch_no\", \"has_serial_no\", \"serial_no_series\", \"is_asset_item\", \"column_break1\", \"tolerance\", \"valuation_method\", \"warranty_period\", \"net_weight\", \"weight_uom\", \"reorder_section\", \"re_order_level\", \"re_order_qty\", \"apply_warehouse_wise_reorder_level\", \"section_break_31\", \"reorder_levels\", \"variants_section\", \"has_variants\", \"attributes\", \"purchase_details\", \"is_purchase_item\", \"min_order_qty\", \"lead_time_days\", \"buying_cost_center\", \"expense_account\", \"unit_of_measure_conversion\", \"uoms\", \"last_purchase_rate\", \"supplier_details\", \"default_supplier\", \"delivered_by_supplier\", \"manufacturer\", \"manufacturer_part_no\", \"column_break2\", \"supplier_items\", \"sales_details\", \"is_sales_item\", \"publish_in_hub\", \"synced_with_hub\", \"income_account\", \"selling_cost_center\", \"column_break3\", \"customer_items\", \"max_discount\", \"item_tax_section_break\", \"taxes\", \"inspection_criteria\", \"inspection_required\", \"quality_parameters\", \"manufacturing\", \"is_pro_applicable\", \"is_sub_contracted_item\", \"column_break_74\", \"default_bom\", \"customer_code\", \"website_section\", \"show_in_website\", \"page_name\", \"weightage\", \"slideshow\", \"website_image\", \"thumbnail\", \"cb72\", \"website_warehouse\", \"website_item_groups\", \"sb72\", \"copy_from_item_group\", \"website_specifications\", \"web_long_description\", \"parent_website_route\"]"
- }, 
- {
-  "_assign": null, 
-  "_comments": null, 
-  "_liked_by": null, 
-  "_user_tags": null, 
-  "default_value": null, 
-  "doc_type": "Item", 
-  "docstatus": 0, 
-  "doctype": "Property Setter", 
   "doctype_or_field": "DocField", 
   "field_name": "brand", 
   "modified": "2016-01-31 22:34:21.601295", 
@@ -1681,5 +1664,22 @@
   "property": "reqd", 
   "property_type": "Check", 
   "value": "1"
+ }, 
+ {
+  "_assign": null, 
+  "_comments": null, 
+  "_liked_by": null, 
+  "_user_tags": null, 
+  "default_value": null, 
+  "doc_type": "Item", 
+  "docstatus": 0, 
+  "doctype": "Property Setter", 
+  "doctype_or_field": "DocType", 
+  "field_name": null, 
+  "modified": "2016-03-02 13:30:29.888179", 
+  "name": "Item-_idx", 
+  "property": "_idx", 
+  "property_type": "Text", 
+  "value": "[\"name_and_description_section\", \"naming_series\", \"item_code\", \"variant_of\", \"item_name\", \"item_group\", \"stock_uom\", \"column_break0\", \"is_stock_item\", \"disabled\", \"is_vehicle\", \"is_outdoor\", \"image\", \"image_view\", \"section_break_11\", \"brand\", \"barcode\", \"description\", \"vehicle_details\", \"engine_cc\", \"wheel_base\", \"inventory\", \"default_warehouse\", \"end_of_life\", \"has_batch_no\", \"has_serial_no\", \"serial_no_series\", \"is_asset_item\", \"column_break1\", \"tolerance\", \"valuation_method\", \"warranty_period\", \"net_weight\", \"weight_uom\", \"reorder_section\", \"re_order_level\", \"re_order_qty\", \"apply_warehouse_wise_reorder_level\", \"section_break_31\", \"reorder_levels\", \"variants_section\", \"has_variants\", \"attributes\", \"purchase_details\", \"is_purchase_item\", \"min_order_qty\", \"lead_time_days\", \"buying_cost_center\", \"expense_account\", \"unit_of_measure_conversion\", \"uoms\", \"last_purchase_rate\", \"supplier_details\", \"default_supplier\", \"delivered_by_supplier\", \"manufacturer\", \"manufacturer_part_no\", \"column_break2\", \"supplier_items\", \"sales_details\", \"is_sales_item\", \"publish_in_hub\", \"synced_with_hub\", \"income_account\", \"selling_cost_center\", \"column_break3\", \"customer_items\", \"max_discount\", \"item_tax_section_break\", \"taxes_template\", \"taxes\", \"inspection_criteria\", \"inspection_required\", \"quality_parameters\", \"manufacturing\", \"is_pro_applicable\", \"is_sub_contracted_item\", \"column_break_74\", \"default_bom\", \"customer_code\", \"website_section\", \"show_in_website\", \"page_name\", \"weightage\", \"slideshow\", \"website_image\", \"thumbnail\", \"cb72\", \"website_warehouse\", \"website_item_groups\", \"sb72\", \"copy_from_item_group\", \"website_specifications\", \"web_long_description\", \"parent_website_route\"]"
  }
 ]
