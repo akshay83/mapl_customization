@@ -14,6 +14,16 @@ def get_data():
 			]
 		},
 		{
+			"label": _("Setup"),
+			"items" : [
+				{
+					"type": "doctype",
+					"name": "Item Taxes Template",
+					"description": "Tax Template for Items"
+				}
+			]
+		},
+		{
 			"label": _("Main Reports"),
 			"items" : [
 				{
