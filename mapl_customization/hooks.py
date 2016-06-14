@@ -16,6 +16,10 @@ doc_events = {
 		"on_submit" : "mapl_customization.customizations_for_mapl.utils.purchase_receipt_on_submit",
 		"validate" : "mapl_customization.customizations_for_mapl.utils.purchase_receipt_validate"
 	},
+	"Purchase Invoice" : {
+		"on_submit" : "mapl_customization.customizations_for_mapl.utils.purchase_receipt_on_submit",
+		"validate" : "mapl_customization.customizations_for_mapl.utils.purchase_receipt_validate"
+	},
 	"Journal Entry" : {
 		"before_cancel" : "mapl_customization.customizations_for_mapl.utils.check_receipt_in_journal_entry"
 	}
