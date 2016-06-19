@@ -1,0 +1,10 @@
+.like-disabled-input {
+	background: #eee;
+	border: 1px solid #d1d8dd;
+	border-radius: 4px;
+	padding-top: 4px;
+	padding-left: 7px;
+}
+.sub-heading {
+	font-size: larger;
+}

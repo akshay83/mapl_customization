@@ -24,7 +24,7 @@ doc_events = {
 		"before_cancel" : "mapl_customization.customizations_for_mapl.utils.check_receipt_in_journal_entry"
 	}
 }
-
+app_include_css = "/assets/css/custom_css.css"
 # Includes in <head>
 # ------------------
 
