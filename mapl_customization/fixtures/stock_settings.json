@@ -12,6 +12,7 @@
   "modified": "2016-02-09 22:33:48.638108", 
   "name": "Stock Settings", 
   "reorder_email_notify": 0, 
+  "show_barcode_field": 0, 
   "stock_auth_role": null, 
   "stock_frozen_upto": null, 
   "stock_frozen_upto_days": 0, 
