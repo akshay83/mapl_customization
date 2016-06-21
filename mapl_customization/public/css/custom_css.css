@@ -1,3 +1,6 @@
+.module-body {
+	padding-left:200px;
+}
 .like-disabled-input {
 	background: #eee;
 	border: 1px solid #d1d8dd;
@@ -7,4 +10,36 @@
 }
 .sub-heading {
 	font-size: larger;
+}
+.col-md-10 {
+	width: 100%;
+}
+.layout-side-section {
+	z-index: 1025;
+	position: fixed;
+	background: #7b7b7b !important;
+	height: 100%;
+	padding-right: 15px;
+}
+.collapsible-button {
+	float:left;
+	margin-right: 10px;
+	height: 40px;
+}
+.collapsible-button .icon-bar {
+	display: block;
+	width: 22px;
+	height: 2px;
+	margin-bottom:3px;
+	background-color: black;
+	border-radius: 1px;
+}
+.sidebar-menu h6, .sidebar-menu .h6 {
+	color: white;
+}
+.sidebar-menu > li {
+	color: black;
+}
+#page-desktop .page-container {
+	background-color: #525454;
 }
