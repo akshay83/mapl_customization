@@ -1,18 +1,23 @@
-window.onload = function() {
+frappe.provide('frappe.pages');
+frappe.provide('frappe');
+
+var sidebar_customized = false;
+
+
+
+$(document).ready(function() {
     var navbar = $('div').find('.navbar-header');
 
     var collapse_button = '<button id="side-bar-menu" type="button" class="btn btn-default collapsible-button" onclick="doSideBar()"> \
-                             <i class="icon-bar"></i> \
-                             <i class="icon-bar"></i> \
-                             <i class="icon-bar"></i> \
-                     </button>';
+                             <i class="octicon octicon-three-bars"></i> \
+                         </button>';
 
     navbar.prepend(collapse_button);
-    $('.col-md-2.layout-side-section','div').ready(function() {
-        console.log('side bar ready');
-        $('.col-md-2.layout-side-section','div').hide();
+    $('div').on('DOMNodeInserted', '.col-md-2.layout-side-section', function (e) {
+            //console.log('Added:'+e.target.className);
+            $('.col-md-2.layout-side-section','div').hide();
     });
-};
+});
 
 
 
