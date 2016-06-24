@@ -2,12 +2,12 @@ var customized_footer = 0;
 
 $(document).ready(function() {
         customized_footer = 0;
-        console.log("Called Ready");
+        //console.log("Called Ready");
 });
 
 $('div').on('DOMNodeInserted', '.form-footer', function (e) {
     if (e.target.className == 'form-footer' && customized_footer!=1) {
-        console.log('Hello Comments:'+e.target.className);
+        //console.log('Hello Comments:'+e.target.className);
         var collapse_button = '<button id="comments-button" type="button" class="btn btn-default collapsible-button" onclick="doComments()"> \
                                  <i class="octicon octicon-comment"></i> \
                              </button>';
@@ -29,3 +29,17 @@ doComments = function() {
     }
 }
 
+$(document).click(function(e){
+
+    // Check if click was triggered on or within #menu_content
+    // console.log(e.target.id);
+    if (e.target.id == 'comments-button') {
+        return;
+    }
+    if( $(e.target).closest('.form-footer').length > 0 ) {
+        return;
+    }
+    $('div').find('.form-footer').hide();
+    // Otherwise
+    // trigger your click function
+});

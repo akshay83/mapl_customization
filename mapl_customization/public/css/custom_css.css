@@ -48,9 +48,29 @@
     float: right;
     z-index: 1025;
     background: #7b7b7b !important;
-    width: 200px;
+    width: 300px;
     right: 0px;
-    height: 100%;	
+    height: 100%;
+	overflow:hidden;	
+}
+.after-save {
+	position: relative;
+	right: -10px;
+	overflow-y: auto;
+	padding-right: 10px;
+    background: #7b7b7b !important;
+}
+.reply {
+	background: beige;
+}
+.comment-header {
+	background: #030652 !important;
+}
+.avatar-medium .standard-image {
+	background: black;
+}
+.timeline-head .comment-input-header {
+	background: #030652 !important;
 }
 #page-desktop .page-container {
 	background-color: #525454;
