@@ -58,14 +58,9 @@ frappe.TallyImportTool = Class.extend({
 				if(r.message.error) {
 					me.onerror(r);
 				} else {
-					if (me.has_progress) {
-							frappe.show_progress(__("Importing"), 1,1);
-							setTimeout(frappe.hide_progress, 1000);
-					}
 					r.messages = ["<h5 style='color:green'>" + __("Import Successful!") + "</h5>"].
 						concat(r.message.messages)
 
-					me.write_messages(r.messages);
 					console.log(r);
 				}
 			},
@@ -73,8 +68,7 @@ frappe.TallyImportTool = Class.extend({
 		});	
 		frappe.realtime.on("tally_import_progress", function(data) {
 				if(data.progress) {
-					frappe.hide_msgprint(true);
-					me.has_progress = true;
+					//show_alert(__("Importing... ")+data.document,1);
 					me.write_messages(data);
 					console.log(data.message);
 				}
@@ -83,12 +77,13 @@ frappe.TallyImportTool = Class.extend({
 	write_messages: function(data) {
 		this.page.main.find(".import-log").removeClass("hide");
 		var parent = this.page.main.find(".import-log-messages");//.empty();
-
-		// TODO render using template!
+	
 		var v = data.message;
-		var $p = $('<p></p>').html(frappe.markdown(v)).appendTo(parent);
+		var $p = $('<div style=\"font-size:12px;margin:1px 1px 1px 10px;\"></div>').html(frappe.markdown(v)).appendTo(parent);
 		if(data.error) {
 			$p.css('color', 'red');
+		} else if (data.message.substr(0,7) == 'Skipped') {
+			$p.css('color', 'darkgray');	
 		} else {
 			$p.css('color', 'green');
 		}
@@ -103,6 +98,8 @@ frappe.TallyImportTool = Class.extend({
 			r.messages.push("Please correct and import again.");
 
 			this.write_messages(r.messages);
+
+			console.log(r.error_desc);
 		}
 	}
 });

@@ -5,6 +5,11 @@ $(document).ready(function() {
         //console.log("Called Ready");
 });
 
+frappe.ui.form.on('page-change', function() {
+        $('#comments-button').remove();
+        $('div').find('.pull-right.scroll-to-top').
+});
+
 $('div').on('DOMNodeInserted', '.form-footer', function (e) {
     if (e.target.className == 'form-footer' && customized_footer!=1) {
         //console.log('Hello Comments:'+e.target.className);

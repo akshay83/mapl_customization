@@ -4,7 +4,7 @@
         <h3>{%= __("Import") %}</h3>
         <p class="text-muted">{%= __("Update the template and save in CSV (Comma Separate Values) format before attaching.") %}</p>
         <div class="row">
-            <div class="col-md-6">
+            <div class="col-md-6" style="float:initial;">
                 <div class="upload-area"></div>
                 <div class="checkbox">
                     <label>
@@ -12,11 +12,15 @@
                             {%= __("Do not update, but insert new records.") %}
                     </label>
                 </div>
+                <div class="date">
+                    <label class="control-label text-muted small">Expected Start Date</label>
+                        <input type="date" class="form-control hasDatepicker" name="exp_start_date">
+                </div>
                 <p>
                     <button class="btn btn-sm btn-primary btn-import">Import</button>
                 </p>
             </div>
-            <div class="import-log hide col-md-6" style="float:initial;">
+            <div class="import-log hide col-md-6" style="float:initial;width:100%;">
                 <h3>Import Log</h3>
                 <div class="import-log-messages"></div>
             </div>
