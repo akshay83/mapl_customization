@@ -19,6 +19,13 @@ $(document).ready(function() {
     });
 });
 
+$(document).on("page-change", function() {
+    if (frappe.get_route_str() == '') {
+        $('div').find('.navbar-header').hide();
+    } else {
+        $('div').find('.navbar-header').show();
+    }
+});
 
 
 doSideBar = function() {

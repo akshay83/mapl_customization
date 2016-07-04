@@ -1,4 +1,5 @@
 var customized_footer = 0;
+var visited_documents = [];
 
 $(document).ready(function() {
         console.log("Called Ready");
@@ -12,29 +13,39 @@ $(document).ready(function() {
 
 $(document).on("page-change", function() {
         customized_footer = 0;
-        console.log("Called Page");
-        try {
-            if ($('.form-footer').parent()[0].className=='row layout-main') {
-                $('.pull-right.scroll-to-top').remove();
-                $('.form-footer').remove();
+        console.log("Called Page, Route:"+frappe.get_route_str());
+        current_form = frappe.get_route()[1];
+        if (frappe.get_route()[0] == 'Form' && $.inArray(current_form, visited_documents) == -1) {
+            try {
+                if ($('.form-footer').parent()[0].className=='row layout-main') {
+                    console.log("Removed Button:"+$('.pull-right.scroll-to-top').remove().length);
+                    $('.form-footer').remove();
+                }
+            } catch (err) {
+                console.log(err);
+            } finally {
+                visited_documents.push(current_form);
             }
-        } catch (err) {
-            console.log(err);
         }
-        //$('#comments-button').hide();
+        if (frappe.get_route()[0] != 'Form')  {
+            $('#comments-button').hide();
+        } else {
+            $('#comments-button').show();
+        }
+        console.log('Button Length:'+$('.pull-right.scroll-to-top').length);
 });
 
 
 $('div').on('DOMNodeInserted', '.form-footer', function (e) {
     if (e.target.className == 'form-footer' && customized_footer!=1) {
+            console.log("Trying to Insert");
         if ($('.form-footer').parent().length == 1 && $('.form-footer').parent()[0].className != 'row layout-main') {
-            console.log("Called Inserted");
             customized_footer = 1;
-            $('div').find('.form-footer').detach().appendTo($('.row.layout-main'))
-            $('div').find('.pull-right.scroll-to-top').detach().appendTo($('.row.layout-main'))
+            $('.form-footer').appendTo($('.row.layout-main'))
+            console.log('Current Buttons:'+$('.pull-right.scroll-to-top').length);
+            $('.pull-right.scroll-to-top').appendTo($('.row.layout-main'))
             $('div').find('.form-footer').hide();
-        } 
-        $('#comments-button').show();
+        }
     }
 });
 
