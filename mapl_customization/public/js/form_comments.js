@@ -1,26 +1,40 @@
 var customized_footer = 0;
 
 $(document).ready(function() {
-        customized_footer = 0;
-        //console.log("Called Ready");
-});
-
-frappe.ui.form.on('page-change', function() {
-        $('#comments-button').remove();
-        $('div').find('.pull-right.scroll-to-top').
-});
-
-$('div').on('DOMNodeInserted', '.form-footer', function (e) {
-    if (e.target.className == 'form-footer' && customized_footer!=1) {
-        //console.log('Hello Comments:'+e.target.className);
+        console.log("Called Ready");
+        //$('div').find('.pull-right.scroll-to-top').remove();
         var collapse_button = '<button id="comments-button" type="button" class="btn btn-default collapsible-button" onclick="doComments()"> \
                                  <i class="octicon octicon-comment"></i> \
                              </button>';
-        customized_footer = 1;
         $('.hidden-xs.hidden-sm').find('.nav.navbar-nav.navbar-right').append(collapse_button);
-        $('div').find('.form-footer').insertBefore($('div').find('.col-md-10.layout-main-section-wrapper'))
-        $('div').find('.pull-right.scroll-to-top').insertAfter($('div').find('.col-md-10.layout-main-section-wrapper'))
-        $('div').find('.form-footer').hide();
+        $('#comments-button').hide();
+});
+
+$(document).on("page-change", function() {
+        customized_footer = 0;
+        console.log("Called Page");
+        try {
+            if ($('.form-footer').parent()[0].className=='row layout-main') {
+                $('.pull-right.scroll-to-top').remove();
+                $('.form-footer').remove();
+            }
+        } catch (err) {
+            console.log(err);
+        }
+        //$('#comments-button').hide();
+});
+
+
+$('div').on('DOMNodeInserted', '.form-footer', function (e) {
+    if (e.target.className == 'form-footer' && customized_footer!=1) {
+        if ($('.form-footer').parent().length == 1 && $('.form-footer').parent()[0].className != 'row layout-main') {
+            console.log("Called Inserted");
+            customized_footer = 1;
+            $('div').find('.form-footer').detach().appendTo($('.row.layout-main'))
+            $('div').find('.pull-right.scroll-to-top').detach().appendTo($('.row.layout-main'))
+            $('div').find('.form-footer').hide();
+        } 
+        $('#comments-button').show();
     }
 });
 
@@ -45,6 +59,5 @@ $(document).click(function(e){
         return;
     }
     $('div').find('.form-footer').hide();
-    // Otherwise
-    // trigger your click function
+
 });
