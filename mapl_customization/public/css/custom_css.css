@@ -21,6 +21,7 @@
 	padding-right: 15px;
 	box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
 	margin-top: 10px;
+	padding-bottom: 10px;
 }
 .form-sidebar {
 	overflow-y: auto;
@@ -57,7 +58,8 @@
 	overflow-y:auto;	
 	box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
 	border-radius: 5px;
-	border: 1px solid darkgrey;
+	border: 2px solid darkgrey;
+	right: 25px;
 }
 .form-comments {
 	margin-left: 20px;

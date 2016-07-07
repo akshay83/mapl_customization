@@ -2,6 +2,15 @@
  {
   "docstatus": 0, 
   "doctype": "Custom Script", 
+  "dt": "Installation Note", 
+  "modified": "2016-07-07 20:20:55.126289", 
+  "name": "Installation Note-Client", 
+  "script": "frappe.ui.form.on(\"Installation Note\", \"onload\", function(frm) {\n   frm.set_query(\"customer\", function(doc) {\n   \treturn{\n\t\tquery: \"mapl_customization.customizations_for_mapl.queries.mapl_customer_query\"\n\t}\n   });\n});", 
+  "script_type": "Client"
+ }, 
+ {
+  "docstatus": 0, 
+  "doctype": "Custom Script", 
   "dt": "Purchase Receipt", 
   "modified": "2016-02-08 23:30:11.718795", 
   "name": "Purchase Receipt-Client", 

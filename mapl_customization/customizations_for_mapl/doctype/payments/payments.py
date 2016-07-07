@@ -38,6 +38,7 @@ class Payments(Document):
 		jv.posting_date = self.payment_date
 		jv.user_remark = 'Formal Payment'
 		jv.payment_link = self.name
+		jv.naming_series = 'LK/PAY/'
 
 		td1 = jv.append("accounts");
 		td1.account = self.party_account

@@ -1,5 +1,3 @@
-var customized_footer = 0;
-var visited_documents = [];
 
 $(document).ready(function() {
         console.log("Called Ready");
@@ -12,7 +10,6 @@ $(document).ready(function() {
 });
 
 $(document).on("page-change", function() {
-        customized_footer = 0;
         if (frappe.get_route()[0] != 'Form')  {
             $('#comments-button').hide();
         } else {

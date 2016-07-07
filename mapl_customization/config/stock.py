@@ -4,7 +4,7 @@ from frappe import _
 def get_data():
 	return [
 		{
-			"label" : _("Documents"),
+			"label" : _("Serial No and Batch"),
 			"items" : [
 				{
 					"type" : "doctype",

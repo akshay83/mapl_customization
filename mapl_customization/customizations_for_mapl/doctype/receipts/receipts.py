@@ -38,6 +38,7 @@ class Receipts(Document):
 		jv.posting_date = self.receipt_date
 		jv.user_remark = 'Formal Receipt'
 		jv.receipt_link = self.name
+		jv.naming_series = 'LK/REC/'
 
 		td1 = jv.append("accounts");
 		td1.account = self.party_account
@@ -56,3 +57,4 @@ class Receipts(Document):
 
 		self.journal_reference = jv.name
 		self.db_update()
+

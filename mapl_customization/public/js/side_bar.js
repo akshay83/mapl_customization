@@ -1,10 +1,6 @@
 frappe.provide('frappe.pages');
 frappe.provide('frappe');
 
-var sidebar_customized = false;
-
-
-
 $(document).ready(function() {
     var navbar = $('div').find('.navbar-header');
 
@@ -17,13 +13,14 @@ $(document).ready(function() {
             //console.log('Added:'+e.target.className);
             $('.col-md-2.layout-side-section','div').hide();
     });
+    $('#side-bar-menu').hide();
 });
 
 $(document).on("page-change", function() {
     if (frappe.get_route_str() == '') {
-        $('div').find('.navbar-header').hide();
+             $('#side-bar-menu').hide();
     } else {
-        $('div').find('.navbar-header').show();
+             $('#side-bar-menu').show();
     }
 });
 
@@ -41,8 +38,6 @@ doSideBar = function() {
 
 $(document).click(function(e){
 
-    // Check if click was triggered on or within #menu_content
-    // console.log(e.target.id);
     if (e.target.id == 'side-bar-menu') {
         return;
     }
@@ -50,7 +45,6 @@ $(document).click(function(e){
         return;
     }
     $('div').find('.col-md-2.layout-side-section').hide();
-    // Otherwise
-    // trigger your click function
+
 });
 
