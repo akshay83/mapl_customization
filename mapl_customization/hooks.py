@@ -26,7 +26,8 @@ doc_events = {
 }
 app_include_css = "/assets/mapl_customization/css/custom_css.css"
 app_include_js = ["/assets/mapl_customization/js/side_bar.js",
-				"/assets/mapl_customization/js/form_comments.js"
+				"/assets/mapl_customization/js/form_comments.js",
+				"/assets/mapl_customization/js/core.js"
 				]
 # Includes in <head>
 # ------------------
