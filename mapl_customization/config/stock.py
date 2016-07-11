@@ -24,7 +24,7 @@ def get_data():
 			]
 		},
 		{
-			"label": _("Main Reports"),
+			"label": _("Stock Reports"),
 			"items" : [
 				{
 					"type": "report",
@@ -37,6 +37,12 @@ def get_data():
 					"type": "report",
 					"doctype": "Stock Ledger Entry",
 					"name": "Simple Stock Report",
+					"is_query_report": True
+				},
+				{
+					"type": "report",
+					"doctype": "Item",
+					"name": "Effective Stock Report",
 					"is_query_report": True
 				}
 			]

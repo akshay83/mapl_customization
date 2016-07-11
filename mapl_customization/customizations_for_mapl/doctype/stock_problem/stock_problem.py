@@ -15,16 +15,16 @@ class StockProblem(Document):
 		serial_doc.via_stock_ledger = True
 		if (self.status == "Open"):
 			self.move_to_temporary_warehouse(serial_doc)
-			serial_doc.add_comment("Damaged/Problematic Set")
+			serial_doc.add_comment("Comment", "Damaged/Problematic Set")
 		else:
 			self.move_to_main_warehouse(serial_doc)
-			serial_doc.add_comment("Problem Resolved")
+			serial_doc.add_comment("Comment", "Problem Resolved")
 
 	def on_trash(self):
 		if (self.serial_no):
 			serial_doc = frappe.get_doc("Serial No", self.serial_no)
 			self.move_to_main_warehouse(serial_doc)
-			serial_doc.add_comment("Problem Not Found")
+			serial_doc.add_comment("Commant", "Problem Not Found")
 
 	def move_to_temporary_warehouse(self,serial_doc):
 		serial_doc.temporary_warehouse = serial_doc.warehouse
