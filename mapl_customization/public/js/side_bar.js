@@ -9,10 +9,6 @@ $(document).ready(function() {
                          </button>';
 
     navbar.prepend(collapse_button);
-    $('div').on('DOMNodeInserted', '.col-md-2.layout-side-section', function (e) {
-            //console.log('Added:'+e.target.className);
-            $('.col-md-2.layout-side-section','div').hide();
-    });
     $('#side-bar-menu').hide();
 });
 

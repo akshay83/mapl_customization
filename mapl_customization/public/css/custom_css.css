@@ -74,6 +74,21 @@
 .comment-input-header {
 	color: black !important;
 }
+.module-section {
+	margin-left: initial;
+}
+.module-body {
+	padding-left: initial;
+}
+.h4 {
+	color: black;
+	text-transform: uppercase;
+	font-size:18px;
+}
+.module-section .module-section-link {
+	color: cornflowerblue;
+	font-size: 95%;
+}
 #page-desktop .page-container {
 	background-color: #525454;
 }

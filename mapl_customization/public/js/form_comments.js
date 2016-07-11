@@ -1,7 +1,6 @@
 
 $(document).ready(function() {
-        console.log("Called Ready");
-        //$('div').find('.pull-right.scroll-to-top').remove();
+        //console.log("Called Ready");
         var collapse_button = '<button id="comments-button" type="button" class="btn btn-default collapsible-button" onclick="doComments()"> \
                                  <i class="octicon octicon-comment"></i> \
                              </button>';
