@@ -22,6 +22,7 @@
 	box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
 	margin-top: 10px;
 	padding-bottom: 10px;
+	display:none;
 }
 .form-sidebar {
 	overflow-y: auto;
@@ -54,12 +55,13 @@
     width: 500px;
 	bottom: 10px;
     height: 250px;
-	background: white;
+	background: #7b7b7b;
 	overflow-y:auto;	
 	box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
 	border-radius: 5px;
 	border: 2px solid darkgrey;
 	right: 25px;
+	display: none;
 }
 .form-comments {
 	margin-left: 20px;
@@ -86,8 +88,32 @@
 	font-size:18px;
 }
 .module-section .module-section-link {
-	color: cornflowerblue;
-	font-size: 95%;
+	color: darkslateblue;
+	font-size: 100%;
+}
+.timeline-item.notification-content *{
+	color: white;
+}
+.form-section h6, .form-section .h6 {
+	color: black;
+	font-weight: bold;
+}
+.control-label {
+	color: brown;
+	font-weight: 600;
+	text-transform: uppercase;
+}
+.grid-heading-row {
+	background-color: darkslateblue;
+}
+.grid-heading-row {
+	color:white;
+}
+.form-documents {
+	display:none;
+}
+.module-link {
+	color:white;
 }
 #page-desktop .page-container {
 	background-color: #525454;
