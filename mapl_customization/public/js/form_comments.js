@@ -1,10 +1,10 @@
 
 $(document).ready(function() {
-        //console.log("Called Ready");
+        console.log("Called Ready");
         var collapse_button = '<button id="comments-button" type="button" class="btn btn-default collapsible-button" onclick="doComments()"> \
                                  <i class="octicon octicon-comment"></i> \
                              </button>';
-        $('.hidden-xs.hidden-sm').find('.nav.navbar-nav.navbar-right').append(collapse_button);
+        $('.nav.navbar-nav.navbar-right').append(collapse_button);
         $('#comments-button').hide();
 });
 
