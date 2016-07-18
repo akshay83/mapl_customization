@@ -115,6 +115,9 @@
 .module-link {
 	color:white;
 }
+.grid-row:hover {
+	color: darkslateblue;
+}
 #page-desktop .page-container {
 	background-color: #525454;
 }
