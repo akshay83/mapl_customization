@@ -21,14 +21,15 @@ def on_update_salesinvoice(doc, method):
 	if not frappe.db.get_single_value("Selling Settings", "raise_approval_for_undercut"):
 		return 
 
-	old_values = frappe.db.sql("""select workflow_state from `tabSales Invoice` where name=%(name)s""",{'name':doc.name},as_dict=1)
-	print "On Update:SI:OVWS:"+old_values[0].workflow_state
+	old_values = frappe.db.sql("""select workflow_state,grand_total from `tabSales Invoice` where name=%(name)s""",{'name':doc.name},as_dict=1)
 
 	if old_values != None:
 		if old_values[0].workflow_state in ["Draft","Pending","Approved"]:
 			if doc.workflow_state in ["Rejected","Approved"]:
 				return
 		elif old_values[0].workflow_state not in ["Rejected"]:
+			return
+		elif doc.workflow_state in ["Rejected"] and old_values[0].grand_total==doc.grand_total:
 			return
 
 	validate_undercut_salesinvoice(doc)

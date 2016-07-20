@@ -28,7 +28,7 @@ doc_events = {
 	},
 	"Sales Invoice" : {
 		"validate": "mapl_customization.customizations_for_mapl.workflow_hooks.validate_salesinvoice",
-		"on_update": "mapl_customization.customizations_for_mapl.workflow_hooks.on_update_salesinvoice"
+		"before_save": "mapl_customization.customizations_for_mapl.workflow_hooks.on_update_salesinvoice"
 	},
 	"Selling Settings" : {
 		"on_update": "mapl_customization.customizations_for_mapl.workflow_hooks.on_update_selling_settings"
