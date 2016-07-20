@@ -27,8 +27,7 @@ doc_events = {
 		"before_cancel" : "mapl_customization.customizations_for_mapl.utils.check_receipt_in_journal_entry"
 	},
 	"Sales Invoice" : {
-		"validate": "mapl_customization.customizations_for_mapl.workflow_hooks.validate_salesinvoice",
-		"before_save": "mapl_customization.customizations_for_mapl.workflow_hooks.on_update_salesinvoice"
+		"before_save": "mapl_customization.customizations_for_mapl.workflow_hooks.before_save_salesinvoice"
 	},
 	"Selling Settings" : {
 		"on_update": "mapl_customization.customizations_for_mapl.workflow_hooks.on_update_selling_settings"

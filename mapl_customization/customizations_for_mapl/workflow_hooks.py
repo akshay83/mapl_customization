@@ -2,28 +2,13 @@ import frappe
 import json
 
 
-def validate_salesinvoice(doc, method):
-	if not frappe.db.get_single_value("Selling Settings", "raise_approval_for_undercut"):
-		return
-
-	if doc.workflow_state not in ["Draft"]:
-		return
-
-	if not doc.get('__islocal'):
-		return
-
-	if doc.get('__islocal') == None:
-		return
-
-	validate_undercut_salesinvoice(doc)
-
-def on_update_salesinvoice(doc, method):
+def before_save_salesinvoice(doc, method):
 	if not frappe.db.get_single_value("Selling Settings", "raise_approval_for_undercut"):
 		return 
 
 	old_values = frappe.db.sql("""select workflow_state,grand_total from `tabSales Invoice` where name=%(name)s""",{'name':doc.name},as_dict=1)
 
-	if old_values != None:
+	if old_values:
 		if old_values[0].workflow_state in ["Draft","Pending","Approved"]:
 			if doc.workflow_state in ["Rejected","Approved"]:
 				return
