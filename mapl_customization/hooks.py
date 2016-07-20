@@ -10,7 +10,10 @@ app_color = "#589494"
 app_email = "mehta.akshay@gmail.com"
 app_version = "0.0.1"
 app_license = "MIT"
-fixtures = ["Custom Field", "Property Setter", "Stock Settings", "Selling Settings","Buying Settings","Custom Script", "Print Format", "Letter Head", "Workflow"]
+
+fixtures = ["Custom Field", "Property Setter", "Stock Settings", "Selling Settings","Buying Settings","Custom Script",
+		 "Print Format", "Letter Head", "Workflow", "Workflow State", "Workflow Action"]
+
 doc_events = {
 	"Purchase Receipt" : {
 		"on_submit" : "mapl_customization.customizations_for_mapl.utils.purchase_receipt_on_submit",
@@ -24,8 +27,11 @@ doc_events = {
 		"before_cancel" : "mapl_customization.customizations_for_mapl.utils.check_receipt_in_journal_entry"
 	},
 	"Sales Invoice" : {
-		"validate": "mapl_customization.customizations_for_mapl.utils.validate_salesinvoice",
-		"on_update": "mapl_customization.customizations_for_mapl.utils.on_update_salesinvoice"
+		"validate": "mapl_customization.customizations_for_mapl.workflow_hooks.validate_salesinvoice",
+		"on_update": "mapl_customization.customizations_for_mapl.workflow_hooks.on_update_salesinvoice"
+	},
+	"Selling Settings" : {
+		"on_update": "mapl_customization.customizations_for_mapl.workflow_hooks.on_update_selling_settings"
 	}
 }
 app_include_css = "/assets/mapl_customization/css/custom_css.css"

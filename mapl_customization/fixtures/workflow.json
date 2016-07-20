@@ -4,7 +4,7 @@
   "doctype": "Workflow", 
   "document_type": "Sales Invoice", 
   "is_active": 1, 
-  "modified": "2016-07-20 17:13:08.789685", 
+  "modified": "2016-07-20 18:54:27.403923", 
   "name": "Sales Invoice Undercut", 
   "states": [
    {
