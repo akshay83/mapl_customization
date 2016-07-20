@@ -10,9 +10,9 @@
   "doctype": "Selling Settings", 
   "editable_price_list_rate": 1, 
   "maintain_same_sales_rate": 0, 
-  "modified": "2016-07-20 18:54:24.412642", 
+  "modified": "2016-07-20 20:35:33.909101", 
   "name": "Selling Settings", 
-  "raise_approval_for_undercut": 1, 
+  "raise_approval_for_undercut": 0, 
   "selling_price_list": "Standard Selling", 
   "so_required": "No", 
   "territory": "India"
