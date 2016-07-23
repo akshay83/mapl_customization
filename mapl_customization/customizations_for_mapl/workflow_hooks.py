@@ -35,6 +35,9 @@ def validate_undercut_salesinvoice(doc):
 		doc.db_set("workflow_state", "Draft")
 
 def on_update_selling_settings(doc, method):
+	if not frappe.db.exists({"doctype":"Workflow","workflow_name": 'Sales Invoice Undercut'}):
+		return
+
 	workdoc = frappe.get_doc("Workflow", "Sales Invoice Undercut")
 	workdoc.is_active = doc.raise_approval_for_undercut
 	workdoc.save()
