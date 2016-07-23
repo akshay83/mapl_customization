@@ -3,6 +3,9 @@ import json
 import xmltodict
 from xmltodict import ParsingInterrupted
 from mapl_customization.customizations_for_mapl.page.tally_import.import_modules.currency_items import TallyImportCurrencyItems
+from mapl_customization.customizations_for_mapl.page.tally_import.import_modules.godown_items import TallyImportGodownItems
+from mapl_customization.customizations_for_mapl.page.tally_import.import_modules.stockgroup_items import TallyImportStockGroupItems
+from mapl_customization.customizations_for_mapl.page.tally_import.import_modules.stockcategory_items import TallyImportStockCategoryItems
 
 overwrite_existing = True
 opening_date = None
@@ -39,6 +42,12 @@ def process_dict(xmlstr):
 def document_import(item):
 	if (item.has_key('CURRENCY')):
 		TallyImportCurrencyItems(value=item['CURRENCY'],ow=overwrite_existing)
+	elif (item.has_key('GODOWN')):
+		TallyImportGodownItems(value=item['GODOWN'],ow=overwrite_existing)
+	elif (item.has_key('STOCKCATEGORY')):
+		TallyImportStockCategoryItems(value=item['STOCKCATEGORY'],ow=overwrite_existing)	
+	elif (item.has_key('STOCKGROUP')):
+		TallyImportStockGroupItems(value=item['STOCKGROUP'],ow=overwrite_existing)
 	else: 
 		return 'Skipped'
 	return 'Success'

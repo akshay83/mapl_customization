@@ -11,11 +11,7 @@ class TallyImportCurrencyItems:
         self.process()        
 
     def process(self):
-        print "----------RESULT----------"
-        print "PROCESSED:" + self.process_node['MAILINGNAME'] + " +++++ OW: " + str(self.overwrite)
-        print "----------RESULT END----------"
-        currency_doc = frappe.db.exists('Currency', self.process_node['MAILINGNAME'])
-        if currency_doc == False:
+        if not frappe.db.exists({"doctype":"Currency","currency_name": self.process_node['MAILINGNAME']}):
             currency_doc = frappe.get_doc('Currency', self.process_node['MAILINGNAME'])
             currency_doc.fraction = process_node['DECIMALSYMBOL']
             currency_doc.symbol = process_node['ORIGINALNAME']            
