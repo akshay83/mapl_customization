@@ -38,6 +38,11 @@ app_include_js = ["/assets/mapl_customization/js/side_bar.js",
 				"/assets/mapl_customization/js/form_comments.js",
 				"/assets/mapl_customization/js/core.js"
 				]
+
+#Monkey Patch
+from mapl_customization.customizations_for_mapl.monkey_patch import do_monkey_patch
+do_monkey_patch()
+
 # Includes in <head>
 # ------------------
 
