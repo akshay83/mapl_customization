@@ -20,10 +20,6 @@ def read_uploaded_file(ignore_encoding=False,overwrite=False,open_date=None):
 	if params.get("open_date"):
 		open_date = params.get("open_date")
 
-	print "-------------ATTRS -------------"
-	print overwrite
-	print open_date
-	print "----------------------------------------"
 	if getattr(frappe, "uploaded_file", None):
 		with open(frappe.uploaded_file, "r") as upfile:
 			fcontent = upfile.read()

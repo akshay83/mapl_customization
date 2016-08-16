@@ -28,6 +28,7 @@ class TallyImportStockItems:
     def process_batches(self, batch):
         stockentry_doc = frappe.new_doc('Stock Entry')
         stockentry_doc.purpose = 'Material Receipt'
+        stockentry_doc.difference_account = frappe.get_value("Account",filters={"account_name": 'Temporary Opening'})
         stockentry_doc.posting_date = self.open_date
 
         item_detail = stockentry_doc.append("items")
