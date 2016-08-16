@@ -6,12 +6,24 @@ from mapl_customization.customizations_for_mapl.page.tally_import.import_modules
 from mapl_customization.customizations_for_mapl.page.tally_import.import_modules.godown_items import TallyImportGodownItems
 from mapl_customization.customizations_for_mapl.page.tally_import.import_modules.stockgroup_items import TallyImportStockGroupItems
 from mapl_customization.customizations_for_mapl.page.tally_import.import_modules.stockcategory_items import TallyImportStockCategoryItems
+from mapl_customization.customizations_for_mapl.page.tally_import.import_modules.stock_items import TallyImportStockItems
 
 overwrite_existing = True
 opening_date = None
 
 @frappe.whitelist()
-def read_uploaded_file(ignore_encoding=False,overwrite=False,opendate=None):
+def read_uploaded_file(ignore_encoding=False,overwrite=False,open_date=None):
+	params = json.loads(frappe.form_dict.get("params") or '{}')
+
+	if params.get("overwrite"):
+		overwrite = params.get("overwrite")
+	if params.get("open_date"):
+		open_date = params.get("open_date")
+
+	print "-------------ATTRS -------------"
+	print overwrite
+	print open_date
+	print "----------------------------------------"
 	if getattr(frappe, "uploaded_file", None):
 		with open(frappe.uploaded_file, "r") as upfile:
 			fcontent = upfile.read()
@@ -23,7 +35,7 @@ def read_uploaded_file(ignore_encoding=False,overwrite=False,opendate=None):
 	overwrite_existing = overwrite
 
 	global opening_date
-	opening_date = opendate
+	opening_date = open_date
 
 	try:
 		xmltodict.parse(fcontent, item_depth=5, item_callback=process)
@@ -48,6 +60,8 @@ def document_import(item):
 		TallyImportStockCategoryItems(value=item['STOCKCATEGORY'],ow=overwrite_existing)	
 	elif (item.has_key('STOCKGROUP')):
 		TallyImportStockGroupItems(value=item['STOCKGROUP'],ow=overwrite_existing)
+	elif (item.has_key('STOCKITEM')):
+		TallyImportStockItems(value=item['STOCKITEM'],ow=overwrite_existing, od=opening_date)
 	else: 
 		return 'Skipped'
 	return 'Success'

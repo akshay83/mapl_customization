@@ -45,7 +45,8 @@ frappe.TallyImportTool = Class.extend({
 			btn: this.page.main.find(".btn-import"),
 			get_params: function() {
 				return {
-					overwrite: !me.page.main.find('[name="always_insert"]').prop("checked")
+					overwrite: !me.page.main.find('[name="always_insert"]').prop("checked"),
+                    open_date: me.page.main.find('[name="exp_start_date"]').val()
 				}
 			},
 			args: {
