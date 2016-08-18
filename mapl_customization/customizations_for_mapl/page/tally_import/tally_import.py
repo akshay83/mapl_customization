@@ -1,6 +1,7 @@
 import frappe
 import json
 import xmltodict
+import lzstring
 from xmltodict import ParsingInterrupted
 from mapl_customization.customizations_for_mapl.page.tally_import.import_modules.currency_items import TallyImportCurrencyItems
 from mapl_customization.customizations_for_mapl.page.tally_import.import_modules.godown_items import TallyImportGodownItems
@@ -10,22 +11,44 @@ from mapl_customization.customizations_for_mapl.page.tally_import.import_modules
 
 overwrite_existing = True
 opening_date = None
+data_content = None
 
 @frappe.whitelist()
-def read_uploaded_file(ignore_encoding=False,overwrite=False,open_date=None):
+def read_uploaded_file(filedata=None,decompress_data=0,overwrite=False,open_date=None):
+	if not filedata:
+		return
+
+	fd_json = json.loads(filedata)
+	#fd_list = list(fd_json["files_data"])
+	lx = lzstring.LZString()
+
+	global data_content
+	data_content = fd_json["files_data"][0]["dataurl"]
+
+	if (int(decompress_data)>0):
+		frappe.publish_realtime("tally_import_progress", {
+				"progress": [5, 100], 
+				"message": "Decompressing"
+				}, user=frappe.session.user)
+
+		global data_content
+		data_content = lx.decompressFromUTF16(data_content)
+
+		frappe.publish_realtime("tally_import_progress", {
+				"progress": [5, 100], 
+				"message": "Decompression Complete"
+				}, user=frappe.session.user)
+	#print "--------------------------------------"
+	#st = base64.b64decode(fd[0]["dataurl"])
+	#print fd["dataurl"]
+	#print lx.decompressFromUTF16(fd[0]["dataurl"])
+
 	params = json.loads(frappe.form_dict.get("params") or '{}')
 
 	if params.get("overwrite"):
 		overwrite = params.get("overwrite")
 	if params.get("open_date"):
 		open_date = params.get("open_date")
-
-	if getattr(frappe, "uploaded_file", None):
-		with open(frappe.uploaded_file, "r") as upfile:
-			fcontent = upfile.read()
-	else:
-		from frappe.utils.file_manager import get_uploaded_content
-		fname, fcontent = get_uploaded_content()	
 
 	global overwrite_existing
 	overwrite_existing = overwrite
@@ -34,7 +57,7 @@ def read_uploaded_file(ignore_encoding=False,overwrite=False,open_date=None):
 	opening_date = open_date
 
 	try:
-		xmltodict.parse(fcontent, item_depth=5, item_callback=process)
+		xmltodict.parse(data_content, item_depth=5, item_callback=process)
 	except ParsingInterrupted:
 		frappe.db.rollback()
 		return {"messages": ["There was a Problem Importing" + ": " + "HG"], "error": True}

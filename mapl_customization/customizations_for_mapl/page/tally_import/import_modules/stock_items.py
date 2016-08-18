@@ -9,21 +9,28 @@ class TallyImportStockItems:
 
     def process(self):
         if not frappe.db.exists({"doctype":"Item","item_code": self.process_node['@NAME']}):
-            item_doc = frappe.new_doc('Item')
-            item_doc.item_code = self.process_node['@NAME']
-            item_doc.item_name = self.process_node['@NAME']
-            item_doc.item_group = self.process_node['PARENT']
-            item_doc.brand = self.process_node['CATEGORY']            
-            item_doc.has_serial_no = 1 if self.process_node['ISBATCHWISEON'] == 'Yes' else 0
-            item_doc.stock_uom = self.process_node['BASEUNITS']       
-            item_doc.is_stock_item = 1
-            item_doc.save(ignore_permissions=True)
-            if self.process_node['BATCHALLOCATIONS.LIST']:
-                if isinstance(self.process_node['BATCHALLOCATIONS.LIST'], list):
-                    for batch_allocations in self.process_node['BATCHALLOCATIONS.LIST']:
-                        self.process_batches(batch_allocations)
-                elif isinstance(self.process_node['BATCHALLOCATIONS.LIST'], dict):
-                    self.process_batches(self.process_node['BATCHALLOCATIONS.LIST'])
+            if self.process_node.has_key('OPENINGBALANCE'):
+                uom_index = self.process_node['OPENINGBALANCE'].find(self.process_node['BASEUNITS'],0)
+                open_qty = float(self.process_node['OPENINGBALANCE'][:uom_index])
+                if open_qty<=0:
+                    return
+
+                item_doc = frappe.new_doc('Item')
+                item_doc.item_code = self.process_node['@NAME']
+                item_doc.item_name = self.process_node['@NAME']
+                item_doc.item_group = self.process_node['PARENT']
+                item_doc.brand = self.process_node['CATEGORY']            
+                item_doc.has_serial_no = 1 if self.process_node['ISBATCHWISEON'] == 'Yes' else 0
+                item_doc.stock_uom = self.process_node['BASEUNITS']       
+                item_doc.is_stock_item = 1
+                item_doc.save(ignore_permissions=True)
+
+                if self.process_node['BATCHALLOCATIONS.LIST']:
+                    if isinstance(self.process_node['BATCHALLOCATIONS.LIST'], list):
+                        for batch_allocations in self.process_node['BATCHALLOCATIONS.LIST']:
+                            self.process_batches(batch_allocations)
+                    elif isinstance(self.process_node['BATCHALLOCATIONS.LIST'], dict):
+                        self.process_batches(self.process_node['BATCHALLOCATIONS.LIST'])
 
     def process_batches(self, batch):
         stockentry_doc = frappe.new_doc('Stock Entry')
@@ -39,6 +46,8 @@ class TallyImportStockItems:
             item_detail.serial_no = batch['BATCHNAME']        
 
         uom_index = batch['OPENINGBALANCE'].find(self.process_node['BASEUNITS'],0)
+        if (float(batch['OPENINGBALANCE'][:uom_index])<=0):
+            return
         item_detail.qty = float(batch['OPENINGBALANCE'][:uom_index])
 
         rate_per_index = batch['OPENINGRATE'].find("/",0)

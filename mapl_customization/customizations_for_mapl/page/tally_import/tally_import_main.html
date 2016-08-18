@@ -5,24 +5,39 @@
         <p class="text-muted">{%= __("Update the template and save in CSV (Comma Separate Values) format before attaching.") %}</p>
         <div class="row">
             <div class="col-md-6" style="float:initial;">
-                <div class="upload-area"></div>
-                <div class="checkbox">
+                <div class="checkbox" style="padding-bottom: 10px;padding-top: 10px;">
+                    <label>
+                       <input type="checkbox" name="compress_data">
+                            {%= __("Compress Data Before Upload") %}
+                    </label>
+                </div>
+                <div>
+                    <div style="float:left;padding-bottom: 10px;padding-top: 10px;">
+                        <form id="frmFileUp">
+                           <input type="file" id="select_files"/>
+                        </form>
+                    </div>
+                    <div style="float:left;padding-bottom: 10px;padding-top: 10px;">
+                        <button class="btn btn-sm btn-primary" id="btn_read">Read</button>
+                    </div>
+                </div>
+                <div class="checkbox"  style="position: initial;padding-bottom: 10px;padding-top: 10px;">
                     <label>
                         <input type="checkbox" name="always_insert">
                             {%= __("Do not update, but insert new records.") %}
                     </label>
                 </div>
-                <div class="date">
+                <div class="date"  style="padding-bottom: 10px;padding-top: 10px;">
                     <label class="control-label text-muted small">Expected Start Date</label>
                     <input type="date" class="form-control hasDatepicker" name="exp_start_date">
                 </div>
-                <p>
-                    <button class="btn btn-sm btn-primary btn-import">Import</button>
-                </p>
+                <div  style="padding-bottom: 10px;padding-top: 10px;">
+                    <button class="btn btn-sm btn-primary" id="btn_import">Import</button>
+                </div>
             </div>
-            <div class="import-log hide col-md-6" style="float:initial;width:100%;">
+            <div class="import-log hide col-md-6" style="float:initial;width:100%;padding-bottom: 10px;padding-top: 10px;">
                 <h3>Import Log</h3>
-                <div class="import-log-messages"></div>
+                <div class="import-log-messages" style="height:200px;overflow-y:auto;"></div>
             </div>
         </div>
     </div>
