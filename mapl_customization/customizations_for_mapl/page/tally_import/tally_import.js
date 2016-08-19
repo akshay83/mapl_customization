@@ -1,5 +1,7 @@
 frappe.provide('frappe');
 
+var compressed_data = "";
+
 frappe.TallyImportTool = Class.extend({
     init: function(parent) {
         this.page = frappe.ui.make_app_page({
@@ -28,16 +30,6 @@ frappe.TallyImportTool = Class.extend({
         frappe.boot.user.can_import = frappe.boot.user.can_import.sort();
 
         $(frappe.render_template("tally_import_main", this)).appendTo(this.page.main);
-
-        this.select = this.page.main.find("select.doctype");
-        this.select.on("change", function() {
-            me.doctype = $(this).val();
-            me.page.main.find(".export-import-section").toggleClass(!!me.doctype);
-            if (me.doctype) {
-                me.set_btn_links();
-                // set button links
-            }
-        });
     }
 });
 
@@ -71,7 +63,7 @@ frappe.pages['tally-import'].on_page_show = function(wrapper) {
             frappe.call({
                 method: "mapl_customization.customizations_for_mapl.page.tally_import.tally_import.read_uploaded_file",
                 args: {
-                    "filedata" : filedata,
+                    "filedata" : compressed_data,
                     "decompress_data" : $('div').find('[name="compress_data"]').prop("checked")?1:0,
         			"overwrite": !$('div').find('[name="always_insert"]').prop("checked"),
                     "open_date": $('div').find('[name="exp_start_date"]').val()
@@ -95,7 +87,6 @@ function setupReader(file, input) {
 				.appendTo("#body_div");
     reader.onload = function(e) {
         freeze.remove();
-        var compressed_data = "";
         if ($('div').find('[name="compress_data"]').prop("checked")) {
             write_messages({"message": "Compressing Data"});
             compressed_data = LZString.compressToUTF16(reader.result);
@@ -103,11 +94,6 @@ function setupReader(file, input) {
         } else {
             compressed_data = reader.result;
         }
-        input.filedata.files_data.push({
-            "__file_attachment": 1,
-            "filename": file.name,
-            "dataurl": compressed_data
-        });
         $("#btn_import").prop("disabled",false)
         //TEST
         //console.log(reader.result.length);

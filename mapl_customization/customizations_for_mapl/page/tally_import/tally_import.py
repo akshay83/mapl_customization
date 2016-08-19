@@ -18,12 +18,7 @@ def read_uploaded_file(filedata=None,decompress_data=0,overwrite=False,open_date
 	if not filedata:
 		return
 
-	fd_json = json.loads(filedata)
-	#fd_list = list(fd_json["files_data"])
 	lx = lzstring.LZString()
-
-	global data_content
-	data_content = fd_json["files_data"][0]["dataurl"]
 
 	if (int(decompress_data)>0):
 		frappe.publish_realtime("tally_import_progress", {
@@ -31,13 +26,13 @@ def read_uploaded_file(filedata=None,decompress_data=0,overwrite=False,open_date
 				"message": "Decompressing"
 				}, user=frappe.session.user)
 
-		global data_content
-		data_content = lx.decompressFromUTF16(data_content)
+		filedata = lx.decompressFromUTF16(filedata)
 
 		frappe.publish_realtime("tally_import_progress", {
 				"progress": [5, 100], 
 				"message": "Decompression Complete"
 				}, user=frappe.session.user)
+
 	#print "--------------------------------------"
 	#st = base64.b64decode(fd[0]["dataurl"])
 	#print fd["dataurl"]
@@ -57,7 +52,7 @@ def read_uploaded_file(filedata=None,decompress_data=0,overwrite=False,open_date
 	opening_date = open_date
 
 	try:
-		xmltodict.parse(data_content, item_depth=5, item_callback=process)
+		xmltodict.parse(filedata, item_depth=5, item_callback=process)
 	except ParsingInterrupted:
 		frappe.db.rollback()
 		return {"messages": ["There was a Problem Importing" + ": " + "HG"], "error": True}
