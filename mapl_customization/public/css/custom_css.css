@@ -16,7 +16,7 @@
 }
 .layout-side-section {
 	z-index: 1025;
-	position: fixed;
+	position: absolute;
 	background: #7b7b7b !important;
 	padding-right: 15px;
 	box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
@@ -31,13 +31,14 @@
 	float:left;
 	margin-right: 10px;
 	height: 40px;
+	background: #3F51B5;
 }
 .collapsible-button .icon-bar {
 	display: block;
 	width: 22px;
 	height: 2px;
 	margin-bottom:3px;
-	background-color: black;
+	background-color: white;
 	border-radius: 1px;
 }
 .sidebar-menu h6, .sidebar-menu .h6 {
@@ -55,13 +56,16 @@
     width: 500px;
 	bottom: 10px;
     height: 250px;
-	background: #7b7b7b;
-	overflow-y:auto;	
+	background: #2c3e50;
+	overflow-y:hidden;	
 	box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
-	border-radius: 5px;
 	border: 2px solid darkgrey;
 	right: 25px;
 	display: none;
+	border-radius: 10px;
+}
+.after-save:hover {
+	overflow-y:scroll;
 }
 .form-comments {
 	margin-left: 20px;
@@ -104,10 +108,22 @@
 	text-transform: uppercase;
 }
 .grid-heading-row {
-	background-color: darkslateblue;
+	background-color: #3F51B5;
+}
+.navbar-default {
+	background-color: #3F51B5;
 }
 .grid-heading-row {
 	color:white;
+}
+#navbar-breadcrumbs > li > a {
+	color: white;
+}
+.navbar-default .navbar-nav > li > a, .navbar-default .navbar-brand {
+	color: white;
+}
+.form-layout {
+	box-shadow: 0 6px 12px 0 rgba(0, 0, 0, 0.25), 0 1px 2px 0 rgba(0, 0, 0, 0.24);
 }
 .form-documents {
 	display:none;
@@ -117,6 +133,22 @@
 }
 .grid-row:hover {
 	color: darkslateblue;
+}
+.form-inner-toolbar {
+	box-shadow: 0 0px 0px 0px rgba(0, 0, 0, 0.25), 0 0px 20px 0 rgba(0, 0, 0, 0.24);
+	background: #d34615;
+}
+.btn-primary {
+	background-color: #38b44a;
+}
+.has-error .form-control {
+	border-color: #df382c;
+}
+.has-error .help-block, .has-error .control-label, .has-error .radio, .has-error .checkbox, .has-error .radio-inline, .has-error .checkbox-inline, .has-error.radio label, .has-error.checkbox label, .has-error.radio-inline label, .has-error.checkbox-inline label {
+	color: #df382c;
+}
+#navbar-search {
+	background-color: white;
 }
 #page-desktop .page-container {
 	background-color: #525454;
