@@ -167,6 +167,10 @@ body[data-route=""] .navbar-default, body[data-route="desktop"] .navbar-default 
 	background-color: #38b44a;
 	border-color: transparent;
 }
+.btn-primary:active {
+	background-color: #38b44a;
+	border-color: transparent;
+}
 .has-error .form-control {
 	border-color: #df382c;
 }

@@ -57,28 +57,33 @@ frappe.pages['tally-import'].on_page_show = function(wrapper) {
     });
 
     $("#btn_import").click(function() {
+
         var filedata = $('#select_files').prop('filedata');
         if (filedata) {
             write_messages({"message": "Uploading Data"});
-            frappe.call({
-                method: "mapl_customization.customizations_for_mapl.page.tally_import.tally_import.read_uploaded_file",
-                args: {
-                    "filedata" : compressed_data,
-                    "decompress_data" : $('div').find('[name="compress_data"]').prop("checked")?1:0,
-        			"overwrite": !$('div').find('[name="always_insert"]').prop("checked"),
-                    "open_date": $('div').find('[name="exp_start_date"]').val()
-                },
-                callback: function(r) {
-                    if (!r.exc) {
-                        frappe.msgprint(__("Files uploaded"));
-                    } else {
-                        frappe.msgprint(__("Files not uploaded. <br /> " + r.exc));
-                    }
+            splitXML(compressed_data, callback = function(r) {
+                if ($('div').find('[name="compress_data"]').prop("checked")) {
+                    r.chunkString = compressString(r.chunkString);
                 }
+                write_messages({"message": "Processing Batch of "+r.chunkCounter.toString()});
+                write_messages({"message": "Uploading Data:"+r.chunkString.length.toString()});
+                frappe.call({                    
+                    method: "mapl_customization.customizations_for_mapl.page.tally_import.tally_import.read_uploaded_file",
+                    args: {
+                        "filedata" : r.chunkString,
+                        "decompress_data" : $('div').find('[name="compress_data"]').prop("checked")?1:0,
+            			"overwrite": !$('div').find('[name="always_insert"]').prop("checked"),
+                        "open_date": $('div').find('[name="exp_start_date"]').val()
+                    },
+                    callback: function(cr) {
+                    }
+                }); 
             });
         }
     });
 };
+
+
 
 function setupReader(file, input) {
     var name = file.name;
@@ -87,14 +92,9 @@ function setupReader(file, input) {
 				.appendTo("#body_div");
     reader.onload = function(e) {
         freeze.remove();
-        if ($('div').find('[name="compress_data"]').prop("checked")) {
-            write_messages({"message": "Compressing Data"});
-            compressed_data = LZString.compressToUTF16(reader.result);
-            write_messages({"message": "Data Compressed"});
-        } else {
-            compressed_data = reader.result;
-        }
+        compressed_data = reader.result;
         $("#btn_import").prop("disabled",false)
+
         //TEST
         //console.log(reader.result.length);
         //console.log(LZString.compressToUTF16(reader.result).length);
@@ -107,10 +107,51 @@ function setupReader(file, input) {
     reader.readAsText(file);
 }
 
+function compressString(chunkXML) {
+        write_messages({"message": "Compressing Data"});
+        compressed_data = LZString.compressToUTF16(chunkXML);
+        write_messages({"message": "Data Compressed"});
+        console.log(compressed_data.length);
+        return compressed_data;
+}
+
+function splitXML(xmlstring, callback) {
+    var startTallyMsg = "<TALLYMESSAGE ";
+    var endTallyMsg = "</TALLYMESSAGE>";
+    var smlStringLength = xmlstring.length;
+    var firstMessageStart = xmlstring.indexOf(startTallyMsg);
+    var lastMessageEnd = xmlstring.lastIndexOf(endTallyMsg);
+    var chunkSize = 100;
+    var currentPos = firstMessageStart;
+    var chunk = {};
+    chunk.chunkString = "";
+    chunk.chunkCounter = 1;
+    while (true) {
+        var messageEndIndex = xmlstring.indexOf(endTallyMsg, currentPos) + endTallyMsg.length;
+        var message = xmlstring.substr(currentPos, (messageEndIndex - currentPos));
+        chunk.chunkString = chunk.chunkString + "\n" + message;
+        chunk.chunkCounter = chunk.chunkCounter + 1;
+        if (chunk.chunkCounter == 100) {
+            chunk.chunkString = "  <ENVELOPE> <BODY> <IMPORTDATA> <REQUESTDATA>" + chunk.chunkString + "</REQUESTDATA> </IMPORTDATA> </BODY> </ENVELOPE>"
+            callback(chunk);
+            chunk.chunkString = "";
+            chunk.chunkCounter = 0;
+        }
+        currentPos = xmlstring.indexOf(startTallyMsg, messageEndIndex);
+        if (currentPos < 0) {
+                if (chunk.chunkCounter > 0) {
+                    chunk.chunkString = "  <ENVELOPE> <BODY> <IMPORTDATA> <REQUESTDATA>" + chunk.chunkString + "</REQUESTDATA> </IMPORTDATA> </BODY> </ENVELOPE>"
+                    callback(chunk)   
+                }
+                break;
+        }
+    }
+}
+
 frappe.realtime.on("tally_import_progress", function(data) {
     if (data.progress) {
         write_messages(data);
-        console.log(data.message);
+        //console.log(data.message);
     }
 });
 write_messages = function(data) {
