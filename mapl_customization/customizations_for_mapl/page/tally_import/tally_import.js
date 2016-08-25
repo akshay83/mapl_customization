@@ -34,66 +34,83 @@ frappe.TallyImportTool = Class.extend({
 });
 
 
-
-
 frappe.pages['tally-import'].on_page_show = function(wrapper) {
-    $("#btn_import").prop("disabled",true)
+    $("#btn_import").prop("disabled", true)
 
     var $form = $("form[id='frmFileUp']");
     $("#btn_read").click(function() {
-      var input = $('div').find("[type='file']").get(0);
-  
-      if(input.files.length) {
-        input.filedata = { "files_data" : [] }; //Initialize as json array.
+        var input = $('div').find("[type='file']").get(0);
 
-        window.file_reading = true;
+        if (input.files.length) {
+            input.filedata = {
+                "files_data": []
+            }; //Initialize as json array.
 
-        $.each(input.files, function(key, value) {
-          setupReader(value, input);
-        });
+            window.file_reading = true;
 
-        window.file_reading = false;
-      }
+            $.each(input.files, function(key, value) {
+                setupReader(value, input);
+            });
+
+            window.file_reading = false;
+        }
     });
 
     $("#btn_import").click(function() {
 
         var filedata = $('#select_files').prop('filedata');
         if (filedata) {
-            write_messages({"message": "Uploading Data"});
-            splitXML(compressed_data, callback = function(r) {
-                if ($('div').find('[name="compress_data"]').prop("checked")) {
-                    r.chunkString = compressString(r.chunkString);
-                }
-                write_messages({"message": "Processing Batch of "+r.chunkCounter.toString()});
-                write_messages({"message": "Uploading Data:"+r.chunkString.length.toString()});
-                frappe.call({                    
-                    method: "mapl_customization.customizations_for_mapl.page.tally_import.tally_import.read_uploaded_file",
-                    args: {
-                        "filedata" : r.chunkString,
-                        "decompress_data" : $('div').find('[name="compress_data"]').prop("checked")?1:0,
-            			"overwrite": !$('div').find('[name="always_insert"]').prop("checked"),
-                        "open_date": $('div').find('[name="exp_start_date"]').val()
-                    },
-                    callback: function(cr) {
-                    }
-                }); 
+            write_messages({
+                "message": "Uploading Data"
             });
+            initImportProcess();
+            processNextBatch(doCallback);
+        }
+    });
+};
+
+function doCallback(r, isLastChunk) {
+    if ($('div').find('[name="compress_data"]').prop("checked")) {
+        r.chunkString = compressString(r.chunkString);
+    }
+    write_messages({
+        "message": "Processing Batch of " + r.chunkCounter.toString()
+    });
+    write_messages({
+        "message": "Uploading Data:" + r.chunkString.length.toString()
+    });
+    frappe.call({
+        method: "mapl_customization.customizations_for_mapl.page.tally_import.tally_import.read_uploaded_file",
+        args: {
+            "filedata": r.chunkString,
+            "decompress_data": $('div').find('[name="compress_data"]').prop("checked") ? 1 : 0,
+            "overwrite": !$('div').find('[name="always_insert"]').prop("checked"),
+            "open_date": $('div').find('[name="exp_start_date"]').val()
+        },
+        callback: function(cr) {
+            if (!r.exc) {
+                if (!isLastChunk) {
+                    processNextBatch(doCallback);   
+                } else {
+                 frappe.msgprint(__("Process Complete"));
+                }
+            } else {
+                 frappe.msgprint(__("Error during Importing <br /> " + r.exc));
+            }
         }
     });
 };
 
 
-
 function setupReader(file, input) {
     var name = file.name;
     var reader = new FileReader();
-	var freeze = $('<div id="freeze" class="modal-backdrop fade"></div>')
-				.appendTo("#body_div");
+    var freeze = $('<div id="freeze" class="modal-backdrop fade"></div>')
+        .appendTo("#body_div");
     reader.onload = function(e) {
         freeze.remove();
         compressed_data = reader.result;
-        $("#btn_import").prop("disabled",false)
+        $("#btn_import").prop("disabled", false)
 
         //TEST
         //console.log(reader.result.length);
@@ -102,51 +119,63 @@ function setupReader(file, input) {
         //console.log(t);
         //console.log(LZString.decompress(t));
     }
-	freeze.html('<div class="freeze-message-container"><div class="freeze-message"><p class="lead">Reading</p></div></div>');
+    freeze.html('<div class="freeze-message-container"><div class="freeze-message"><p class="lead">Reading</p></div></div>');
     freeze.addClass("in")
     reader.readAsText(file);
 }
 
 function compressString(chunkXML) {
-        write_messages({"message": "Compressing Data"});
-        compressed_data = LZString.compressToUTF16(chunkXML);
-        write_messages({"message": "Data Compressed"});
-        console.log(compressed_data.length);
-        return compressed_data;
+    write_messages({
+        "message": "Compressing Data"
+    });
+    compressedXML = LZString.compressToUTF16(chunkXML);
+    write_messages({
+        "message": "Data Compressed"
+    });
+    console.log(compressed_data.length);
+    return compressedXML;
 }
 
-function splitXML(xmlstring, callback) {
-    var startTallyMsg = "<TALLYMESSAGE ";
-    var endTallyMsg = "</TALLYMESSAGE>";
-    var smlStringLength = xmlstring.length;
-    var firstMessageStart = xmlstring.indexOf(startTallyMsg);
-    var lastMessageEnd = xmlstring.lastIndexOf(endTallyMsg);
-    var chunkSize = 100;
-    var currentPos = firstMessageStart;
-    var chunk = {};
+var chunk = {};
+var processImport = {};
+
+function initImportProcess() {
+    processImport.startTallyMsg = "<TALLYMESSAGE ";
+    processImport.endTallyMsg = "</TALLYMESSAGE>";
+    processImport.xmlStringLength = compressed_data.length;
+    processImport.firstMessageStart = compressed_data.indexOf(processImport.startTallyMsg);
+    processImport.lastMessageEnd = compressed_data.lastIndexOf(processImport.endTallyMsg);
+    processImport.chunkSize = 100;
+    processImport.currentPos = processImport.firstMessageStart;
     chunk.chunkString = "";
     chunk.chunkCounter = 1;
+}
+
+
+function processNextBatch(callback) {
     while (true) {
-        var messageEndIndex = xmlstring.indexOf(endTallyMsg, currentPos) + endTallyMsg.length;
-        var message = xmlstring.substr(currentPos, (messageEndIndex - currentPos));
+        var messageEndIndex = compressed_data.indexOf(processImport.endTallyMsg, processImport.currentPos) + processImport.endTallyMsg.length;
+        var message = compressed_data.substr(processImport.currentPos, (messageEndIndex - processImport.currentPos));
         chunk.chunkString = chunk.chunkString + "\n" + message;
         chunk.chunkCounter = chunk.chunkCounter + 1;
+        processImport.currentPos = compressed_data.indexOf(processImport.startTallyMsg, messageEndIndex);
         if (chunk.chunkCounter == 100) {
             chunk.chunkString = "  <ENVELOPE> <BODY> <IMPORTDATA> <REQUESTDATA>" + chunk.chunkString + "</REQUESTDATA> </IMPORTDATA> </BODY> </ENVELOPE>"
-            callback(chunk);
+            callback(chunk, false);
             chunk.chunkString = "";
-            chunk.chunkCounter = 0;
+            chunk.chunkCounter = 1;
+            break;
         }
-        currentPos = xmlstring.indexOf(startTallyMsg, messageEndIndex);
-        if (currentPos < 0) {
-                if (chunk.chunkCounter > 0) {
-                    chunk.chunkString = "  <ENVELOPE> <BODY> <IMPORTDATA> <REQUESTDATA>" + chunk.chunkString + "</REQUESTDATA> </IMPORTDATA> </BODY> </ENVELOPE>"
-                    callback(chunk)   
-                }
-                break;
+        if (processImport.currentPos < 0) {
+            if (chunk.chunkCounter > 0) {
+                chunk.chunkString = "  <ENVELOPE> <BODY> <IMPORTDATA> <REQUESTDATA>" + chunk.chunkString + "</REQUESTDATA> </IMPORTDATA> </BODY> </ENVELOPE>"
+                callback(chunk, true);
+            }
+            break;
         }
     }
 }
+
 
 frappe.realtime.on("tally_import_progress", function(data) {
     if (data.progress) {

@@ -20,13 +20,6 @@ def read_uploaded_file(filedata=None,decompress_data=0,overwrite=False,open_date
 
 	lx = lzstring.LZString()
 
-	#frappe.publish_realtime("tally_import_progress", {
-#				"progress": [5, 100], 
-#				"message": filedata,
-#				}, user=frappe.session.user)
-
-#	return {"messages": "Import Successful", "error": False}
-
 	if (int(decompress_data)>0):
 		frappe.publish_realtime("tally_import_progress", {
 				"progress": [5, 100], 
@@ -39,11 +32,6 @@ def read_uploaded_file(filedata=None,decompress_data=0,overwrite=False,open_date
 				"progress": [5, 100], 
 				"message": "Decompression Complete"
 				}, user=frappe.session.user)
-
-	#print "--------------------------------------"
-	#st = base64.b64decode(fd[0]["dataurl"])
-	#print fd["dataurl"]
-	#print lx.decompressFromUTF16(fd[0]["dataurl"])
 
 	params = json.loads(frappe.form_dict.get("params") or '{}')
 
