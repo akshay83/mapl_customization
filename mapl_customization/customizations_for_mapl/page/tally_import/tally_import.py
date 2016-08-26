@@ -8,6 +8,7 @@ from mapl_customization.customizations_for_mapl.page.tally_import.import_modules
 from mapl_customization.customizations_for_mapl.page.tally_import.import_modules.stockgroup_items import TallyImportStockGroupItems
 from mapl_customization.customizations_for_mapl.page.tally_import.import_modules.stockcategory_items import TallyImportStockCategoryItems
 from mapl_customization.customizations_for_mapl.page.tally_import.import_modules.stock_items import TallyImportStockItems
+from mapl_customization.customizations_for_mapl.page.tally_import.import_modules.sundrydebtors import TallyImportSundryDebtors
 
 overwrite_existing = True
 opening_date = None
@@ -71,6 +72,8 @@ def document_import(item):
 		TallyImportStockGroupItems(value=item['STOCKGROUP'],ow=overwrite_existing)
 	elif (item.has_key('STOCKITEM')):
 		TallyImportStockItems(value=item['STOCKITEM'],ow=overwrite_existing, od=opening_date)
+	elif (item.has_key('LEDGER')):
+		TallyImportSundryDebtors(value=item['LEDGER'],ow=overwrite_existing, od=opening_date)
 	else: 
 		return 'Skipped'
 	return 'Success'

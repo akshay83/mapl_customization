@@ -145,10 +145,11 @@ function initImportProcess() {
     processImport.xmlStringLength = compressed_data.length;
     processImport.firstMessageStart = compressed_data.indexOf(processImport.startTallyMsg);
     processImport.lastMessageEnd = compressed_data.lastIndexOf(processImport.endTallyMsg);
-    processImport.chunkSize = 100;
+    processImport.chunkSize = 1000;
     processImport.currentPos = processImport.firstMessageStart;
     chunk.chunkString = "";
-    chunk.chunkCounter = 1;
+    chunk.chunkCounter = 0;
+    processImport.chunksSent = 0;
 }
 
 
@@ -159,14 +160,15 @@ function processNextBatch(callback) {
         chunk.chunkString = chunk.chunkString + "\n" + message;
         chunk.chunkCounter = chunk.chunkCounter + 1;
         processImport.currentPos = compressed_data.indexOf(processImport.startTallyMsg, messageEndIndex);
-        if (chunk.chunkCounter == 100) {
+        if (chunk.chunkCounter == processImport.chunkSize) {
             chunk.chunkString = "  <ENVELOPE> <BODY> <IMPORTDATA> <REQUESTDATA>" + chunk.chunkString + "</REQUESTDATA> </IMPORTDATA> </BODY> </ENVELOPE>"
             callback(chunk, false);
             chunk.chunkString = "";
-            chunk.chunkCounter = 1;
+            chunk.chunkCounter = 0;
+            processImport.chunksSent = processImport.chunksSent+1;
             break;
         }
-        if (processImport.currentPos < 0) {
+        if (processImport.currentPos < 0 /* For Testing || processImport.chunksSent > 5*/) {
             if (chunk.chunkCounter > 0) {
                 chunk.chunkString = "  <ENVELOPE> <BODY> <IMPORTDATA> <REQUESTDATA>" + chunk.chunkString + "</REQUESTDATA> </IMPORTDATA> </BODY> </ENVELOPE>"
                 callback(chunk, true);

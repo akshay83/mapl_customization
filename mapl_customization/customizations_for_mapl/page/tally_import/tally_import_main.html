@@ -31,6 +31,19 @@
                     <label class="control-label text-muted small">Expected Start Date</label>
                     <input type="date" class="form-control hasDatepicker" name="exp_start_date">
                 </div>
+                <div class="checkbox"  style="position: initial;padding-bottom: 10px;padding-top: 10px;">
+                    <label>
+                        <input type="checkbox" name="import_stock_items">
+                            {%= __("Import Stock Items") %}
+                    </label>
+                </div>
+                <div class="checkbox"  style="position: initial;padding-bottom: 10px;padding-top: 10px;">
+                    <label>
+                        <input type="checkbox" name="import_sundry_debtors">
+                            {%= __("Import Sundry Debtors") %}
+                    </label>
+                </div>
+
                 <div  style="padding-bottom: 10px;padding-top: 10px;">
                     <button class="btn btn-sm btn-primary" id="btn_import">Import</button>
                 </div>
