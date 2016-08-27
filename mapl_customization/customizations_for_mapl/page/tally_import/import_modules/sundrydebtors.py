@@ -17,10 +17,6 @@ class TallyImportSundryDebtors:
 			if open_balance == 0:
 				return
 
-			print "-------------------------------"
-			print "DOING CUSTOMER:"+str(self.process_node["@NAME"])
-			print "-------------------------------"
-
 			self.make_customer()
 
 	def make_customer(self):
@@ -34,7 +30,10 @@ class TallyImportSundryDebtors:
 		if (self.process_node.has_key('ADDRESS.LIST') and self.process_node['ADDRESS.LIST']):
 			for address_line in self.process_node['ADDRESS.LIST']['ADDRESS']:
 				if not (re.match('[\d/-]+$', address_line[:5])):
-					customer_address = customer_address + ',' + address_line
+					if len(customer_address) > 0:
+						customer_address = customer_address + ',' + address_line
+					else:
+						customer_address = customer_address + address_line
 				else:
 					for token in address_line.split(','):
 						if (re.match('[\d/-]+$', token)):
@@ -42,8 +41,6 @@ class TallyImportSundryDebtors:
 							break
 						
 		customer_doc.tax_id = self.process_node['VATTINNUMBER'] if self.process_node.has_key('VATTINNUMBER') else None
-		#customer_doc.pan_no = args["pan_no"] if "pan_no" in customer_keys else None
-		#customer_doc.secondary_contact_no = args["secondary_contact_no"] if "secondary_contact_no" in customer_keys else None
 		customer_doc.company_name = frappe.defaults.get_user_default("Company")
 		customer_doc.autoname()
 		customer_doc.db_insert()
@@ -57,7 +54,8 @@ class TallyImportSundryDebtors:
 		address_doc.is_primary_address = 1
 		address_doc.address_type = "Billing"
 		address_doc.address_line1 = args
-		address_doc.city = args[-10:]
+		city_index = args.rfind(',')
+		address_doc.city = args[((city_index+1) if city_index > 0 else -10):]
 		address_doc.customer = customer.name
 		address_doc.autoname()
 		address_doc.save()

@@ -145,7 +145,7 @@ function initImportProcess() {
     processImport.xmlStringLength = compressed_data.length;
     processImport.firstMessageStart = compressed_data.indexOf(processImport.startTallyMsg);
     processImport.lastMessageEnd = compressed_data.lastIndexOf(processImport.endTallyMsg);
-    processImport.chunkSize = 1000;
+    processImport.chunkSize = 100;
     processImport.currentPos = processImport.firstMessageStart;
     chunk.chunkString = "";
     chunk.chunkCounter = 0;

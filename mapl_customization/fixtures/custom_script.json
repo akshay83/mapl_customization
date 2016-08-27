@@ -39,9 +39,9 @@
   "docstatus": 0, 
   "doctype": "Custom Script", 
   "dt": "Stock Problem", 
-  "modified": "2016-02-21 17:29:28.515063", 
+  "modified": "2016-08-27 18:09:02.567663", 
   "name": "Stock Problem-Client", 
-  "script": "frappe.ui.form.on(\"Stock Problem\", \"refresh\", function (frm) {\n   cur_frm.toggle_enable(\"status\",frm.doc.status===\"Open\")\n});\nfrappe.ui.form.on(\"Stock Problem\", \"status\", function (frm) {\n         cur_frm.set_df_property(\"resolution\", \"reqd\", frm.doc.status==\"Closed\");\n});", 
+  "script": "frappe.ui.form.on(\"Stock Problem\", \"refresh\", function (frm) {\n   cur_frm.toggle_enable(\"status\",frm.doc.status===\"Open\")\n});\nfrappe.ui.form.on(\"Stock Problem\", \"status\", function (frm) {\n         cur_frm.set_df_property(\"resolution\", \"reqd\", frm.doc.status==\"Closed\");\n});\n\nfrappe.ui.form.on(\"Stock Problem\", \"onload\", function(frm) {\n   cur_frm.set_query(\"customer\", function(doc) {\n   \treturn{\n\t\tquery: \"mapl_customization.customizations_for_mapl.queries.mapl_customer_query\"\n\t}\n   });\n});\nfrappe.ui.form.on(\"Stock Problem\", \"is_customer_return\", function (frm) {\n         cur_frm.set_df_property(\"customer\", \"reqd\", frm.doc.is_customer_return==1);\n         cur_frm.set_df_property(\"returned_on\", \"reqd\", frm.doc.is_customer_return==1);\n         cur_frm.refresh_field(\"hypothecation\");\n});", 
   "script_type": "Client"
  }, 
  {

@@ -54,6 +54,10 @@ def read_uploaded_file(filedata=None,decompress_data=0,overwrite=False,open_date
 		return {"messages": ["There was a Problem Importing" + ": " + "HG"], "error": True}
 
 	frappe.db.commit()
+	frappe.publish_realtime("tally_import_progress", {
+						"message": "Processed Batch"
+					}, user=frappe.session.user)
+
 	return {"messages": "Import Successful", "error": False}
 
 
@@ -106,11 +110,11 @@ def process(path, item):
 		if (message[:7] != 'Skipped'):
 			message = 'Successfully Imported : ' + message
 
-		frappe.publish_realtime("tally_import_progress", {
-							"progress": [len(path), 100], 
-							"message": message, 
-							"document" : document_description
-						}, user=frappe.session.user)
+		#frappe.publish_realtime("tally_import_progress", {
+		#					"progress": [len(path), 100], 
+		#					"message": message, 
+		#					"document" : document_description
+		#				}, user=frappe.session.user)
 
 	return True
 
