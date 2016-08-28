@@ -9,7 +9,7 @@ class TallyImportSundryDebtors:
 		self.process()
 
 	def process(self):
-		if self.process_node.has_key('OPENINGBALANCE'):
+		if self.process_node.has_key('OPENINGBALANCE') and self.process_node.has_key('PARENT'):
 			if self.process_node['PARENT'].lower() != 'sundry debtors':
 				return
 
@@ -68,8 +68,6 @@ class TallyImportSundryDebtors:
 		jv.company = frappe.defaults.get_user_default("Company")
 		jv.posting_date = self.open_date
 		jv.user_remark = 'Customer Opening Balance'
-		#jv.receipt_link = self.name
-		#jv.naming_series = 'LK/REC/'
 
 		td1 = jv.append("accounts")
 		from erpnext.accounts.party import get_party_account

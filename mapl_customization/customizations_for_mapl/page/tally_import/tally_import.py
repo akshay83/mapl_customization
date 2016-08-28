@@ -12,7 +12,6 @@ from mapl_customization.customizations_for_mapl.page.tally_import.import_modules
 
 overwrite_existing = True
 opening_date = None
-data_content = None
 
 @frappe.whitelist()
 def read_uploaded_file(filedata=None,decompress_data=0,overwrite=False,open_date=None):
@@ -23,14 +22,12 @@ def read_uploaded_file(filedata=None,decompress_data=0,overwrite=False,open_date
 
 	if (int(decompress_data)>0):
 		frappe.publish_realtime("tally_import_progress", {
-				"progress": [5, 100], 
 				"message": "Decompressing"
 				}, user=frappe.session.user)
 
 		filedata = lx.decompressFromUTF16(filedata)
 
 		frappe.publish_realtime("tally_import_progress", {
-				"progress": [5, 100], 
 				"message": "Decompression Complete"
 				}, user=frappe.session.user)
 
@@ -60,10 +57,6 @@ def read_uploaded_file(filedata=None,decompress_data=0,overwrite=False,open_date
 
 	return {"messages": "Import Successful", "error": False}
 
-
-def process_dict(xmlstr):
-    stock_dict = xmlstr
-    #stock_messages = sd['ENVELOPE']['BODY']['IMPORTDATA']['REQUESTDATA']['TALLYMESSAGE']
 
 def document_import(item):
 	if (item.has_key('CURRENCY')):
@@ -100,21 +93,14 @@ def process(path, item):
 			print e
 			message = 'Failed to Import : ' + message
 			frappe.publish_realtime("tally_import_progress", {
-				"progress": [len(path), 100], 
 				"message": message, 
 				"error":True,
 				"error_desc": e,
 				}, user=frappe.session.user)
-			return False
+			return True
 
 		if (message[:7] != 'Skipped'):
 			message = 'Successfully Imported : ' + message
-
-		#frappe.publish_realtime("tally_import_progress", {
-		#					"progress": [len(path), 100], 
-		#					"message": message, 
-		#					"document" : document_description
-		#				}, user=frappe.session.user)
 
 	return True
 
