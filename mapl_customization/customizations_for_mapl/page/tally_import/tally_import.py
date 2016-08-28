@@ -9,6 +9,7 @@ from mapl_customization.customizations_for_mapl.page.tally_import.import_modules
 from mapl_customization.customizations_for_mapl.page.tally_import.import_modules.stockcategory_items import TallyImportStockCategoryItems
 from mapl_customization.customizations_for_mapl.page.tally_import.import_modules.stock_items import TallyImportStockItems
 from mapl_customization.customizations_for_mapl.page.tally_import.import_modules.sundrydebtors import TallyImportSundryDebtors
+from mapl_customization.customizations_for_mapl.page.tally_import.import_modules.units import TallyImportUnits
 
 overwrite_existing = True
 opening_date = None
@@ -59,7 +60,9 @@ def read_uploaded_file(filedata=None,decompress_data=0,overwrite=False,open_date
 
 
 def document_import(item):
-	if (item.has_key('CURRENCY')):
+	if (item.has_key('UNIT')):
+		TallyImportUnits(value=item['UNIT'],ow=overwrite_existing)
+	elif (item.has_key('CURRENCY')):
 		TallyImportCurrencyItems(value=item['CURRENCY'],ow=overwrite_existing)
 	elif (item.has_key('GODOWN')):
 		TallyImportGodownItems(value=item['GODOWN'],ow=overwrite_existing)

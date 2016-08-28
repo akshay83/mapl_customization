@@ -7,8 +7,6 @@ class TallyImportStockGroupItems:
         self.process()        
 
     def process(self):
-        print "----------------------------------------"
-        print "DEBUG: PROCESSED: STOCK GROUP:"+self.process_node['@NAME']
         if not frappe.db.exists({"doctype":"Item Group","item_group_name": self.process_node['@NAME']}):
             doc = frappe.get_doc({"doctype":"Item Group","item_group_name": self.process_node['@NAME']})
             if self.process_node['PARENT']:
@@ -17,6 +15,3 @@ class TallyImportStockGroupItems:
                 doc.parent_item_group = 'All Item Groups'
             doc.is_group = 1
             doc.insert(ignore_permissions=True)
-            print "DEBUG: INSERTED: STOCK GROUP:"+self.process_node['@NAME']
-        print "----------------------------------------"
-

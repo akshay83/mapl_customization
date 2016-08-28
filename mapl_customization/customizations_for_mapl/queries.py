@@ -76,10 +76,7 @@ def mapl_customer_query(doctype, txt, searchfield, start, page_len, filters):
 				or `tabAddress`.address_line2 like %(txt)s) and disabled=0
 			{mcond}
 		group by `tabCustomer`.name
-		order by
-			if(locate(%(_txt)s, `tabCustomer`.name), locate(%(_txt)s, `tabCustomer`.name), 99999),
-			if(locate(%(_txt)s, `tabCustomer`.customer_name), locate(%(_txt)s, `tabCustomer`.customer_name), 99999),
-			`tabCustomer`.name, `tabCustomer`.customer_name
+		order by `tabCustomer`.name, `tabCustomer`.customer_name
 		limit %(start)s, %(page_len)s""".format(**{
 			"fields": fields,
 			"key": "`tabCustomer`.name",
@@ -105,10 +102,7 @@ def supplier_query(doctype, txt, searchfield, start, page_len, filters):
 			and ({key} like %(txt)s
 				or supplier_name like %(txt)s) and disabled=0
 			{mcond}
-		order by
-			if(locate(%(_txt)s, name), locate(%(_txt)s, name), 99999),
-			if(locate(%(_txt)s, supplier_name), locate(%(_txt)s, supplier_name), 99999),
-			name, supplier_name
+		order by name, supplier_name
 		limit %(start)s, %(page_len)s """.format(**{
 			'field': fields,
 			'key': searchfield,
