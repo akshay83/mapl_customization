@@ -59,27 +59,26 @@ def mapl_customer_query(doctype, txt, searchfield, start, page_len, filters):
 	if cust_master_name == "Customer Name":
 		fields = ["name", "customer_group", "territory"]
 	else:
-		fields = ["`tabCustomer`.name", "`tabCustomer`.customer_name", 
-			"`tabCustomer`.primary_contact_no", "`tabCustomer`.secondary_contact_no",
-			"`tabAddress`.address_line1", "`tabAddress`.address_line2"]
+		fields = ["cust.name", "cust.customer_name", 
+			"cust.primary_contact_no", "cust.secondary_contact_no",
+			"addr.address_line1", "addr.address_line2"]
 
 	fields = ", ".join(fields)
 
-	return frappe.db.sql("""select {fields} from `tabCustomer`
-		LEFT JOIN `tabAddress` ON `tabCustomer`.name = `tabAddress`.customer
-		where `tabCustomer`.docstatus < 2
+	return frappe.db.sql("""select {fields} from `tabCustomer` cust, `tabAddress` addr 
+		where cust.name=addr.customer
 			and ({key} like %(txt)s
-				or `tabCustomer`.customer_name like %(txt)s
-				or `tabCustomer`.primary_contact_no like %(txt)s
-				or `tabCustomer`.secondary_contact_no like %(txt)s
-				or `tabAddress`.address_line1 like %(txt)s
-				or `tabAddress`.address_line2 like %(txt)s) and disabled=0
+				or cust.customer_name like %(txt)s
+				or cust.primary_contact_no like %(txt)s
+				or cust.secondary_contact_no like %(txt)s
+				or addr.address_line1 like %(txt)s
+				or addr.address_line2 like %(txt)s) and cust.disabled=0
 			{mcond}
-		group by `tabCustomer`.name
-		order by `tabCustomer`.name, `tabCustomer`.customer_name
+		group by cust.name
+		order by cust.customer_name, cust.name
 		limit %(start)s, %(page_len)s""".format(**{
 			"fields": fields,
-			"key": "`tabCustomer`.name",
+			"key": "cust.name",
 			"mcond": get_match_cond(doctype)
 		}), {
 			'txt': "%%%s%%" % txt,
