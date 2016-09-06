@@ -8,7 +8,8 @@ def save_customization(self):
 	if not self.doc_type:
 		return
 
-	del docfield_properties['allow_on_submit']
+	if docfield_properties.has_key('allow_on_submit'):
+		del docfield_properties['allow_on_submit']
 
 	self.set_property_setters()
 	self.set_allow_on_submit()

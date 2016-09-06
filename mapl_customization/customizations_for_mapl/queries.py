@@ -54,32 +54,31 @@ def mapl_address_query (doctype, txt, searchfield, start, page_len, filters):
 
 # searches for customer
 def mapl_customer_query(doctype, txt, searchfield, start, page_len, filters):
-	cust_master_name = frappe.defaults.get_user_default("cust_master_name")
 
-	if cust_master_name == "Customer Name":
-		fields = ["name", "customer_group", "territory"]
-	else:
-		fields = ["cust.name", "cust.customer_name", 
-			"cust.primary_contact_no", "cust.secondary_contact_no",
-			"addr.address_line1", "addr.address_line2"]
-
-	fields = ", ".join(fields)
-
-	return frappe.db.sql("""select {fields} from `tabCustomer` cust, `tabAddress` addr 
-		where cust.name=addr.customer
-			and ({key} like %(txt)s
-				or cust.customer_name like %(txt)s
-				or cust.primary_contact_no like %(txt)s
-				or cust.secondary_contact_no like %(txt)s
-				or addr.address_line1 like %(txt)s
-				or addr.address_line2 like %(txt)s) and cust.disabled=0
-			{mcond}
-		group by cust.name
-		order by cust.customer_name, cust.name
-		limit %(start)s, %(page_len)s""".format(**{
-			"fields": fields,
+	return frappe.db.sql("""select * from 
+          (
+            (select cust.name, cust.customer_name, cust.primary_contact_no,
+              cust.secondary_contact_no,addr.address_line1,addr.address_line2 
+              from `tabCustomer` cust inner join `tabAddress` addr 
+              on cust.name=addr.customer where
+              ({key} like %(txt)s
+                or cust.customer_name like %(txt)s
+                or cust.primary_contact_no like %(txt)s
+                or cust.secondary_contact_no like %(txt)s
+                or addr.address_line1 like %(txt)s
+                or addr.address_line2 like %(txt)s) and cust.disabled=0
+              group by cust.name)
+            union all
+            (select cust.name, cust.customer_name, cust.primary_contact_no,
+              cust.secondary_contact_no,null,null 
+              from `tabCustomer` cust where 
+              ({key} like %(txt)s
+                or cust.customer_name like %(txt)s
+                or cust.primary_contact_no like %(txt)s
+                or cust.secondary_contact_no like %(txt)s) and cust.disabled=0)
+            ) 
+            as temp_tb group by name order by customer_name, name limit %(start)s, %(page_len)s""".format(**{
 			"key": "cust.name",
-			"mcond": get_match_cond(doctype)
 		}), {
 			'txt': "%%%s%%" % txt,
 			'_txt': txt.replace("%", ""),
