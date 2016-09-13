@@ -105,3 +105,32 @@ def get_current_stock_at_all_warehouse(item_code, date=None):
 	  ) DER GROUP BY ITEM_CODE, WAREHOUSE""", 
 		{ 	'date': date if date else 'CURDATE()',
 			'item_code': item_code },as_dict=1)
+
+@frappe.whitelist()
+def get_effective_stock_at_all_warehouse(item_code, date=None):
+	return frappe.db.sql("""SELECT NAME,`OPENING STOCK`,`IN QTY`, `OUT QTY`,
+  	`OPENING STOCK`+`IN QTY`-`OUT QTY` AS `CLOSING STOCK`,`UNCONFIRMED`, `UNDELIVERED`,`DEFECTIVE` FROM (
+		
+    SELECT OUTSTK.NAME, 
+    
+    IFNULL((SELECT SUM(ACTUAL_QTY) FROM `tabStock Ledger Entry` Stk WHERE
+		ITEM_CODE=%(item_code)s AND WAREHOUSE=OUTSTK.NAME AND POSTING_DATE < %(date)s),0) AS `OPENING STOCK`,
+
+		IFNULL((SELECT SUM(ACTUAL_QTY) FROM `tabStock Ledger Entry` Stk WHERE
+		ITEM_CODE=%(item_code)s AND ACTUAL_QTY > 0 AND WAREHOUSE=OUTSTK.NAME AND POSTING_DATE>=%(date)s),0) AS `IN QTY`,
+		
+    IFNULL((SELECT SUM(ABS(ACTUAL_QTY)) FROM `tabStock Ledger Entry` Stk WHERE
+		ITEM_CODE=%(item_code)s AND ACTUAL_QTY < 0 AND WAREHOUSE=OUTSTK.NAME  AND POSTING_DATE<=%(date)s),0) AS `OUT QTY`,
+	  
+    IFNULL((SELECT SUM(INV_ITEM.QTY) FROM `tabSales Invoice` INV, `tabSales Invoice Item` INV_ITEM WHERE 
+        INV_ITEM.PARENT=INV.NAME AND INV.DOCSTATUS<1 AND INV_ITEM.ITEM_CODE=%(item_code)s AND INV.POSTING_DATE<=%(date)s),0) AS `UNCONFIRMED`,
+  	    IFNULL((SELECT SUM(INV_ITEM.QTY-INV_ITEM.DELIVERED_QTY) FROM `tabSales Invoice` INV, 
+		`tabSales Invoice Item` INV_ITEM WHERE INV_ITEM.PARENT=INV.NAME AND INV.DOCSTATUS=1 AND 
+		INV_ITEM.DELIVERED_QTY<>INV_ITEM.QTY AND INV_ITEM.ITEM_CODE=%(item_code)s AND INV.POSTING_DATE<=%(date)s),0) AS `UNDELIVERED`,
+		
+    IFNULL((SELECT COUNT(*) FROM `tabStock Problem` PROB WHERE PROB.item=%(item_code)s AND PROB.STATUS='Open'),0) AS `DEFECTIVE`
+		
+    FROM `tabWarehouse` OUTSTK 
+		) DER GROUP BY NAME""", {
+			'date': date if date else 'CURDATE()',
+			'item_code': item_code }, as_dict=1)
