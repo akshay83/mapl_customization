@@ -93,3 +93,30 @@ custom._get_party_balance_formatted = function (party, customer_name,company, ca
         		}         
             
 };
+
+custom.show_stock_dialog = function(stk) {
+		d = new frappe.ui.Dialog({title: __('Current Stock at Warehouses')});
+		html_string = "<div style=\"width:40%;float:left;color:red;\"><b>Warehouse</b></div>\
+                                <div style=\"float:left;width:15%;\">Cur Stock</div>\
+                                <div style=\"float:left;width:15%;\">Unconfirmed</div>\
+                                <div style=\"float:left;width:15%;\">Undelivered</div>\
+                                <div style=\"float:left;width:15%;\">Defective</div>\
+                                <div style=\"clear:both;\"></div>\
+						</div>";
+		$.each(keys(stk).sort(), function(i, key) {
+				var v = stk[key];
+				html_string = html_string + $.format('<div style=\"padding-top:10px;\">\
+                				<div style=\"width:40%;float:left;\"><b>{0}</b></div>\
+                                <div style=\"color:blue;float:left;width:15%;\">{1}</div>\
+                                <div style=\"color:blue;float:left;width:15%;\">{2}</div>\
+                                <div style=\"color:blue;float:left;width:15%;\">{3}</div>\
+                                <div style=\"color:blue;float:left;width:15%;\">{4}</div>\
+                                <div style=\"clear:both;\"></div>\
+                            </div>',
+						   [v['NAME'], v['CLOSING STOCK'], v['UNCONFIRMED'], v['UNDELIVERED'], v['DEFECTIVE']]);
+		});   
+        html_string = html_string + "<div style=\"clear:both;\"></div><hr>";     
+        $(d.body).html(html_string);
+        d.$wrapper.find('.modal-dialog').css("width", "800px");
+        d.show();
+}
