@@ -3,20 +3,24 @@
  "allow_import": 0, 
  "allow_rename": 0, 
  "autoname": "field:company_name", 
+ "beta": 0, 
  "creation": "2016-01-31 22:58:01.674914", 
  "custom": 0, 
  "docstatus": 0, 
  "doctype": "DocType", 
  "document_type": "Document", 
+ "editable_grid": 0, 
  "fields": [
   {
    "allow_on_submit": 0, 
    "bold": 0, 
    "collapsible": 0, 
+   "columns": 0, 
    "fieldname": "company_name", 
    "fieldtype": "Data", 
    "hidden": 0, 
    "ignore_user_permissions": 0, 
+   "ignore_xss_filter": 0, 
    "in_filter": 0, 
    "in_list_view": 1, 
    "label": "Company Name", 
@@ -37,13 +41,14 @@
  "hide_heading": 0, 
  "hide_toolbar": 0, 
  "idx": 0, 
+ "image_view": 0, 
  "in_create": 0, 
  "in_dialog": 0, 
  "is_submittable": 0, 
  "issingle": 0, 
  "istable": 0, 
  "max_attachments": 0, 
- "modified": "2016-01-31 22:58:01.674914", 
+ "modified": "2016-09-15 18:15:58.119296", 
  "modified_by": "Administrator", 
  "module": "Customizations for MAPL", 
  "name": "Hypothecation Company", 
@@ -71,9 +76,11 @@
    "write": 1
   }
  ], 
+ "quick_entry": 1, 
  "read_only": 0, 
  "read_only_onload": 0, 
  "sort_field": "modified", 
  "sort_order": "DESC", 
- "title_field": "company_name"
+ "title_field": "company_name", 
+ "track_seen": 0
 }
