@@ -33,6 +33,12 @@ frappe.query_reports["Effective Stock Report"] = {
 					  "width":"100"
 					},
 					{
+					"fieldname":"remove_material_transfer",
+					"fieldtype":"Check",
+					"label":"Remove Material Transfer",
+					"default":"1"
+					},
+					{
 					  "fieldname":"company",
 					  "label":__("Company"),
 					  "fieldtype": "Link",

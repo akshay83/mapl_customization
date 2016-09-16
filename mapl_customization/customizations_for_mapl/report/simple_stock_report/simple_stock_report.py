@@ -97,6 +97,12 @@ def get_conditions(filters):
 	if filters.get("warehouse"):
 		conditions += " and warehouse = '%s'" % frappe.db.escape(filters.get("warehouse"), percent=False)
 
+	if filters.get("remove_material_transfer"):
+		conditions += """ and if(voucher_type='Stock Entry',
+			(select purpose from `tabStock Entry` se where se.name=voucher_no) 
+			not like '%%Transfer%%', True)"""
+
+
 	return conditions
 
 #unsused for now

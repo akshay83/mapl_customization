@@ -106,6 +106,12 @@ def get_conditions(filters):
 	if filters.get("to_date"):
 		conditions += " and posting_date <= '%s'" % frappe.db.escape(filters["to_date"])
 
+	if filters.get("remove_material_transfer"):
+		conditions += """ and if(voucher_type='Stock Entry',
+			(select purpose from `tabStock Entry` se where se.name=voucher_no) 
+			not like '%%Transfer%%', True)"""
+
+
 	return conditions
 
 def get_conditions_for_invoice(filters):
@@ -158,7 +164,7 @@ def get_data(filters):
         INV_ITEM.PARENT=INV.NAME AND INV.DOCSTATUS<1 AND INV_ITEM.ITEM_CODE=OUTSTK.NAME {inv_condition}),0) AS `UNCONFIRMED`,
   	    IFNULL((SELECT SUM(INV_ITEM.QTY-INV_ITEM.DELIVERED_QTY) FROM `tabSales Invoice` INV, 
 		`tabSales Invoice Item` INV_ITEM WHERE INV_ITEM.PARENT=INV.NAME AND INV.DOCSTATUS=1 AND 
-		INV_ITEM.DELIVERED_QTY<>INV_ITEM.QTY AND INV_ITEM.ITEM_CODE=OUTSTK.NAME {inv_condition}),0) AS `UNDELIVERED`,
+		INV_ITEM.DELIVERED_QTY<>INV_ITEM.QTY AND INV.UPDATE_STOCK=0 AND INV_ITEM.ITEM_CODE=OUTSTK.NAME {inv_condition}),0) AS `UNDELIVERED`,
 		IFNULL((SELECT COUNT(*) FROM `tabStock Problem` PROB WHERE PROB.item=OUTSTK.NAME AND PROB.STATUS='Open'),0) AS `DEFECTIVE`
 		FROM `tabItem` OUTSTK WHERE OUTSTK.IS_STOCK_ITEM=1 {global_condition}
 		) DER GROUP BY NAME""".format(**{
