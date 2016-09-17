@@ -114,7 +114,6 @@ custom.show_stock_dialog = function(stk) {
                                 <div style=\"clear:both;\"></div>\
                             </div>',
 						   [v['NAME'], v['CLOSING STOCK'], v['UNCONFIRMED'], v['UNDELIVERED'], v['DEFECTIVE']]);
-                console.log(v);
 		});   
         html_string = html_string + "<div style=\"clear:both;\"></div><hr>";     
         $(d.body).html(html_string);
