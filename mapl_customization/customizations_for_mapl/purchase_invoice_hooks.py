@@ -37,10 +37,9 @@ def purchase_invoice_on_update_after_submit(doc, method):
 
     if cint(doc.update_stock):
         for i in doc.items:
-            snos = get_serial_nos(i.serial_no)
-            repost_se(snos)
-            repost_si(snos)
-            repost_dn(snos)
+            repost_se(i.item_code)
+            repost_si(i.item_code)
+            repost_dn(i.item_code)
 
 def get_serial_nos(serial_no):
 	return [s.strip() for s in cstr(serial_no).strip().upper().replace(',', '\n').split('\n')
@@ -55,22 +54,18 @@ def update_incoming_rate_serial_no(serial_nos, rate):
                 { 'sno': s_no, 'rate': rate })
 
 
-def repost_se(serials):
-    se_list = []
-    for s in serials:
-        se = frappe.db.sql("""select distinct se.name, se.docstatus
+def repost_se(item_code):
+    se_list = frappe.db.sql("""select distinct se.name, se.docstatus
                 from `tabStock Entry` se, `tabStock Entry Detail` se_detail
                 where se.name=se_detail.parent and se.docstatus = 1 and se.purpose='Material Transfer'
-                and se_detail.serial_no like %(serialno)s 
-                order by se.posting_date asc""", { 'serialno': "%%%s%%" % s }, as_dict=1)
-        if se:
-            se_list.append(se)
+                and se_detail.item_code = %(item_code)s 
+                order by se.posting_date asc""", { 'item_code': item_code }, as_dict=1)
 
     for se in se_list:
         frappe.db.sql("""delete from `tabGL Entry` where voucher_no=%(vname)s""", {
-            'vname': se[0].name })
+            'vname': se.name })
 
-        se_doc = frappe.get_doc("Stock Entry", se[0].name)
+        se_doc = frappe.get_doc("Stock Entry", se.name)
         se_doc.calculate_rate_and_amount(force=True)
         se_doc.update_children()
         se_doc.db_update()
@@ -85,50 +80,41 @@ def repost_se(serials):
         se_doc.make_gl_entries()
 
 
-def repost_si(serials):
-    si_list = []
-    for s in serials:
-        si = frappe.db.sql("""select distinct si.name, si.docstatus
+def repost_si(item_code):
+    si_list = frappe.db.sql("""select distinct si.name, si.docstatus
                 from `tabSales Invoice` si, `tabSales Invoice Item` si_item
                 where si.name=si_item.parent and si.docstatus = 1 and si.update_stock=1
-                and si_item.serial_no like %(serialno)s 
-                order by si.posting_date asc""", { 'serialno': "%%%s%%" % s }, as_dict=1)
-        if si:
-            si_list.append(si)
+                and si_item.item_code=%(item_code)s 
+                order by si.posting_date asc""", { 'item_code': item_code }, as_dict=1)
 
     for si in si_list:
-        si_doc = frappe.get_doc("Sales Invoice", si[0].name)
+        si_doc = frappe.get_doc("Sales Invoice", si.name)
         si_doc.docstatus = 2
         si_doc.update_stock_ledger()
         frappe.db.sql("""delete from `tabGL Entry` 
-				where voucher_type='Sales Invoice' and voucher_no=%s""", si[0].name)
+				where voucher_type='Sales Invoice' and voucher_no=%s""", si.name)
 			
-        si_doc = frappe.get_doc("Sales Invoice", si[0].name)
+        si_doc = frappe.get_doc("Sales Invoice", si.name)
         si_doc.docstatus = 1
         si_doc.update_stock_ledger()
         si_doc.make_gl_entries()
 
-def repost_dn(serials):
-    dn_list = []
-    for s in serials:
-        di = frappe.db.sql("""select distinct dn.name, dn.docstatus
+def repost_dn(item_code):
+    dn_list = frappe.db.sql("""select distinct dn.name, dn.docstatus
 		from `tabDelivery Note` dn, `tabDelivery Note Item` dn_item
-		where dn.name=dn_item.parent and dn.docstatus = 2 and dn_item.serial_no like %(serialno)s
-		order by dn.posting_date asc""", { 'serialno': "%%%s%%" % s }, as_dict=1)
-
-        if di:
-            di_list.append(di)        
+		where dn.name=dn_item.parent and dn.docstatus = 1 and dn_item.item_code = %(item_code)s
+		order by dn.posting_date asc""", { 'item_code': item_code }, as_dict=1)
 		
     for dn in dn_list:
-        dn_doc = frappe.get_doc("Delivery Note", dn[0].name)
+        dn_doc = frappe.get_doc("Delivery Note", dn.name)
         dn_doc.docstatus = 2
         dn_doc.update_prevdoc_status()
         dn_doc.update_stock_ledger()
         dn_doc.cancel_packing_slips()
         frappe.db.sql("""delete from `tabGL Entry` 
-				where voucher_type='Delivery Note' and voucher_no=%s""", dn[0].name)
+				where voucher_type='Delivery Note' and voucher_no=%s""", dn.name)
 
-        dn_doc = frappe.get_doc("Delivery Note", dn[0].name)
+        dn_doc = frappe.get_doc("Delivery Note", dn.name)
         dn_doc.docstatus = 1
         dn_doc.on_submit()
 
