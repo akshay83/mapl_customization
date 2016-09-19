@@ -37,8 +37,10 @@ def purchase_invoice_on_update_after_submit(doc, method):
 
     if cint(doc.update_stock):
         for i in doc.items:
-            repost_si(get_serial_nos(i.serial_no))
-            repost_dn(get_serial_nos(i.serial_no))
+            snos = get_serial_nos(i.serial_no)
+            repost_se(snos)
+            repost_si(snos)
+            repost_dn(snos)
 
 def get_serial_nos(serial_no):
 	return [s.strip() for s in cstr(serial_no).strip().upper().replace(',', '\n').split('\n')
@@ -51,6 +53,36 @@ def update_incoming_rate_serial_no(serial_nos, rate):
     for s_no in serial_nos:
         frappe.db.sql("""update `tabSerial No` set purchase_rate=%(rate)s where serial_no=%(sno)s""",
                 { 'sno': s_no, 'rate': rate })
+
+
+def repost_se(serials):
+    se_list = []
+    for s in serials:
+        se = frappe.db.sql("""select distinct se.name, se.docstatus
+                from `tabStock Entry` se, `tabStock Entry Detail` se_detail
+                where se.name=se_detail.parent and se.docstatus = 1 and se.purpose='Material Transfer'
+                and se_detail.serial_no like %(serialno)s 
+                order by se.posting_date asc""", { 'serialno': "%%%s%%" % s }, as_dict=1)
+        if se:
+            se_list.append(se)
+
+    for se in se_list:
+        frappe.db.sql("""delete from `tabGL Entry` where voucher_no=%(vname)s""", {
+            'vname': se[0].name })
+
+        se_doc = frappe.get_doc("Stock Entry", se[0].name)
+        se_doc.calculate_rate_and_amount(force=True)
+        se_doc.update_children()
+        se_doc.db_update()
+        for i in se_doc.items:
+            frappe.db.sql("""update `tabStock Ledger Entry` set incoming_rate = %(value_rate)s, valuation_rate=%(value_rate)s,
+                    stock_value=%(value_rate)s * actual_qty, stock_value_difference=%(value_rate)s * actual_qty
+                     where voucher_no = %(vno)s and item_code=%(item)s""",
+                    { 'value_rate': i.valuation_rate,
+                      'item': i.item_code,
+                      'vno' : se_doc.name }) 
+
+        se_doc.make_gl_entries()
 
 
 def repost_si(serials):
