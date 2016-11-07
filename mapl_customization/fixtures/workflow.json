@@ -6,6 +6,7 @@
   "is_active": 0, 
   "modified": "2016-07-27 20:46:13.823718", 
   "name": "Sales Invoice Undercut", 
+  "override_status": 0, 
   "states": [
    {
     "allow_edit": "All", 
