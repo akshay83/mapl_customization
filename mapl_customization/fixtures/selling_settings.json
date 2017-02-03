@@ -15,6 +15,7 @@
   "name": "Selling Settings", 
   "selling_price_list": "Standard Selling", 
   "so_required": "No", 
-  "territory": "India"
+  "territory": "India", 
+  "validate_selling_price": 0
  }
 ]

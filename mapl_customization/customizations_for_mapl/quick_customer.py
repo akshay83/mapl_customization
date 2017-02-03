@@ -67,7 +67,7 @@ def enter_billing_address(args, customer):
 	address_doc.fax = args["billing_fax"] if "billing_fax" in address_keys else None
 	address_doc.phone = args["billing_phone"] if "billing_phone" in address_keys else None
 	address_doc.email_id = args["billing_email_id"] if "billing_email_id" in address_keys else None
-	address_doc.customer = customer.name
+	address_doc.append('links', dict(link_doctype='Customer', link_name=customer.name))
 	address_doc.autoname()
 	address_doc.save()
 
@@ -87,6 +87,6 @@ def enter_shipping_address(args, customer):
 	address_doc.fax = args["shipping_fax"] if "shipping_fax" in address_keys else None
 	address_doc.phone = args["shipping_phone"] if "shipping_phone" in address_keys else None
 	address_doc.email_id = args["shipping_email_id"] if "shipping_email_id" in address_keys else None
-	address_doc.customer = customer.name
+	address_doc.append('links', dict(link_doctype='Customer', link_name=customer.name))
 	address_doc.autoname()
 	address_doc.save()

@@ -15,26 +15,26 @@ def select_customer_supplier_query(doctype, txt, searchfield, start, page_len, f
 		return supplier_query(doctype, txt, searchfield, start, page_len, filters)
 
 def mapl_address_query (doctype, txt, searchfield, start, page_len, filters):
-	fields = ["name","customer_name","supplier_name","address_line1", "address_line2"]
+	fields = ["addr.name","dyn.link_name","addr.address_line1", "addr.address_line2"]
 
 	fields = ", ".join(fields)
 
 	condition = ""	
 	if filters.get("customer"):
-		condition += "and `tabAddress`.customer = %(customer)s"
+		condition += "and dyn.link_name = %(customer)s"
 
 	if filters.get("supplier"):
-		condition += "and `tabAddress`.supplier = %(supplier)s"
+		condition += "and dyn.link_name = %(supplier)s"
 
 	return frappe.db.sql("""select {fields}
-			from `tabAddress` where
-			({key} like %(txt)s
+			from `tabAddress` addr, `tabDynamic Link` dyn where dyn.parent=addr.name and 
+			(addr.{key} like %(txt)s
 			or address_line1 like %(txt)s
 			or address_line2 like %(txt)s)
 			{condition} {mcond}
 			order by
-			if(locate(%(_txt)s, `tabAddress`.name), locate(%(_txt)s, `tabAddress`.name), 99999),
-			`tabAddress`.name, `tabAddress`.customer_name
+			if(locate(%(_txt)s, addr.name), locate(%(_txt)s, addr.name), 99999),
+			addr.name 
 			limit %(start)s, %(page_len)s""".format(**{
 				"fields": fields,
 				"key": searchfield,
@@ -59,8 +59,8 @@ def mapl_customer_query(doctype, txt, searchfield, start, page_len, filters):
           (
             (select cust.name, cust.customer_name, cust.primary_contact_no,
               cust.secondary_contact_no,addr.address_line1,addr.address_line2 
-              from `tabCustomer` cust inner join `tabAddress` addr 
-              on cust.name=addr.customer where
+              from `tabCustomer` cust, `tabAddress` addr, `tabDynamic Link` dyn
+              where cust.name=dyn.link_name and dyn.parent=addr.name and
               ({key} like %(txt)s
                 or cust.customer_name like %(txt)s
                 or cust.primary_contact_no like %(txt)s

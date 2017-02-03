@@ -32,7 +32,7 @@ def purchase_invoice_on_update_after_submit(doc, method):
             update_entries_after({
 					"item_code": i.item_code, 
 					"warehouse": i.warehouse,
-					"posting_date": get_fiscal_year(today())[1]
+					"posting_date": doc.posting_date #get_fiscal_year(today())[1]
 				}, allow_zero_rate=True)
 
     if cint(doc.update_stock):
