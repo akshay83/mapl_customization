@@ -1,0 +1,65 @@
+from __future__ import unicode_literals
+import frappe
+import erpnext
+
+from frappe.utils import cint, cstr, flt, add_days, nowdate, getdate
+from frappe import _, ValidationError
+from erpnext.stock.doctype.serial_no.serial_no import get_serial_nos
+
+class SerialNoCannotCreateDirectError(ValidationError): pass
+class SerialNoCannotCannotChangeError(ValidationError): pass
+class SerialNoNotRequiredError(ValidationError): pass
+class SerialNoRequiredError(ValidationError): pass
+class SerialNoQtyError(ValidationError): pass
+class SerialNoItemError(ValidationError): pass
+class SerialNoWarehouseError(ValidationError): pass
+class SerialNoNotExistsError(ValidationError): pass
+class SerialNoDuplicateError(ValidationError): pass
+
+def validate_serial_no(sle, item_det):
+	if item_det.has_serial_no==0:
+		if sle.serial_no:
+			frappe.throw(_("Item {0} is not setup for Serial Nos. Column must be blank").format(sle.item_code),
+				SerialNoNotRequiredError)
+	else:
+		if sle.serial_no:
+			serial_nos = get_serial_nos(sle.serial_no)
+			if cint(sle.actual_qty) != flt(sle.actual_qty):
+				frappe.throw(_("Serial No {0} quantity {1} cannot be a fraction").format(sle.item_code, sle.actual_qty))
+
+			if len(serial_nos) and len(serial_nos) != abs(cint(sle.actual_qty)):
+				frappe.throw(_("{0} Serial Numbers required for Item {1}. You have provided {2}.").format(sle.actual_qty, sle.item_code, len(serial_nos)),
+					SerialNoQtyError)
+
+			if len(serial_nos) != len(set(serial_nos)):
+				frappe.throw(_("Duplicate Serial No entered for Item {0}").format(sle.item_code), SerialNoDuplicateError)
+
+			for serial_no in serial_nos:
+				if frappe.db.exists("Serial No", serial_no):
+					sr = frappe.get_doc("Serial No", serial_no)
+
+					if sr.item_code!=sle.item_code:
+						if not allow_serial_nos_with_different_item(serial_no, sle):
+							frappe.throw(_("Serial No {0} does not belong to Item {1}").format(serial_no,
+								sle.item_code), SerialNoItemError)
+
+					#if sr.warehouse and sle.actual_qty > 0:
+					#	frappe.throw(_("Serial No {0} has already been received").format(serial_no),
+					#		SerialNoDuplicateError)
+
+					if sle.actual_qty < 0:
+						#if sr.warehouse!=sle.warehouse:
+						#	frappe.throw(_("Serial No {0} does not belong to Warehouse {1}").format(serial_no,
+						#		sle.warehouse), SerialNoWarehouseError)
+
+						if sle.voucher_type in ("Delivery Note", "Sales Invoice") \
+							and sle.is_cancelled=="No" and not sr.warehouse:
+								frappe.throw(_("Serial No {0} does not belong to any Warehouse")
+									.format(serial_no), SerialNoWarehouseError)
+
+				elif sle.actual_qty < 0:
+					# transfer out
+					frappe.throw(_("Serial No {0} not in stock").format(serial_no), SerialNoNotExistsError)
+		elif sle.actual_qty < 0 or not item_det.serial_no_series:
+			frappe.throw(_("Serial Nos Required for Serialized Item {0}").format(sle.item_code),
+				SerialNoRequiredError)

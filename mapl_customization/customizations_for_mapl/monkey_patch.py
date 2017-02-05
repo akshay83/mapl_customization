@@ -1,4 +1,5 @@
 import frappe
+import erpnext
 
 from frappe import _
 from frappe.core.doctype.doctype.doctype import validate_fields_for_doctype
@@ -83,7 +84,13 @@ def monkey_patch_for_allow_on_submit():
 	from frappe.custom.doctype.customize_form.customize_form import CustomizeForm
 	CustomizeForm.set_allow_on_submit = set_allow_on_submit
 	CustomizeForm.save_customization = save_customization
+
+def monkey_patch_for_serial_validation():
+	from erpnext.stock.doctype.serial_no import serial_no
+	from monkey_patch_serial import validate_serial_no as vsn
+	serial_no.validate_serial_no = vsn
 	
 def do_monkey_patch():
 	monkey_patch_for_allow_on_submit()
 	monkey_patch_allow_transition_from_0_to_2()
+	monkey_patch_for_serial_validation()

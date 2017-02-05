@@ -5,24 +5,32 @@ from frappe.utils import today
 from erpnext.accounts.utils import get_fiscal_year
 from frappe.utils import cstr, cint
 from erpnext.stock.stock_ledger import update_entries_after
+from erpnext.controllers.stock_controller import get_warehouse_account, update_gl_entries_after
+
 
 def purchase_invoice_on_update_after_submit(doc, method):
     doc.validate()
     frappe.db.sql("""delete from `tabGL Entry` where voucher_no=%(vname)s""", {
             'vname': doc.name })
     doc.update_valuation_rate("items")
+    doc.update_children()
+    doc.db_update()
+
+    #items, warehouses = doc.get_items_and_warehouses()
+    #update_gl_entries_after(doc.posting_date, doc.posting_time, warehouses, items)
 
     if cint(doc.update_stock):
         for i in doc.items:
-            frappe.db.sql("""update `tabStock Ledger Entry` set incoming_rate = %(value_rate)s, valuation_rate=%(value_rate)s,
-                    stock_value=%(value_rate)s * actual_qty, stock_value_difference=%(value_rate)s * actual_qty
-                     where voucher_no = %(vno)s and item_code=%(item)s""",
-                    { 'value_rate': i.valuation_rate,
-                      'item': i.item_code,
-                      'vno' : doc.name }) 
-
-        for i in doc.items:
             update_incoming_rate_serial_no(get_serial_nos(i.serial_no), i.valuation_rate)
+
+        doc.db_update()
+
+        frappe.db.sql("""delete from `tabStock Ledger Entry` where voucher_no=%(vname)s""", {
+            'vname': doc.name })
+
+        #raw_input("Press Enter to continue...")
+        doc.update_stock_ledger()
+
         #update_stock_ledger_entry(get_serial_nos(i.serial_no))
 
     doc.make_gl_entries(repost_future_gle=False)
@@ -32,6 +40,7 @@ def purchase_invoice_on_update_after_submit(doc, method):
             update_entries_after({
 					"item_code": i.item_code, 
 					"warehouse": i.warehouse,
+                    "posting_time": doc.posting_time,
 					"posting_date": doc.posting_date #get_fiscal_year(today())[1]
 				}, allow_zero_rate=True)
 
@@ -40,6 +49,8 @@ def purchase_invoice_on_update_after_submit(doc, method):
             repost_se(i.item_code)
             repost_si(i.item_code)
             repost_dn(i.item_code)
+
+    frappe.db.commit()
 
 def get_serial_nos(serial_no):
 	return [s.strip() for s in cstr(serial_no).strip().upper().replace(',', '\n').split('\n')
@@ -50,8 +61,9 @@ def update_incoming_rate_serial_no(serial_nos, rate):
         return
 
     for s_no in serial_nos:
-        frappe.db.sql("""update `tabSerial No` set purchase_rate=%(rate)s where serial_no=%(sno)s""",
-                { 'sno': s_no, 'rate': rate })
+        serial = frappe.get_doc('Serial No', s_no)
+        serial.purchase_rate = rate
+        serial.db_update()
 
 
 def repost_se(item_code):
@@ -65,17 +77,15 @@ def repost_se(item_code):
         frappe.db.sql("""delete from `tabGL Entry` where voucher_no=%(vname)s""", {
             'vname': se.name })
 
+        frappe.db.sql("""delete from `tabStock Ledger Entry` where voucher_no=%(vname)s""", {
+            'vname': se.name })
+
         se_doc = frappe.get_doc("Stock Entry", se.name)
         se_doc.calculate_rate_and_amount(force=True)
+
         se_doc.update_children()
         se_doc.db_update()
-        for i in se_doc.items:
-            frappe.db.sql("""update `tabStock Ledger Entry` set incoming_rate = %(value_rate)s, valuation_rate=%(value_rate)s,
-                    stock_value=%(value_rate)s * actual_qty, stock_value_difference=%(value_rate)s * actual_qty
-                     where voucher_no = %(vno)s and item_code=%(item)s""",
-                    { 'value_rate': i.valuation_rate,
-                      'item': i.item_code,
-                      'vno' : se_doc.name }) 
+        se_doc.update_stock_ledger()
 
         se_doc.make_gl_entries()
 
