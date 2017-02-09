@@ -63,3 +63,22 @@ def validate_serial_no(sle, item_det):
 		elif sle.actual_qty < 0 or not item_det.serial_no_series:
 			frappe.throw(_("Serial Nos Required for Serialized Item {0}").format(sle.item_code),
 				SerialNoRequiredError)
+
+def set_purchase_details(self, purchase_sle):
+	if purchase_sle:
+		self.purchase_document_type = purchase_sle.voucher_type
+		self.purchase_document_no = purchase_sle.voucher_no
+		self.purchase_date = purchase_sle.posting_date
+		self.purchase_time = purchase_sle.posting_time
+
+		if not self.purchase_rate:
+			self.purchase_rate = purchase_sle.incoming_rate
+
+		if purchase_sle.voucher_type == "Purchase Receipt":
+			self.supplier, self.supplier_name = \
+				frappe.db.get_value("Purchase Receipt", purchase_sle.voucher_no,
+						["supplier", "supplier_name"])
+	else:
+		for fieldname in ("purchase_document_type", "purchase_document_no",
+			"purchase_date", "purchase_time", "purchase_rate", "supplier", "supplier_name"):
+				self.set(fieldname, None)

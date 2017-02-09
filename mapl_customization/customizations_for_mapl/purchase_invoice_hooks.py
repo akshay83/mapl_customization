@@ -23,7 +23,7 @@ def purchase_invoice_on_update_after_submit(doc, method):
         for i in doc.items:
             update_incoming_rate_serial_no(get_serial_nos(i.serial_no), i.valuation_rate)
 
-        doc.db_update()
+        #doc.db_update()
 
         frappe.db.sql("""delete from `tabStock Ledger Entry` where voucher_no=%(vname)s""", {
             'vname': doc.name })

@@ -89,6 +89,9 @@ def monkey_patch_for_serial_validation():
 	from erpnext.stock.doctype.serial_no import serial_no
 	from monkey_patch_serial import validate_serial_no as vsn
 	serial_no.validate_serial_no = vsn
+
+	from monkey_patch_serial import set_purchase_details as spd
+	serial_no.SerialNo.set_purchase_details = spd 
 	
 def do_monkey_patch():
 	monkey_patch_for_allow_on_submit()
