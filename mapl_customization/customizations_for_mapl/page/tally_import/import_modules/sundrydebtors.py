@@ -56,7 +56,7 @@ class TallyImportSundryDebtors:
 		address_doc.address_line1 = args
 		city_index = args.rfind(',')
 		address_doc.city = args[((city_index+1) if city_index > 0 else -10):]
-		address_doc.customer = customer.name
+		address_doc.append('links', dict(link_doctype='Customer', link_name=customer.name))
 		address_doc.autoname()
 		address_doc.save()
 
