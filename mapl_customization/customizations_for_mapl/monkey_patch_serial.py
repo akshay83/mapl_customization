@@ -6,15 +6,9 @@ from frappe.utils import cint, cstr, flt, add_days, nowdate, getdate
 from frappe import _, ValidationError
 from erpnext.stock.doctype.serial_no.serial_no import get_serial_nos
 
-class SerialNoCannotCreateDirectError(ValidationError): pass
-class SerialNoCannotCannotChangeError(ValidationError): pass
-class SerialNoNotRequiredError(ValidationError): pass
-class SerialNoRequiredError(ValidationError): pass
-class SerialNoQtyError(ValidationError): pass
-class SerialNoItemError(ValidationError): pass
-class SerialNoWarehouseError(ValidationError): pass
-class SerialNoNotExistsError(ValidationError): pass
-class SerialNoDuplicateError(ValidationError): pass
+from erpnext.stock.doctype.serial_no.serial_no import  SerialNoCannotCreateDirectError,SerialNoCannotCannotChangeError,\
+	SerialNoNotRequiredError,SerialNoRequiredError,SerialNoQtyError,SerialNoItemError,SerialNoWarehouseError,\
+	SerialNoNotExistsError,SerialNoDuplicateError
 
 def validate_serial_no(sle, item_det):
 	if item_det.has_serial_no==0:
@@ -43,11 +37,15 @@ def validate_serial_no(sle, item_det):
 							frappe.throw(_("Serial No {0} does not belong to Item {1}").format(serial_no,
 								sle.item_code), SerialNoItemError)
 
+					#Following Code Disabled in Monkey Patch as It Creates Problem in Updating Purchase Invoice
+					#After Submittion
 					#if sr.warehouse and sle.actual_qty > 0:
 					#	frappe.throw(_("Serial No {0} has already been received").format(serial_no),
 					#		SerialNoDuplicateError)
 
 					if sle.actual_qty < 0:
+						#Following Code Disabled in Monkey Patch as It Creates Problem in Updating Purchase Invoice
+						#After Submittion
 						#if sr.warehouse!=sle.warehouse:
 						#	frappe.throw(_("Serial No {0} does not belong to Warehouse {1}").format(serial_no,
 						#		sle.warehouse), SerialNoWarehouseError)

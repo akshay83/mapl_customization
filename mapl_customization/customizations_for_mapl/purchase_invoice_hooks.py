@@ -5,6 +5,7 @@ from frappe.utils import today
 from erpnext.accounts.utils import get_fiscal_year
 from frappe.utils import cstr, cint
 from erpnext.stock.stock_ledger import update_entries_after
+from erpnext.accounts.doctype.gl_entry.gl_entry import update_outstanding_amt
 from erpnext.controllers.stock_controller import get_warehouse_account, update_gl_entries_after
 
 
@@ -16,22 +17,15 @@ def purchase_invoice_on_update_after_submit(doc, method):
     doc.update_children()
     doc.db_update()
 
-    #items, warehouses = doc.get_items_and_warehouses()
-    #update_gl_entries_after(doc.posting_date, doc.posting_time, warehouses, items)
-
     if cint(doc.update_stock):
         for i in doc.items:
             update_incoming_rate_serial_no(get_serial_nos(i.serial_no), i.valuation_rate)
-
-        #doc.db_update()
 
         frappe.db.sql("""delete from `tabStock Ledger Entry` where voucher_no=%(vname)s""", {
             'vname': doc.name })
 
         #raw_input("Press Enter to continue...")
         doc.update_stock_ledger()
-
-        #update_stock_ledger_entry(get_serial_nos(i.serial_no))
 
     doc.make_gl_entries(repost_future_gle=False)
 
@@ -49,6 +43,8 @@ def purchase_invoice_on_update_after_submit(doc, method):
             repost_se(i.item_code)
             repost_si(i.item_code)
             repost_dn(i.item_code)
+
+    update_outstanding_amt(doc.credit_to, "Supplier", doc.supplier,doc.doctype, doc.name)
 
     frappe.db.commit()
 
