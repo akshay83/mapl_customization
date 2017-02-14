@@ -21,6 +21,9 @@ doc_events = {
 	"Sales Order": {
 		"validate" : "mapl_customization.customizations_for_mapl.finance_validation.sales_order_validate"
 	},
+	"Payment Entry": {
+		"validate": "mapl_customization.customizations_for_mapl.finance_validation.payment_entry_validate"
+	},
 	"Purchase Receipt" : {
 		"on_submit" : "mapl_customization.customizations_for_mapl.utils.purchase_receipt_on_submit",
 		"validate" : "mapl_customization.customizations_for_mapl.utils.purchase_receipt_validate"

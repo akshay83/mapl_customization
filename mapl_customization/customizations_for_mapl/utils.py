@@ -13,16 +13,12 @@ def get_party_name(party, party_type):
 
 @frappe.whitelist()
 def get_primary_billing_address(party, party_type):
-	party_address = frappe.db.get_value("Address", { 
-			party_type.lower(): party, 
-			"is_primary_address":1,
-			"address_type":"Billing"
-			}, "name")
-	return party_address
+	from frappe.geo.doctype.address.address import get_default_address
+	return get_default_address(party_type.lower(), party)
 
 @frappe.whitelist()
 def fetch_address_details_payments_receipts(party_address):
-	from erpnext.utilities.doctype.address.address import get_address_display
+	from frappe.geo.doctype.address.address import get_address_display
 	return get_address_display(party_address)
 	
 
