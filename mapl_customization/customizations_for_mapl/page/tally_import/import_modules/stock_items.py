@@ -1,13 +1,18 @@
 import frappe
 
 class TallyImportStockItems:
-    def __init__(self, value, ow, od):
+    def __init__(self, value, ow, od, bc):
         self.overwrite = ow
         self.process_node = value
         self.open_date = od
+	self.brand_category = bc
         self.process()        
 
     def process(self):
+	if self.brand_category:
+		if self.brand_category.upper() != self.process_node['CATEGORY'].upper():
+			return
+
         if not frappe.db.exists({"doctype":"Item","item_code": self.process_node['@NAME']}):
             if self.process_node.has_key('OPENINGBALANCE'):
                 uom_index = self.process_node['OPENINGBALANCE'].find(self.process_node['BASEUNITS'],0)
