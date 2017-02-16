@@ -2,11 +2,11 @@ import frappe
 
 class TallyImportStockItems:
     def __init__(self, value, ow, od, bc):
-        self.overwrite = ow
-        self.process_node = value
-        self.open_date = od
+	self.overwrite = ow
+	self.process_node = value
+	self.open_date = od
 	self.brand_category = bc
-        self.process()        
+	self.process()        
 
     def process(self):
 	if self.brand_category:
