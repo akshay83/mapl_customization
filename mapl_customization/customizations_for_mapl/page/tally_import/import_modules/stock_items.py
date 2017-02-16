@@ -10,7 +10,7 @@ class TallyImportStockItems:
 
     def process(self):
 	if self.brand_category:
-		if self.brand_category.upper() != self.process_node['CATEGORY'].upper():
+		if self.process_node['CATEGORY'].upper() not in self.brand_category:
 			return
 
         if not frappe.db.exists({"doctype":"Item","item_code": self.process_node['@NAME']}):

@@ -45,8 +45,9 @@ def read_uploaded_file(filedata=None,decompress_data=0,overwrite=False,open_date
 	global opening_date
 	opening_date = open_date
 
+	brand = brand.replace(" ","") + ","
 	global brand_category
-	brand_category = brand 
+	brand_category = brand.upper().rstrip(",").split(",") 
 
 	try:
 		xmltodict.parse(filedata, item_depth=5, item_callback=process)
