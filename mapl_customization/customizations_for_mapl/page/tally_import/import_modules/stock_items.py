@@ -5,10 +5,14 @@ class TallyImportStockItems:
 		self.overwrite = ow
 		self.process_node = value
 		self.open_date = od
-		self.brand_category = c
+		self.brand_category = bc
 		self.process()        
 
 	def process(self):
+		print "DEBUG: PROCESSING: STOCK_ITEM:"+self.process_node['@NAME']
+		if not self.process_node['CATEGORY']:
+			return
+
 		if self.brand_category:
 			if self.process_node['CATEGORY'].upper() not in self.brand_category:
 				return
@@ -23,7 +27,10 @@ class TallyImportStockItems:
 			item_doc = frappe.new_doc('Item')
 			item_doc.item_code = self.process_node['@NAME']
 			item_doc.item_name = self.process_node['@NAME']
-			item_doc.item_group = self.process_node['PARENT']
+			if self.process_node['PARENT']:
+				item_doc.item_group = self.process_node['PARENT']
+			else
+				item_doc.item_group = 'All Item Groups'
 			item_doc.brand = self.process_node['CATEGORY']            
 			item_doc.has_serial_no = 1 if self.process_node['ISBATCHWISEON'] == 'Yes' else 0
 			item_doc.stock_uom = self.process_node['BASEUNITS']       
@@ -42,6 +49,8 @@ class TallyImportStockItems:
 						self.process_batches(batch_allocations)
 				elif isinstance(self.process_node['BATCHALLOCATIONS.LIST'], dict):
 					self.process_batches(self.process_node['BATCHALLOCATIONS.LIST'])
+			print "DEBUG: PROCESSING: STOCK_ITEM:"+self.process_node['@NAME']
+
 
 	def process_batches(self, batch):
 		stockentry_doc = frappe.new_doc('Stock Entry')
@@ -57,8 +66,8 @@ class TallyImportStockItems:
 			item_detail.serial_no = batch['BATCHNAME']        
 
 		uom_index = batch['OPENINGBALANCE'].find(self.process_node['BASEUNITS'],0)
-			if (float(batch['OPENINGBALANCE'][:uom_index])<=0):
-				return
+		if (float(batch['OPENINGBALANCE'][:uom_index])<=0):
+			return
 		item_detail.qty = float(batch['OPENINGBALANCE'][:uom_index])
 
 		rate_per_index = batch['OPENINGRATE'].find("/",0)
