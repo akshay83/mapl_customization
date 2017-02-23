@@ -67,7 +67,28 @@ frappe.pages['tally-import'].on_page_show = function(wrapper) {
             processNextBatch(doCallback);
         }
     });
+    $("#btn_import_internal").click(function() {
+            start_internal_import();
+    });
 };
+
+
+function start_internal_import() {
+    frappe.call({
+        method: "mapl_customization.customizations_for_mapl.tally_import_stock_internal.process_import",
+        args: {
+            "open_date": $('div').find('[name="exp_start_date"]').val(),
+        },
+        callback: function(cr) {
+            if (!r.exc) {
+                 frappe.msgprint(__("Process Complete"));
+            } else {
+                 frappe.msgprint(__("Error during Importing <br /> " + r.exc));
+            }
+        }
+    });
+};
+
 
 function doCallback(r, isLastChunk) {
     if ($('div').find('[name="compress_data"]').prop("checked")) {

@@ -54,7 +54,6 @@ def mapl_address_query (doctype, txt, searchfield, start, page_len, filters):
 
 # searches for customer
 def mapl_customer_query(doctype, txt, searchfield, start, page_len, filters):
-
 	return frappe.db.sql("""select * from 
           (
             (select cust.name, cust.customer_name, cust.primary_contact_no,
