@@ -133,5 +133,14 @@
   "name": "Stock Taking-Client", 
   "script": "frappe.ui.form.on('Stock Taking Details', {\n    items_add: function(frm) {\n\tvar l = frm.doc.items.length;\n\tif (l > 1) {\n\t\tvar last_value = frm.doc.items[l-2].item_code;\n\t\tif (last_value) {\n\t\t\tfrm.doc.items[l-1].item_code = last_value;\n\t\t}\n\t}\n    }\n});", 
   "script_type": "Client"
+ }, 
+ {
+  "docstatus": 0, 
+  "doctype": "Custom Script", 
+  "dt": "Tally Stock Items", 
+  "modified": "2017-02-23 13:33:31.032817", 
+  "name": "Tally Stock Items-Client", 
+  "script": "frappe.listview_settings['Tally Stock Items'] = {\n    onload: function(me){\n\t\tme.page.add_menu_item(__(\"Import to Main Database\"), function() {\n\n\t\t});\n    }\n}", 
+  "script_type": "Client"
  }
 ]

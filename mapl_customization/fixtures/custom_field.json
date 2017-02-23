@@ -3028,7 +3028,7 @@
   "in_standard_filter": 0, 
   "insert_after": "column_break", 
   "label": "Finance Charges", 
-  "modified": "2017-02-12 17:19:50.635696", 
+  "modified": "2017-02-15 19:48:12.707631", 
   "name": "Sales Invoice-finance_charges", 
   "no_copy": 0, 
   "options": "Finance Details", 
