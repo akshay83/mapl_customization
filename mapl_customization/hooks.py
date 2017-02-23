@@ -15,6 +15,9 @@ fixtures = ["Custom Field", "Property Setter", "Stock Settings", "Selling Settin
 		 "Print Format", "Letter Head", "Workflow", "Workflow State", "Workflow Action"]
 
 doc_events = {
+	"Item" : {
+		"validate" : "mapl_customization.customizations_for_mapl.item_validation.item_hooks.item_validate"
+	},
 	"Sales Invoice" : {
 		"validate" : "mapl_customization.customizations_for_mapl.finance_validation.sales_invoice_validate"
 	},

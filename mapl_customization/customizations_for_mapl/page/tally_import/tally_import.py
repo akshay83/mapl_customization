@@ -15,7 +15,7 @@ overwrite_existing = True
 opening_date = None
 
 @frappe.whitelist()
-def read_uploaded_file(filedata=None,decompress_data=0,overwrite=False,open_date=None):
+def read_uploaded_file(filedata=None,decompress_data=0,overwrite=False,open_date=None,brand=None):
 	if not filedata:
 		return
 
@@ -45,6 +45,10 @@ def read_uploaded_file(filedata=None,decompress_data=0,overwrite=False,open_date
 	global opening_date
 	opening_date = open_date
 
+	brand = brand.replace(" ","") + ","
+	global brand_category
+	brand_category = brand.upper().rstrip(",").split(",") 
+
 	try:
 		xmltodict.parse(filedata, item_depth=5, item_callback=process)
 	except ParsingInterrupted:
@@ -71,7 +75,7 @@ def document_import(item):
 	elif (item.has_key('STOCKGROUP')):
 		TallyImportStockGroupItems(value=item['STOCKGROUP'],ow=overwrite_existing)
 	elif (item.has_key('STOCKITEM')):
-		TallyImportStockItems(value=item['STOCKITEM'],ow=overwrite_existing, od=opening_date)
+		TallyImportStockItems(value=item['STOCKITEM'],ow=overwrite_existing, od=opening_date, bc=brand_category)
 	elif (item.has_key('LEDGER')):
 		TallyImportSundryDebtors(value=item['LEDGER'],ow=overwrite_existing, od=opening_date)
 	else: 

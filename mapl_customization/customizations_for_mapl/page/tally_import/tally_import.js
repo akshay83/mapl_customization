@@ -77,7 +77,7 @@ function doCallback(r, isLastChunk) {
         "message": "Processing Batch of " + r.chunkCounter.toString()
     });
     write_messages({
-        "message": "Uploading Data:" + r.chunkString.length.toString()
+        "message": "Length of Data Uploaded:" + r.chunkString.length.toString()
     });
     frappe.call({
         method: "mapl_customization.customizations_for_mapl.page.tally_import.tally_import.read_uploaded_file",
@@ -85,7 +85,8 @@ function doCallback(r, isLastChunk) {
             "filedata": r.chunkString,
             "decompress_data": $('div').find('[name="compress_data"]').prop("checked") ? 1 : 0,
             "overwrite": !$('div').find('[name="always_insert"]').prop("checked"),
-            "open_date": $('div').find('[name="exp_start_date"]').val()
+            "open_date": $('div').find('[name="exp_start_date"]').val(),
+	    "brand": $('div').find('[name="brand"]').val()
         },
         callback: function(cr) {
             if (!r.exc) {
