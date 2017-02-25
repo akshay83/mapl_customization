@@ -38,6 +38,8 @@ def read_uploaded_file(filedata=None,decompress_data=0,overwrite=False,open_date
 		overwrite = params.get("overwrite")
 	if params.get("open_date"):
 		open_date = params.get("open_date")
+	if params.get("brand"):
+		brand = params.get("brand")
 
 	global overwrite_existing
 	overwrite_existing = overwrite

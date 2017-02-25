@@ -70,8 +70,8 @@ class TallyInternalStockImport(od):
 			item_doc.brand = rec.category            
 			item_doc.has_serial_no = rec.batch_on == 1
 			item_doc.is_stock_item = 1
-			if r.vat_rate:
-				template = frappe.db.get_value("Item Taxes Template", {"name": ("like %%%s%%" % r.vat_rate)})
+			if rec.vat_rate:
+				template = frappe.db.get_value("Item Taxes Template", {"name": ("like %%%s%%" % rec.vat_rate)})
 				if template:
 					item_doc.taxes_template = template
 				else:
@@ -107,8 +107,8 @@ class TallyInternalStockImport(od):
 		categories = frappe.db.sql("""select dictinct category from `tabTally Stock Items` order by category""",as_dict=1)
 		for c in categories:
 			if not frappe.db.exists({"doctype":"Brand","brand": c.category}):
-			doc = frappe.get_doc({"doctype":"Brand","brand": c.category})
-			doc.insert(ignore_permissions=True)
+				doc = frappe.get_doc({"doctype":"Brand","brand": c.category})
+				doc.insert(ignore_permissions=True)
 
 	def do_stock_groups(self):
 		groups = frappe.db.sql("""select dictinct stock_group from `tabTally Stock Items` order by stock_group""",as_dict=1)
@@ -128,4 +128,16 @@ class TallyInternalStockImport(od):
 
 @frappe.whitelist()
 def process_import(open_date=None):
-	TallyInternalStockImport(od=opening_date)
+	params = json.loads(frappe.form_dict.get("params") or '{}')
+
+	if params.get("open_date"):
+		open_date = params.get("open_date")
+
+	TallyInternalStockImport(od=open_date)
+
+	frappe.publish_realtime("tally_import_progress", {
+                                                "message": "Import From Internal Table Successful"
+                                        }, user=frappe.session.user)
+
+	return {"messages": "Import Successful", "error": False}
+
