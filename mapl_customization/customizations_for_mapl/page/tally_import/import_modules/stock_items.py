@@ -29,7 +29,7 @@ class TallyImportStockItems:
 			item_doc.item_name = self.process_node['@NAME']
 			if self.process_node['PARENT']:
 				item_doc.item_group = self.process_node['PARENT']
-			else
+			else:
 				item_doc.item_group = 'All Item Groups'
 			item_doc.brand = self.process_node['CATEGORY']            
 			item_doc.has_serial_no = 1 if self.process_node['ISBATCHWISEON'] == 'Yes' else 0

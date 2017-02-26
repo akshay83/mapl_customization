@@ -1,8 +1,9 @@
 import frappe
 import math
+import json
 
-class TallyInternalStockImport(od):
-	def __init__(self):
+class TallyInternalStockImport:
+	def __init__(self,od):
 		self.total_rows = 0
 		self.total_batch_rows = 100.0
 		self.current_batch = 0
@@ -10,9 +11,8 @@ class TallyInternalStockImport(od):
 		self.start_process()
 
 	def get_stock_item_count(self, table):
-		row_cnt = frappe.db.sql("""select count(*) from `tab{table}`""".format(**{
-			"table" : table})
-		return row_cnt
+		row_count = frappe.db.sql("""select ifnull(count(*),0) as rows from `tab{table}`""".format(**{"table" : table}),as_dict=1)
+		return row_count[0].rows if row_count else 0
 
 	def get_next_batch(self, table):
 		return frappe.db.sql("""select * from `tab{table}` order by item_name 
@@ -35,14 +35,14 @@ class TallyInternalStockImport(od):
 		self.current_batch = 0
 		self.total_rows = self.get_stock_item_count('Tally Stock Details')
 		self.total_batches = math.ceil(self.total_rows / self.total_batch_rows)
-		for x in range(0,self.total_batches):
+		for x in range(0,int(self.total_batches)):
 			self.records = self.get_next_batch('Tally Stock Details')
 			if not self.records:
 				break
 			self.current_batch = self.current_batch + len(self.records)
 			for r in self.records:
 				self.process_stock_details(r)
-			frappe.commit()
+			frappe.db.commit()
 
 
 
@@ -50,7 +50,7 @@ class TallyInternalStockImport(od):
 		self.current_batch = 0
 		self.total_rows = self.get_stock_item_count('Tally Stock Items')
 		self.total_batches = math.ceil(self.total_rows / self.total_batch_rows)
-		for x in range(0,self.total_batches):
+		for x in range(0,int(self.total_batches)):
 			self.records = self.get_next_batch('Tally Stock Items')
 			if not self.records:
 				break
@@ -58,7 +58,7 @@ class TallyInternalStockImport(od):
 			for r in self.records:
 				if r.closing_qty > 0:
 					self.process_stock_items(r)
-			frappe.commit()
+			frappe.db.commit()
 
 
 	def process_stock_items(self,rec):
@@ -68,18 +68,23 @@ class TallyInternalStockImport(od):
 			item_doc.item_name = rec.item_name
 			item_doc.item_group = rec.stock_group
 			item_doc.brand = rec.category            
-			item_doc.has_serial_no = rec.batch_on == 1
+			item_doc.has_serial_no = rec.batch_on
 			item_doc.is_stock_item = 1
 			if rec.vat_rate:
-				template = frappe.db.get_value("Item Taxes Template", {"name": ("like %%%s%%" % rec.vat_rate)})
+				template = frappe.db.get_value("Item Taxes Template", dict(name=('like', '%%%s%%' % rec.vat_rate)))
 				if template:
 					item_doc.taxes_template = template
 				else:
-					item_doc.taxes_template = frappe.db.get_value("Item Taxes Template", {"name": ("like %14%")})
+					item_dic.taxes_template = frappe.db.get_value("Item Taxes Template", dict(name=('like', '%15%')))
+			else:
+				item_dic.taxes_template = frappe.db.get_value("Item Taxes Template", dict(name=('like', '%15%')))
 			item_doc.save(ignore_permissions=True)
 
 
 	def process_stock_details(self, rec):
+		if (rec.qty<=0):
+			return
+
 		stockentry_doc = frappe.new_doc('Stock Entry')
 		stockentry_doc.purpose = 'Material Receipt'
 		stockentry_doc.difference_account = frappe.get_value("Account",filters={"account_name": 'Temporary Opening'})
@@ -92,8 +97,6 @@ class TallyInternalStockImport(od):
 		if rec.batch != 'Primary Batch':
 			item_detail.serial_no = rec.batch        
 
-		if (rec.qty<=0):
-			return
 		item_detail.qty = rec.qty
 
 		item_detail.basic_rate = rec.value
@@ -104,14 +107,14 @@ class TallyInternalStockImport(od):
 
 
 	def do_categories(self):
-		categories = frappe.db.sql("""select dictinct category from `tabTally Stock Items` order by category""",as_dict=1)
+		categories = frappe.db.sql("""select distinct category from `tabTally Stock Items` order by category""",as_dict=1)
 		for c in categories:
 			if not frappe.db.exists({"doctype":"Brand","brand": c.category}):
 				doc = frappe.get_doc({"doctype":"Brand","brand": c.category})
 				doc.insert(ignore_permissions=True)
 
 	def do_stock_groups(self):
-		groups = frappe.db.sql("""select dictinct stock_group from `tabTally Stock Items` order by stock_group""",as_dict=1)
+		groups = frappe.db.sql("""select distinct stock_group from `tabTally Stock Items` order by stock_group""",as_dict=1)
 		for g in groups:
 			if not frappe.db.exists({"doctype":"Item Group","item_group_name": g.stock_group}):
 				doc = frappe.get_doc({"doctype":"Item Group","item_group_name": g.stock_group})
@@ -128,10 +131,14 @@ class TallyInternalStockImport(od):
 
 @frappe.whitelist()
 def process_import(open_date=None):
+	print '------------------------HELLO INTERNAL-------------------------'
 	params = json.loads(frappe.form_dict.get("params") or '{}')
 
 	if params.get("open_date"):
 		open_date = params.get("open_date")
+
+	if not open_date:
+		return
 
 	TallyInternalStockImport(od=open_date)
 

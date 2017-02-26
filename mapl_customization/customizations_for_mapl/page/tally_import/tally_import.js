@@ -68,6 +68,10 @@ frappe.pages['tally-import'].on_page_show = function(wrapper) {
         }
     });
     $("#btn_import_internal").click(function() {
+            write_messages({
+                "message": "Starting Internal Process"
+            });
+
             start_internal_import();
     });
 };
