@@ -22,11 +22,35 @@ class TallyInternalStockImport:
                         "batch_offset" : self.current_batch}), as_dict=1)
 
 	def start_process(self):
+		frappe.publish_realtime("tally_import_progress", {
+                                                "message": """<span style="color:black;"><b>Importing Categories</b></span>"""
+                                        }, user=frappe.session.user)
+
 		self.do_categories()
+
+		frappe.publish_realtime("tally_import_progress", {
+                                                "message": """<span style="color:black;"><b>Importing Stock Groups</b></span>"""
+                                        }, user=frappe.session.user)
+
 		self.do_stock_groups()
+
+		frappe.publish_realtime("tally_import_progress", {
+                                                "message": """<span style="color:black;"><b>Importing Warehouses</b></span>"""
+                                        }, user=frappe.session.user)
+
 		self.do_warehouse()
 		frappe.db.commit()
+
+	        frappe.publish_realtime("tally_import_progress", {
+                                                "message": """<span style="color:black;"><b>Importing Stock Items</b></span>"""
+                                        }, user=frappe.session.user)
+
 		self.do_stock_items()
+
+		frappe.publish_realtime("tally_import_progress", {
+                                                "message": """<span style="color:black;"><b>Importing Stock Details</b></span>"""
+                                        }, user=frappe.session.user)
+
 		self.do_stock_details()
 		frappe.db.commit()
 
@@ -41,7 +65,8 @@ class TallyInternalStockImport:
 				break
 			self.current_batch = self.current_batch + len(self.records)
 			for r in self.records:
-				self.process_stock_details(r)
+				if not r.imported:
+					self.process_stock_details(r)
 			frappe.db.commit()
 
 
@@ -62,7 +87,11 @@ class TallyInternalStockImport:
 
 
 	def process_stock_items(self,rec):
-		if not frappe.db.exists({"doctype":"Item","item_code": rec.stock_item}):
+		frappe.publish_realtime("tally_import_progress", {
+                                                "message": "Processing:"+rec.item_name
+                                        }, user=frappe.session.user)
+
+		if not frappe.db.exists({"doctype":"Item","item_code": rec.item_name}):
 			item_doc = frappe.new_doc('Item')
 			item_doc.item_code = rec.item_name
 			item_doc.item_name = rec.item_name
@@ -82,6 +111,10 @@ class TallyInternalStockImport:
 
 
 	def process_stock_details(self, rec):
+		frappe.publish_realtime("tally_import_progress", {
+                                                "message": "Processing:"+rec.item_name+" Batch:"+rec.batch
+                                        }, user=frappe.session.user)
+
 		if (rec.qty<=0):
 			return
 
@@ -103,6 +136,9 @@ class TallyInternalStockImport:
 
 		stockentry_doc.save(ignore_permissions=True)
 		stockentry_doc.submit()
+		import_doc = frappe.get_doc('Tally Stock Details', rec.name)
+		import_doc.imported = 1
+		import_doc.save()
 			
 
 
@@ -131,7 +167,6 @@ class TallyInternalStockImport:
 
 @frappe.whitelist()
 def process_import(open_date=None):
-	print '------------------------HELLO INTERNAL-------------------------'
 	params = json.loads(frappe.form_dict.get("params") or '{}')
 
 	if params.get("open_date"):

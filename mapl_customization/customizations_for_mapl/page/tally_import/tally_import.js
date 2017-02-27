@@ -206,10 +206,10 @@ function processNextBatch(callback) {
 
 
 frappe.realtime.on("tally_import_progress", function(data) {
-    if (data.progress) {
+    //if (data.progress) {
         write_messages(data);
         //console.log(data.message);
-    }
+    //}
 });
 write_messages = function(data) {
     $('div').find('.import-log').removeClass("hide");
