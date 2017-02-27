@@ -138,9 +138,9 @@
   "docstatus": 0, 
   "doctype": "Custom Script", 
   "dt": "Tally Stock Items", 
-  "modified": "2017-02-23 13:33:31.032817", 
+  "modified": "2017-02-27 16:18:35.663547", 
   "name": "Tally Stock Items-Client", 
-  "script": "frappe.listview_settings['Tally Stock Items'] = {\n    onload: function(me){\n\t\tme.page.add_menu_item(__(\"Import to Main Database\"), function() {\n\n\t\t});\n    }\n}", 
+  "script": "frappe.listview_settings['Tally Stock Items'] = {\n    onload: function(me){\n\t\tme.page.add_menu_item(__(\"Import to Main Database\"), function() {\n\t\t\tfrappe.set_route(\"tally-import\");\n\t\t});\n    }\n}", 
   "script_type": "Client"
  }
 ]

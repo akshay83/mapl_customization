@@ -4,6 +4,7 @@
   "allow_multiple_items": 1, 
   "campaign_naming_by": "Campaign Name", 
   "check_price": "", 
+  "close_opportunity_after_days": 0, 
   "cust_master_name": "Naming Series", 
   "customer_group": "Individual", 
   "dn_required": "No", 
