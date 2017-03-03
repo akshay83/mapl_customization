@@ -5,7 +5,7 @@ custom.customer_quick_entry = function (doc) {
 		var dialog = new frappe.ui.Dialog({
 			title: __("Quick Customer Entry"),
 			fields: [
-				{fieldtype: "Select", fieldname: "customer_type", label: __("Customer Type"), reqd: 1, options: "Company\nIndividual"},
+				{fieldtype: "Select", fieldname: "customer_type", label: __("Customer Type"), reqd: 1, options: "Company\nIndividual", default: "Individual"},
 				{fieldtype: "Data", fieldname: "customer_name", label: __("Customer Name"), reqd: 1},
 				{fieldtype: "Data", fieldname: "company_name", label: __("Company Name"), reqd: 0},
 				{fieldtype: "Data", fieldname: "tax_id", label: __("Tax ID"), reqd: 0},
@@ -70,7 +70,7 @@ custom.customer_quick_entry = function (doc) {
 		});
 	});
 
-
+	custom.customer_quick_entry.set_default_values(dialog, dialog.fields);
 	dialog.show();
         //$("div").find(".modal-dialog").css({"line-height":".5"});
         //$("div[class*='modal-dialog']").find(".control-label").css({"font-size":"12px","font-weight":"500","margin-bottom":"1px"});
@@ -84,4 +84,17 @@ custom.customer_quick_entry.set_called_from = function(from) {
 
 custom.customer_quick_entry.unset_called_from = function() {
 	custom._customer_called_from = null;
+}
+
+custom.customer_quick_entry.set_default_values = function(doc, docfields) {
+	for(var fid=0;fid<docfields.length;fid++) {
+		var f = docfields[fid];
+		var v = frappe.model.get_default_value(f, {doctype: 'Customer'}, null);
+		if(v) {
+			doc.set_value(f.fieldname, v);
+		} else if(f.fieldtype == "Select" && f.options && typeof f.options === 'string'
+					&& !in_list(["[Select]", "Loading..."], f.options)) {
+				doc.set_value(f.fieldname,f.options.split("\n")[0]);
+		}
+	}
 }
