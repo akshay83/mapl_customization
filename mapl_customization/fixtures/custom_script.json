@@ -21,9 +21,9 @@
   "docstatus": 0, 
   "doctype": "Custom Script", 
   "dt": "Customer", 
-  "modified": "2017-03-03 16:28:02.221882", 
+  "modified": "2017-03-04 19:42:32.221925", 
   "name": "Customer-Client", 
-  "script": "frappe.ui.form.on(\"Customer\",\"refresh\", function(frm) {\n\t\tif (frm.doc.__islocal) {\n\t\t\tfrm.add_custom_button(__('Quick Entry'), function() {\n\t\t\t\tcustom.customer_quick_entry(frm);\n\t\t\t});\n\t\t}\n\n                   custom._get_party_balance_in_drcr('Customer', frm.doc.name,\n\t\t\t\t\t\t\tfrappe.defaults.get_user_default(\"company\"), function(result) { \n\t\t\t\t\t\t\t\tfrm.doc.current_balance=result; \nrefresh_field(\"current_balance\");\n                             });\n});\n\n", 
+  "script": "frappe.ui.form.on(\"Customer\",\"refresh\", function(frm) {\n\t\tif (frm.doc.__islocal) {\n\t\t\tfrm.add_custom_button(__('Quick Entry'), function() {\n\t\t\t\tcustom.customer_quick_entry(frm);\n\t\t\t});\n\t\t\tcustom.customer_quick_entry(frm);\n\t\t}\n\n                   custom._get_party_balance_in_drcr('Customer', frm.doc.name,\n\t\t\t\t\t\t\tfrappe.defaults.get_user_default(\"company\"), function(result) { \n\t\t\t\t\t\t\t\tfrm.doc.current_balance=result; \nrefresh_field(\"current_balance\");\n                             });\n});\n\n", 
   "script_type": "Client"
  }, 
  {
