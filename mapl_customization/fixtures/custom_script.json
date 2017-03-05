@@ -124,5 +124,14 @@
   "name": "Tally Stock Items-Client", 
   "script": "frappe.listview_settings['Tally Stock Items'] = {\n    onload: function(me){\n\t\tme.page.add_menu_item(__(\"Import to Main Database\"), function() {\n\t\t\tfrappe.set_route(\"tally-import\");\n\t\t});\n    }\n}", 
   "script_type": "Client"
+ }, 
+ {
+  "docstatus": 0, 
+  "doctype": "Custom Script", 
+  "dt": "Journal Entry", 
+  "modified": "2017-03-05 13:58:43.222219", 
+  "name": "Journal Entry-Client", 
+  "script": "   cur_frm.set_query(\"party\",\"accounts\", function(doc, cdt, cdn) {\n\tvar jvd = frappe.get_doc(cdt, cdn);\n   \treturn{\n\t\tquery: \"mapl_customization.customizations_for_mapl.queries.select_customer_supplier_query\",\n        \tfilters: {'party_type':jvd.party_type }\n\t}\n   });\n", 
+  "script_type": "Client"
  }
 ]
