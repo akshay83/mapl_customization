@@ -16,15 +16,18 @@ class TallyInternalStockImport:
 		return row_count[0].rows if row_count else 0
 
 	def get_next_batch(self, table):
-		return frappe.db.sql("""select * from `tab{table}` order by item_name 
+		return frappe.db.sql("""select * from `tab{table}` where category in ('{category_names}') order by item_name 
 	                limit {current_batch} offset {batch_offset}""".format(**{
 			"table" : table,
+			"category_names": ','.join(self.brand_category),
                         "current_batch" : int(self.total_batch_rows),
                         "batch_offset" : self.current_batch}), as_dict=1)
 
 	def update_category_in_details(self):
-		frappe.db.sql("""update `tabTally Stock Details` det set category=(select category from 
-			`tabTally Stock Items` where item_name=det.item_name)""")
+		row_count = frappe.db.sql("""select ifnull(count(*),0) as rows from `tabTally Stock Details` where category is not null""",as_dict=1)
+		if row_count <= 0:
+			frappe.db.sql("""update `tabTally Stock Details` det set category=(select category from 
+				`tabTally Stock Items` where item_name=det.item_name)""")
 
 	def start_process(self):
 		frappe.publish_realtime("tally_import_progress", {
