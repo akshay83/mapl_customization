@@ -81,7 +81,8 @@ function start_internal_import() {
     frappe.call({
         method: "mapl_customization.customizations_for_mapl.tally_import_stock_internal.process_import",
         args: {
-            "open_date": $('div').find('[name="exp_start_date"]').val()
+            "open_date": $('div').find('[name="exp_start_date"]').val(),
+	    "brand": $('div').find('[name="brand"]').val()
         },
         callback: function(r) {
             if (!r.exc) {

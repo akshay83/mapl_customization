@@ -16,10 +16,14 @@ class TallyInternalStockImport:
 		return row_count[0].rows if row_count else 0
 
 	def get_next_batch(self, table):
+		print '-------------------------DEBUG------------------------------------'
+		print self.brand_category
+		print ','.join(self.brand_category) if not isinstance(self.brand_category, basestring) else self.brand_category,
+		print '------------------------------------------------------------------'
 		return frappe.db.sql("""select * from `tab{table}` where category in ('{category_names}') order by item_name 
 	                limit {current_batch} offset {batch_offset}""".format(**{
 			"table" : table,
-			"category_names": ','.join(self.brand_category),
+			"category_names": ','.join(self.brand_category) if not isinstance(self.brand_category, basestring) else self.brand_category,
                         "current_batch" : int(self.total_batch_rows),
                         "batch_offset" : self.current_batch}), as_dict=1)
 
@@ -104,8 +108,8 @@ class TallyInternalStockImport:
                                                 "message": "Processing:"+rec.item_name
                                         }, user=frappe.session.user)
 
-		if self.brand_category:
-			if rec.cateogry.upper() not in self.brand_category:
+		if self.brand_category and rec.category:
+			if rec.category.upper() not in self.brand_category:
 				return
 
 		if not frappe.db.exists({"doctype":"Item","item_code": rec.item_name}):
@@ -132,7 +136,7 @@ class TallyInternalStockImport:
                                                 "message": "Processing:"+rec.item_name+" Batch:"+rec.batch
                                         }, user=frappe.session.user)
 
-		if self.brand_category:
+		if self.brand_category and rec.category:
 			if rec.category.upper() not in self.brand_category:
 				return
 
