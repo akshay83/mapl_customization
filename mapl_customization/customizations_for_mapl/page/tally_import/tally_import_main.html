@@ -4,6 +4,10 @@
             <label class="control-label text-muted small">Expected Start Date</label> 
             <input class="form-control hasDatepicker" name="exp_start_date" type="date" />
       </div>
+      <div class="control-input">
+            <label class="control-label text-muted small">Brand/Category</label> 
+            <input class="input-with-feedback form-control" name="brand" type="text" />
+      </div>
       <hr />
       <p style="font-size: 16px;">Method 1</p>
       <p class="text-muted">Populate Tables "Tally Stock Items" &amp; "Tally Stock Details" using Data Import Tool and Then Import.</p>
@@ -23,14 +27,13 @@
                <div style="float: left; padding-bottom: 10px; padding-top: 10px;">
                   <form id="frmFileUp"><input id="select_files" type="file" /></form>
                </div>
-               <div style="padding-bottom: 10px; padding-top: 10px;"><button id="btn_read" class="btn btn-sm btn-primary">Read</button></div>
+               <div style="padding-bottom: 10px; padding-top: 10px;">
+                  <button id="btn_read" class="btn btn-sm btn-primary">Read</button>
+               </div>
             </div>
             <div class="checkbox" style="position: initial; padding-bottom: 10px; padding-top: 10px;">
-                <label> <input name="always_insert" type="checkbox" /> {%= __("Do not update, but insert new records.") %} </label></div>
-            <div class="control-input">
-                <label class="control-label text-muted small">Brand/Category</label> 
-                <input class="input-with-feedback form-control" name="brand" type="text" />
-            </div>
+                <label> <input name="always_insert" type="checkbox" /> {%= __("Do not update, but insert new records.") %} </label>
+	    </div>
             <div class="checkbox" style="position: initial; padding-bottom: 10px; padding-top: 10px;">
                 <label> <input name="import_stock_items" type="checkbox" /> {%= __("Import Stock Items") %} </label>
             </div>

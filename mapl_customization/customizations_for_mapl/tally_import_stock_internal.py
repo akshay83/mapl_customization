@@ -3,11 +3,12 @@ import math
 import json
 
 class TallyInternalStockImport:
-	def __init__(self,od):
+	def __init__(self,od,bc):
 		self.total_rows = 0
 		self.total_batch_rows = 100.0
 		self.current_batch = 0
 		self.open_date = od
+		self.brand_category = bc
 		self.start_process()
 
 	def get_stock_item_count(self, table):
@@ -20,6 +21,10 @@ class TallyInternalStockImport:
 			"table" : table,
                         "current_batch" : int(self.total_batch_rows),
                         "batch_offset" : self.current_batch}), as_dict=1)
+
+	def update_category_in_details(self):
+		frappe.db.sql("""update `tabTally Stock Details` det set category=(select category from 
+			`tabTally Stock Items` where item_name=det.item_name)""")
 
 	def start_process(self):
 		frappe.publish_realtime("tally_import_progress", {
@@ -39,6 +44,11 @@ class TallyInternalStockImport:
                                         }, user=frappe.session.user)
 
 		self.do_warehouse()
+		frappe.publish_realtime("tally_import_progress", {
+                                                "message": """<span style="color:black;"><b>Updating Category/Brands in Details</b></span>"""
+                                        }, user=frappe.session.user)
+		
+		self.update_category_in_details()
 		frappe.db.commit()
 
 	        frappe.publish_realtime("tally_import_progress", {
@@ -91,6 +101,10 @@ class TallyInternalStockImport:
                                                 "message": "Processing:"+rec.item_name
                                         }, user=frappe.session.user)
 
+		if self.brand_category:
+			if rec.cateogry.upper() not in self.brand_category:
+				return
+
 		if not frappe.db.exists({"doctype":"Item","item_code": rec.item_name}):
 			item_doc = frappe.new_doc('Item')
 			item_doc.item_code = rec.item_name
@@ -104,9 +118,9 @@ class TallyInternalStockImport:
 				if template:
 					item_doc.taxes_template = template
 				else:
-					item_dic.taxes_template = frappe.db.get_value("Item Taxes Template", dict(name=('like', '%15%')))
+					item_doc.taxes_template = frappe.db.get_value("Item Taxes Template", dict(name=('like', '%15%')))
 			else:
-				item_dic.taxes_template = frappe.db.get_value("Item Taxes Template", dict(name=('like', '%15%')))
+				item_doc.taxes_template = frappe.db.get_value("Item Taxes Template", dict(name=('like', '%15%')))
 			item_doc.save(ignore_permissions=True)
 
 
@@ -115,7 +129,14 @@ class TallyInternalStockImport:
                                                 "message": "Processing:"+rec.item_name+" Batch:"+rec.batch
                                         }, user=frappe.session.user)
 
+		if self.brand_category:
+			if rec.category.upper() not in self.brand_category:
+				return
+
 		if (rec.qty<=0):
+			return
+
+		if not frappe.db.exists({"doctype":"Item","item_code": rec.item_name}):
 			return
 
 		stockentry_doc = frappe.new_doc('Stock Entry')
@@ -127,7 +148,7 @@ class TallyInternalStockImport:
 		item_detail.item_code = rec.item_name
 		item_detail.t_warehouse = frappe.get_value("Warehouse",filters={"warehouse_name": rec.warehouse})
 
-		if rec.batch != 'Primary Batch':
+		if rec.batch and len(rec.batch) > 0:
 			item_detail.serial_no = rec.batch        
 
 		item_detail.qty = rec.qty
@@ -166,16 +187,20 @@ class TallyInternalStockImport:
 				godown_doc.insert(ignore_permissions=True)
 
 @frappe.whitelist()
-def process_import(open_date=None):
+def process_import(open_date=None,brand=None):
 	params = json.loads(frappe.form_dict.get("params") or '{}')
 
 	if params.get("open_date"):
 		open_date = params.get("open_date")
 
+	if params.get("brand"):
+		brand = params.get("brand")
+		brand = brand.upper().rstrip(",").split(",")
+
 	if not open_date:
 		return
 
-	TallyInternalStockImport(od=open_date)
+	TallyInternalStockImport(od=open_date,bc=brand)
 
 	frappe.publish_realtime("tally_import_progress", {
                                                 "message": "Import From Internal Table Successful"
