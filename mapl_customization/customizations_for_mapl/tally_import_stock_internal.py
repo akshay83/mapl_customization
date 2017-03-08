@@ -5,14 +5,18 @@ import json
 class TallyInternalStockImport:
 	def __init__(self,od,bc):
 		self.total_rows = 0
-		self.total_batch_rows = 100.0
+		self.total_batch_rows = 20.0
 		self.current_batch = 0
 		self.open_date = od
 		self.brand_category = bc
 		self.start_process()
 
 	def get_stock_item_count(self, table):
-		row_count = frappe.db.sql("""select ifnull(count(*),0) as rows from `tab{table}`""".format(**{"table" : table}),as_dict=1)
+		row_count = frappe.db.sql("""select ifnull(count(*),0) as rows from `tab{table}`
+			where category in ('{category_names}')""".format(**{
+			"table" : table,
+			"category_names": ','.join(self.brand_category) if not isinstance(self.brand_category,basestring) else self.brand_category,
+			}),as_dict=1)
 		return row_count[0].rows if row_count else 0
 
 	def get_next_batch(self, table):
@@ -25,8 +29,14 @@ class TallyInternalStockImport:
 
 	def update_category_in_details(self):
 		row_count = frappe.db.sql("""select ifnull(count(*),0) as rows from `tabTally Stock Details` where category is not null""",as_dict=1)
-		if row_count <= 0:
-			frappe.db.sql("""update `tabTally Stock Details` det set category=(select category from 
+		if not row_count:
+			self.update_categories()
+		if (row_count and row_count[0].rows <= 0):
+			self.update_categories()
+
+
+	def update_categories(self):
+		frappe.db.sql("""update `tabTally Stock Details` det set category=(select category from 
 				`tabTally Stock Items` where item_name=det.item_name)""")
 
 	def start_process(self):
@@ -70,8 +80,13 @@ class TallyInternalStockImport:
 
 	def do_stock_details(self):
 		self.current_batch = 0
+		self.total_batch_rows = 5.0
 		self.total_rows = self.get_stock_item_count('Tally Stock Details')
 		self.total_batches = math.ceil(self.total_rows / self.total_batch_rows)
+		frappe.publish_realtime("tally_import_progress", {
+                                                "message": """<span style="color:black;">Total Batches:"""+str(self.total_batches)+"</span>"
+                                        }, user=frappe.session.user)
+
 		for x in range(0,int(self.total_batches)):
 			self.records = self.get_next_batch('Tally Stock Details')
 			if not self.records:
@@ -80,6 +95,10 @@ class TallyInternalStockImport:
 			for r in self.records:
 				if not r.imported:
 					self.process_stock_details(r)
+			frappe.publish_realtime("tally_import_progress", {
+	                                         "message": """<span style="color:black;">Commiting Batch:"""+str(x)+"</span>"
+                                        }, user=frappe.session.user)
+
 			frappe.db.commit()
 
 
@@ -88,6 +107,10 @@ class TallyInternalStockImport:
 		self.current_batch = 0
 		self.total_rows = self.get_stock_item_count('Tally Stock Items')
 		self.total_batches = math.ceil(self.total_rows / self.total_batch_rows)
+		frappe.publish_realtime("tally_import_progress", {
+                                                "message": """<span style="color:black;">Total Batches:"""+str(self.total_batches)+"</span>"
+                                        }, user=frappe.session.user)
+
 		for x in range(0,int(self.total_batches)):
 			self.records = self.get_next_batch('Tally Stock Items')
 			if not self.records:
@@ -96,6 +119,10 @@ class TallyInternalStockImport:
 			for r in self.records:
 				if r.closing_qty > 0:
 					self.process_stock_items(r)
+			frappe.publish_realtime("tally_import_progress", {
+                                                "message": """<span style="color:black;">Commiting Batch """+str(x)+"</span>"
+                                        }, user=frappe.session.user)
+
 			frappe.db.commit()
 
 
