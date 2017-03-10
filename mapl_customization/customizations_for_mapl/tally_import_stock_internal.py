@@ -1,6 +1,8 @@
 import frappe
 import math
 import json
+import gc
+import multiprocessing as mp
 from mapl_customization.customizations_for_mapl.internal_import.stock_details import InternalImportStockDetails
 from mapl_customization.customizations_for_mapl.internal_import.stockgroup_items import InternalImportStockGroupItems
 from mapl_customization.customizations_for_mapl.internal_import.stock_items import InternalImportStockItems
@@ -104,17 +106,22 @@ class TallyInternalStockImport:
 
 			for r in self.records:
 				if not r.imported:
-					frappe.publish_realtime("tally_import_progress", {
-                                                "message": "Processing:"+rec.item_name+" Batch:"+rec.batch
-                                        }, user=frappe.session.user)
+					#frappe.publish_realtime("tally_import_progress", {
+                                        #        "message": "Processing:"+r.item_name+" Batch:"+r.batch
+                                        #}, user=frappe.session.user)
 
-					InternalImportStockDetails(value=r,od=self.open_date,bc=self.brand_category)
+					proc = mp.Process(target=InternalImportStockDetails(value=r,od=self.open_date,bc=self.brand_category))
+					proc.start()
+					proc.join()
 
 			frappe.publish_realtime("tally_import_progress", {
 	                                         "message": """<span style="color:black;">Commiting Batch:"""+str(x)+"</span>"
                                         }, user=frappe.session.user)
 
 			frappe.db.commit()
+
+			del self.records
+			gc.collect()
 
 
 
@@ -136,13 +143,18 @@ class TallyInternalStockImport:
 
 			for r in self.records:
 				if r.closing_qty > 0:
-					InternalImportStockItems(value=r,bc=self.brand_category)
+					proc = mp.Process(target=InternalImportStockItems(value=r,bc=self.brand_category))
+					proc.start()
+					proc.join()
 
 			frappe.publish_realtime("tally_import_progress", {
                                                 "message": """<span style="color:black;">Commiting Batch """+str(x)+"</span>"
                                         }, user=frappe.session.user)
 
 			frappe.db.commit()
+
+			del self.records
+			gc.collect()
 
 
 	def do_categories(self):
