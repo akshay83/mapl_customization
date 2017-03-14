@@ -35,12 +35,8 @@ frappe.TallyImportTool = Class.extend({
 
 
 frappe.pages['tally-import'].on_page_show = function(wrapper) {
-<<<<<<< HEAD
-    $("#btn_import").prop("disabled", true)
-=======
     $("#btn_import").prop("disabled", true);
     //$("#btn_import_next_batch").prop("disabled", true);
->>>>>>> temp
 
     var $form = $("form[id='frmFileUp']");
     $("#btn_read").click(function() {
@@ -77,9 +73,6 @@ frappe.pages['tally-import'].on_page_show = function(wrapper) {
                 "message": "Starting Internal Process"
             });
 
-<<<<<<< HEAD
-            start_internal_import();
-=======
             start_internal_import(-1);
     });
     $("#btn_import_next_batch").click(function() {
@@ -88,27 +81,15 @@ frappe.pages['tally-import'].on_page_show = function(wrapper) {
             });
 
             start_internal_import(1);
->>>>>>> temp
     });
 };
 
 
-<<<<<<< HEAD
-function start_internal_import() {
-=======
 function start_internal_import(next_batch) {
->>>>>>> temp
     frappe.call({
         method: "mapl_customization.customizations_for_mapl.tally_import_stock_internal.process_import",
         args: {
             "open_date": $('div').find('[name="exp_start_date"]').val(),
-<<<<<<< HEAD
-	    "brand": $('div').find('[name="brand"]').val()
-        },
-        callback: function(r) {
-            if (!r.exc) {
-                 frappe.msgprint(__("Process Complete"));
-=======
 	    "brand": $('div').find('[name="brand"]').val(),
             "next_batch": next_batch
         },
@@ -122,7 +103,6 @@ function start_internal_import(next_batch) {
 		   frappe.msgprint(__("Process Complete"));
 		   $("#btn_import_next_batch").prop("disabled", true);
 		 }
->>>>>>> temp
             } else {
                  frappe.msgprint(__("Error during Importing <br /> " + r.exc));
             }
