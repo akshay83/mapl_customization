@@ -91,7 +91,6 @@ class TallyInternalStockImport:
 
 	def do_stock_details(self):
 		self.current_batch = 0
-		self.total_batch_rows = 5.0
 		self.total_rows = self.get_stock_item_count('Tally Stock Details',is_details=1)
 		self.the_end = 0
 		self.total_batches = math.ceil(self.total_rows / self.total_batch_rows)
@@ -168,6 +167,7 @@ class TallyInternalStockImport:
 		for w in warehouse:
 			InternalImportGodownItems(value=w)			
 
+@frappe.whitelist()
 def process_import(open_date=None,brand=None,next_batch=0):
 	params = json.loads(frappe.form_dict.get("params") or '{}')
 
