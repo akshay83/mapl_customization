@@ -7,7 +7,7 @@ class InternalImportStockItems:
 		self.process()        
 
 	def process(self):
-		print "DEBUG: PROCESSING: STOCK_ITEM:"+self.process_node.item_name
+		#print "DEBUG: PROCESSING: STOCK_ITEM:"+self.process_node.item_name
 		if self.brand_category:
 			if self.process_node.category.upper() not in self.brand_category.upper():
 				return
@@ -29,4 +29,4 @@ class InternalImportStockItems:
 			else:
 				item_doc.taxes_template = frappe.db.get_value("Item Taxes Template", dict(name=('like', '%15%')))
 			item_doc.save(ignore_permissions=True)     
-		print "DEBUG: INSERTED: STOCK_ITEM:"+self.process_node.item_name 
+		#print "DEBUG: INSERTED: STOCK_ITEM:"+self.process_node.item_name 

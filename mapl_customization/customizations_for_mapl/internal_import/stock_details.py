@@ -8,7 +8,7 @@ class InternalImportStockDetails:
 		self.process()        
 
 	def process(self):
-		print "DEBUG: PROCESSING: STOCK_ITEM:"+self.process_node.item_name
+		#print "DEBUG: PROCESSING: STOCK_ITEM:"+self.process_node.item_name
 		if self.brand_category:
 			if self.process_node.category.upper() not in self.brand_category.upper():
 				return
@@ -33,6 +33,9 @@ class InternalImportStockDetails:
 
 		item_detail.qty = self.process_node.qty
 
+		if self.process_node.value == 0:
+			self.process_node.value = 1
+
 		item_detail.basic_rate = self.process_node.value
 
 		stockentry_doc.save(ignore_permissions=True)
@@ -41,4 +44,4 @@ class InternalImportStockDetails:
 		import_doc = frappe.get_doc('Tally Stock Details', self.process_node.name)
 		import_doc.imported = 1
 		import_doc.save()		
-		print "DEBUG: INSERTED: STOCK_ITEM:"+self.process_node.item_name 
+		#print "DEBUG: INSERTED: STOCK_ITEM:"+self.process_node.item_name 

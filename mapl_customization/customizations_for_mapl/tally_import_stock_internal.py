@@ -24,7 +24,7 @@ class TallyInternalStockImport:
 			where category in ('{category_names}') {import_condition}""".format(**{
 			"table" : table,
 			"category_names": ','.join(self.brand_category) if not isinstance(self.brand_category,basestring) else self.brand_category,
-			"import_condition" : " and imported=0 and qty > 0 " if is_details==1 else ""
+			"import_condition" : " and imported=0 and qty > 0 and item_name in (select item_name from `tabItem`) " if is_details==1 else ""
 			}),as_dict=1)
 		return row_count[0].rows if row_count else 0
 
@@ -33,7 +33,7 @@ class TallyInternalStockImport:
 	                limit {current_batch} offset {batch_offset}""".format(**{
 			"table" : table,
 			"category_names": ','.join(self.brand_category) if not isinstance(self.brand_category, basestring) else self.brand_category,
-			"import_condition": " and imported=0 and qty > 0 " if is_details==1 else "",
+			"import_condition": " and imported=0 and qty > 0 and item_name in (select item_name from `tabItem`) " if is_details==1 else "",
                         "current_batch" : int(self.total_batch_rows),
                         "batch_offset" : self.current_batch}), as_dict=1)
 
@@ -112,8 +112,12 @@ class TallyInternalStockImport:
 				frappe.publish_realtime("tally_import_progress", {
                                                 "message": """Processing:"""+r.item_name+" "+r.batch
                                         }, user=frappe.session.user)
-				InternalImportStockDetails(value=r,od=self.open_date,bc=self.brand_category)
+				t = InternalImportStockDetails(value=r,od=self.open_date,bc=self.brand_category)
+				del t
 				gc.collect()
+		
+		del self.records
+		gc.collect()
 
 		frappe.publish_realtime("tally_import_progress", {
 	                                         "message": """<span style="color:black;">Commiting Batch:"</span>"""
