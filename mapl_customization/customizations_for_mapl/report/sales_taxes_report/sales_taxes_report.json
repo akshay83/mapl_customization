@@ -1,0 +1,18 @@
+{
+ "add_total_row": 0, 
+ "apply_user_permissions": 1, 
+ "creation": "2016-02-24 17:05:21.481765", 
+ "disabled": 0, 
+ "docstatus": 0, 
+ "doctype": "Report", 
+ "idx": 0, 
+ "is_standard": "Yes", 
+ "modified": "2016-02-24 18:37:30.385317", 
+ "modified_by": "Administrator", 
+ "module": "Customizations for MAPL", 
+ "name": "Sales Taxes Report", 
+ "owner": "Administrator", 
+ "ref_doctype": "Sales Invoice", 
+ "report_name": "Sales Taxes Report", 
+ "report_type": "Script Report"
+}

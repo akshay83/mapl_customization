@@ -1,0 +1,56 @@
+<div class="tally-import-tool" style="margin: 10px;">
+   <div>
+      <div class="date" style="padding-bottom: 10px; padding-top: 10px;">
+            <label class="control-label text-muted small">Expected Start Date</label> 
+            <input class="form-control hasDatepicker" name="exp_start_date" type="date" />
+      </div>
+      <div class="control-input">
+            <label class="control-label text-muted small">Brand/Category</label> 
+            <input class="input-with-feedback form-control" name="brand" type="text" />
+      </div>
+      <hr />
+      <p style="font-size: 16px;">Method 1</p>
+      <p class="text-muted">Populate Tables "Tally Stock Items" &amp; "Tally Stock Details" using Data Import Tool and Then Import.</p>
+      <div style="float:left;padding-right:10px;padding-bottom: 10px; padding-top: 10px;">
+            <button id="btn_import_internal" class="btn btn-sm btn-primary">Import from Internal Table</button>
+      </div>
+      <div style="padding-bottom: 10px; padding-top: 10px;">
+            <button id="btn_import_next_batch" class="btn btn-sm btn-primary">Import Next Batch</button>
+      </div>
+      <hr />
+      <p style="font-size: 16px;">Method 2</p>
+      <p class="text-muted">Export data in XML Format from Tally by going into Display-&gt;List of Accounts. Attach the file here. Supports Tally ERP.9</p>
+      <p class="text-muted">Read the File First and then Import</p>
+      <div class="row">
+         <div class="col-md-6" style="float: initial;">
+            <div class="checkbox" style="padding-bottom: 10px; padding-top: 10px;">
+                <label> <input name="compress_data" type="checkbox" /> {%= __("Compress Data Before Upload") %} </label>
+            </div>
+            <div>
+               <div style="float: left; padding-bottom: 10px; padding-top: 10px;">
+                  <form id="frmFileUp"><input id="select_files" type="file" /></form>
+               </div>
+               <div style="padding-bottom: 10px; padding-top: 10px;">
+                  <button id="btn_read" class="btn btn-sm btn-primary">Read</button>
+               </div>
+            </div>
+            <div class="checkbox" style="position: initial; padding-bottom: 10px; padding-top: 10px;">
+                <label> <input name="always_insert" type="checkbox" /> {%= __("Do not update, but insert new records.") %} </label>
+	    </div>
+            <div class="checkbox" style="position: initial; padding-bottom: 10px; padding-top: 10px;">
+                <label> <input name="import_stock_items" type="checkbox" /> {%= __("Import Stock Items") %} </label>
+            </div>
+            <div class="checkbox" style="position: initial; padding-bottom: 10px; padding-top: 10px;">
+                <label> <input name="import_sundry_debtors" type="checkbox" /> {%= __("Import Sundry Debtors") %} </label>
+            </div>
+            <div style="padding-bottom: 10px; padding-top: 10px;">
+                <button id="btn_import" class="btn btn-sm btn-primary">Import</button>
+            </div>
+         </div>
+         <div class="import-log hide col-md-6" style="float: left; width: 100%; padding-bottom: 10px; padding-top: 10px;">
+            <h3>Import Log</h3>
+            <div class="import-log-messages" style="height: 200px; overflow-y: auto;">&nbsp;</div>
+         </div>
+      </div>
+   </div>
+</div>

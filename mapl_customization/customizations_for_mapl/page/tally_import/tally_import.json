@@ -1,0 +1,23 @@
+{
+ "content": null, 
+ "creation": "2016-06-24 15:41:10.714829", 
+ "docstatus": 0, 
+ "doctype": "Page", 
+ "icon": "icon-upload", 
+ "idx": 0, 
+ "modified": "2017-02-24 23:32:33.225517", 
+ "modified_by": "Administrator", 
+ "module": "Customizations for MAPL", 
+ "name": "tally-import", 
+ "owner": "Administrator", 
+ "page_name": "tally-import", 
+ "roles": [
+  {
+   "role": "All"
+  }
+ ], 
+ "script": null, 
+ "standard": "Yes", 
+ "style": null, 
+ "title": "Tally Import"
+}

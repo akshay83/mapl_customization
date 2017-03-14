@@ -1,0 +1,22 @@
+[
+ {
+  "allow_against_multiple_purchase_orders": 0, 
+  "allow_multiple_items": 1, 
+  "campaign_naming_by": "Campaign Name", 
+  "check_price": "", 
+  "close_opportunity_after_days": 0, 
+  "cust_master_name": "Naming Series", 
+  "customer_group": "Individual", 
+  "dn_required": "No", 
+  "docstatus": 0, 
+  "doctype": "Selling Settings", 
+  "editable_price_list_rate": 0, 
+  "maintain_same_sales_rate": 0, 
+  "modified": "2016-07-27 20:46:10.683980", 
+  "name": "Selling Settings", 
+  "selling_price_list": "Standard Selling", 
+  "so_required": "No", 
+  "territory": "India", 
+  "validate_selling_price": 0
+ }
+]

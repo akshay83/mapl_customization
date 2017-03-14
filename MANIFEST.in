@@ -1,0 +1,18 @@
+include MANIFEST.in
+include requirements.txt
+include *.json
+include *.md
+include *.py
+include *.txt
+recursive-include mapl_customization *.css
+recursive-include mapl_customization *.csv
+recursive-include mapl_customization *.html
+recursive-include mapl_customization *.ico
+recursive-include mapl_customization *.js
+recursive-include mapl_customization *.json
+recursive-include mapl_customization *.md
+recursive-include mapl_customization *.png
+recursive-include mapl_customization *.py
+recursive-include mapl_customization *.svg
+recursive-include mapl_customization *.txt
+recursive-exclude mapl_customization *.pyc
