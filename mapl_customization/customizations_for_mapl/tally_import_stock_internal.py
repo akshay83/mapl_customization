@@ -11,12 +11,17 @@ from mapl_customization.customizations_for_mapl.internal_import.stockcategory_it
 
 
 class TallyInternalStockImport:
+<<<<<<< HEAD
 	def __init__(self,od,bc):
+=======
+	def __init__(self,od,bc,nb):
+>>>>>>> temp
 		self.total_rows = 0
 		self.total_batch_rows = 20.0
 		self.current_batch = 0
 		self.open_date = od
 		self.brand_category = bc
+<<<<<<< HEAD
 		self.start_process()
 
 	def get_stock_item_count(self, table):
@@ -32,6 +37,26 @@ class TallyInternalStockImport:
 	                limit {current_batch} offset {batch_offset}""".format(**{
 			"table" : table,
 			"category_names": ','.join(self.brand_category) if not isinstance(self.brand_category, basestring) else self.brand_category,
+=======
+		self.next_batch = nb
+		self.start_process()
+
+	def get_stock_item_count(self, table, is_details=0):
+		row_count = frappe.db.sql("""select ifnull(count(*),0) as rows from `tab{table}`
+			where category in ('{category_names}') {import_condition}""".format(**{
+			"table" : table,
+			"category_names": ','.join(self.brand_category) if not isinstance(self.brand_category,basestring) else self.brand_category,
+			"import_condition" : " and imported=0 and qty > 0 " if is_details==1 else ""
+			}),as_dict=1)
+		return row_count[0].rows if row_count else 0
+
+	def get_next_batch(self, table, is_details=0):
+		return frappe.db.sql("""select * from `tab{table}` where category in ('{category_names}') {import_condition} order by item_name 
+	                limit {current_batch} offset {batch_offset}""".format(**{
+			"table" : table,
+			"category_names": ','.join(self.brand_category) if not isinstance(self.brand_category, basestring) else self.brand_category,
+			"import_condition": " and imported=0 and qty > 0 " if is_details==1 else "",
+>>>>>>> temp
                         "current_batch" : int(self.total_batch_rows),
                         "batch_offset" : self.current_batch}), as_dict=1)
 
@@ -48,6 +73,7 @@ class TallyInternalStockImport:
 				`tabTally Stock Items` where item_name=det.item_name)""")
 
 	def start_process(self):
+<<<<<<< HEAD
 		frappe.publish_realtime("tally_import_progress", {
                                                 "message": """<span style="color:black;"><b>Importing Categories</b></span>"""
                                         }, user=frappe.session.user)
@@ -79,6 +105,40 @@ class TallyInternalStockImport:
 		self.do_stock_items()
 
 		frappe.publish_realtime("tally_import_progress", {
+=======
+		if self.next_batch <= 0:
+			frappe.publish_realtime("tally_import_progress", {
+                                                "message": """<span style="color:black;"><b>Importing Categories</b></span>"""
+                                        }, user=frappe.session.user)
+
+			self.do_categories()
+
+			frappe.publish_realtime("tally_import_progress", {
+                                                "message": """<span style="color:black;"><b>Importing Stock Groups</b></span>"""
+                                        }, user=frappe.session.user)
+
+			self.do_stock_groups()
+
+			frappe.publish_realtime("tally_import_progress", {
+                                                "message": """<span style="color:black;"><b>Importing Warehouses</b></span>"""
+                                        }, user=frappe.session.user)
+
+			self.do_warehouse()
+			frappe.publish_realtime("tally_import_progress", {
+                                                "message": """<span style="color:black;"><b>Updating Category/Brands in Details</b></span>"""
+                                        }, user=frappe.session.user)
+		
+			self.update_category_in_details()
+			frappe.db.commit()
+
+			frappe.publish_realtime("tally_import_progress", {
+                                                "message": """<span style="color:black;"><b>Importing Stock Items</b></span>"""
+                                        }, user=frappe.session.user)
+
+			self.do_stock_items()
+
+			frappe.publish_realtime("tally_import_progress", {
+>>>>>>> temp
                                                 "message": """<span style="color:black;"><b>Importing Stock Details</b></span>"""
                                         }, user=frappe.session.user)
 
@@ -88,14 +148,20 @@ class TallyInternalStockImport:
 
 	def do_stock_details(self):
 		self.current_batch = 0
+<<<<<<< HEAD
 		self.total_batch_rows = 5.0
 		self.total_rows = self.get_stock_item_count('Tally Stock Details')
+=======
+		self.total_rows = self.get_stock_item_count('Tally Stock Details',is_details=1)
+		self.the_end = 0
+>>>>>>> temp
 		self.total_batches = math.ceil(self.total_rows / self.total_batch_rows)
 
 		frappe.publish_realtime("tally_import_progress", {
                                                 "message": """<span style="color:black;">Total Batches:"""+str(self.total_batches)+"</span>"
                                         }, user=frappe.session.user)
 
+<<<<<<< HEAD
 		for x in range(0,int(self.total_batches)):
 			self.records = self.get_next_batch('Tally Stock Details')
 
@@ -122,6 +188,29 @@ class TallyInternalStockImport:
 
 			del self.records
 			gc.collect()
+=======
+		self.records = self.get_next_batch('Tally Stock Details',is_details=1)
+
+		if not self.records:
+			self.the_end = 1
+			return
+
+		self.current_batch = self.current_batch + len(self.records)
+
+		for r in self.records:
+			if not r.imported:
+				frappe.publish_realtime("tally_import_progress", {
+                                                "message": """Processing:"""+r.item_name+" "+r.batch
+                                        }, user=frappe.session.user)
+				InternalImportStockDetails(value=r,od=self.open_date,bc=self.brand_category)
+				gc.collect()
+
+		frappe.publish_realtime("tally_import_progress", {
+	                                         "message": """<span style="color:black;">Commiting Batch:"</span>"""
+                                        }, user=frappe.session.user)
+
+		frappe.db.commit()
+>>>>>>> temp
 
 
 
@@ -143,9 +232,13 @@ class TallyInternalStockImport:
 
 			for r in self.records:
 				if r.closing_qty > 0:
+<<<<<<< HEAD
 					proc = mp.Process(target=InternalImportStockItems(value=r,bc=self.brand_category))
 					proc.start()
 					proc.join()
+=======
+					InternalImportStockItems(value=r,bc=self.brand_category)
+>>>>>>> temp
 
 			frappe.publish_realtime("tally_import_progress", {
                                                 "message": """<span style="color:black;">Commiting Batch """+str(x)+"</span>"
@@ -173,7 +266,11 @@ class TallyInternalStockImport:
 			InternalImportGodownItems(value=w)			
 
 @frappe.whitelist()
+<<<<<<< HEAD
 def process_import(open_date=None,brand=None):
+=======
+def process_import(open_date=None,brand=None,next_batch=0):
+>>>>>>> temp
 	params = json.loads(frappe.form_dict.get("params") or '{}')
 
 	if params.get("open_date"):
@@ -183,6 +280,7 @@ def process_import(open_date=None,brand=None):
 		brand = params.get("brand")
 		brand = brand.upper().rstrip(",").split(",")
 
+<<<<<<< HEAD
 	if not open_date:
 		return
 
@@ -193,4 +291,20 @@ def process_import(open_date=None,brand=None):
                                         }, user=frappe.session.user)
 
 	return {"messages": "Import Successful", "error": False}
+=======
+	if params.get("next_batch"):
+		next_batch = int(params.get("next_batch"))
+
+	if not open_date:
+		return
+
+	tism = TallyInternalStockImport(od=open_date,bc=brand,nb=int(next_batch))
+
+	if next_batch==0:
+		return {"messages": tism.total_batches, "error": False}
+	elif tism.the_end>0:
+		return {"messages": 1, "error": False}
+	else:
+		return {"messages": 0, "error": False}
+>>>>>>> temp
 
