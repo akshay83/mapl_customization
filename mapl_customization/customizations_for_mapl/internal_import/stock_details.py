@@ -36,12 +36,8 @@ class InternalImportStockDetails:
 		item_detail.basic_rate = self.process_node.value
 
 		stockentry_doc.save(ignore_permissions=True)
-<<<<<<< HEAD
-		#stockentry_doc.submit()
-=======
 		stockentry_doc.submit()
 
->>>>>>> temp
 		import_doc = frappe.get_doc('Tally Stock Details', self.process_node.name)
 		import_doc.imported = 1
 		import_doc.save()		
