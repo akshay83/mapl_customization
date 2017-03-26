@@ -1,0 +1,3 @@
+execute:import unidecode # new requirement
+
+mapl_customization.patches.warehouse_error
