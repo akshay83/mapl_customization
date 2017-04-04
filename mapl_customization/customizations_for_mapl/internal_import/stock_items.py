@@ -19,6 +19,7 @@ class InternalImportStockItems:
 			item_doc.item_group = self.process_node.stock_group
 			item_doc.brand = self.process_node.category            
 			item_doc.has_serial_no = self.process_node.batch_on
+			item_doc.description = self.process_node.description
 			item_doc.is_stock_item = 1
 			if self.process_node.vat_rate:
 				template = frappe.db.get_value("Item Taxes Template", dict(name=('like', '%%%s%%' % self.process_node.vat_rate)))
