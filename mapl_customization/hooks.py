@@ -12,7 +12,7 @@ app_version = "0.0.1"
 app_license = "MIT"
 
 fixtures = ["Custom Field", "Property Setter", "Stock Settings", "Selling Settings","Buying Settings","Custom Script",
-		 "Print Format", "Letter Head", "Workflow", "Workflow State", "Workflow Action"]
+		 "Print Format", "Letter Head", "Workflow", "Workflow State", "Workflow Action", "Custom SQL Queries"]
 
 doc_events = {
 	"Item" : {

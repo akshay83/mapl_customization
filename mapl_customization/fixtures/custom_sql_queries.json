@@ -1,0 +1,29 @@
+[
+ {
+  "description": null, 
+  "docstatus": 0, 
+  "doctype": "Custom SQL Queries", 
+  "modified": "2017-04-23 16:25:00.380654", 
+  "name": "Current Stock", 
+  "query": "select item.item_code, item.brand, ifnull((select qty_after_transaction from `tabStock Ledger Entry` det where docstatus=1 and item_code=item.item_code order by posting_date, posting_time desc limit 1),0) as Qty from `tabItem` item order by item.brand, item.item_code", 
+  "query_name": "Current Stock"
+ }, 
+ {
+  "description": null, 
+  "docstatus": 0, 
+  "doctype": "Custom SQL Queries", 
+  "modified": "2017-04-23 16:26:58.214877", 
+  "name": "Current Warehouse-wise Stock", 
+  "query": "select item.item_code, item.item_group, item.brand, det.warehouse, sum(det.actual_qty) from `tabStock Ledger Entry` det,`tabItem` item where det.docstatus=1 and det.item_code=item.item_code group by det.item_code, det.warehouse order by item.brand, item.item_group, item.item_code", 
+  "query_name": "Current Warehouse-wise Stock"
+ }, 
+ {
+  "description": "Gets current stock from `Stock Ledger Entry` and `Serial No` with Details of Each Serial No and Item", 
+  "docstatus": 0, 
+  "doctype": "Custom SQL Queries", 
+  "modified": "2017-04-23 16:28:50.180151", 
+  "name": "Current Stock with Serial No Details", 
+  "query": "select * from ((select ser.name, ser.item_code, ser.item_group, ser.brand, ser.description, ser.warehouse, 1 as qty,ser.purchase_rate as rate, item.taxes_template from `tabSerial No` ser,`tabItem` item where ser.warehouse is not null and item.item_code=ser.item_code) union all \n(select null, item.item_code, item.item_group, item.brand, item.description, led.warehouse, sum(led.actual_qty),(sum(led.stock_value_difference)/sum(led.actual_qty)), item.taxes_template from `tabStock Ledger Entry` led, `tabItem` item where item.item_code=led.item_code and has_serial_no = 0 and led.docstatus = 1 group by item.item_code, led.warehouse)) a order by brand, item_code", 
+  "query_name": "Current Stock with Serial No Details"
+ }
+]
