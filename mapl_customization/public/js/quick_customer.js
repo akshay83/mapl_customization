@@ -90,7 +90,11 @@ custom.customer_quick_entry.unset_called_from = function() {
 custom.customer_quick_entry.set_default_values = function(doc, docfields) {
 	for(var fid=0;fid<docfields.length;fid++) {
 		var f = docfields[fid];
-		var v = frappe.model.get_default_value(f, {doctype: 'Customer'}, null);
+		var v;
+		try {
+			v = frappe.model.get_default_value(f, {doctype: 'Customer'}, null);
+		} catch (err) {
+		}
 		if(v) {
 			doc.set_value(f.fieldname, v);
 		} else if(f.fieldtype == "Select" && f.options && typeof f.options === 'string'
