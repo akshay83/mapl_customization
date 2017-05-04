@@ -1,6 +1,6 @@
 [
  {
-  "allow_negative_stock": 0, 
+  "allow_negative_stock": 1, 
   "auto_indent": 0, 
   "auto_insert_price_list_rate_if_missing": 0, 
   "automatically_set_serial_nos_based_on_fifo": 0, 
@@ -9,7 +9,7 @@
   "doctype": "Stock Settings", 
   "item_group": "", 
   "item_naming_by": "Item Code", 
-  "modified": "2017-03-28 16:11:24.941114", 
+  "modified": "2017-05-04 19:09:57.922231", 
   "name": "Stock Settings", 
   "reorder_email_notify": 0, 
   "show_barcode_field": 0, 
