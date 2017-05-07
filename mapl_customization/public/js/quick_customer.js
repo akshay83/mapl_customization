@@ -24,7 +24,7 @@ custom.customer_quick_entry = function (doc) {
 				{fieldtype: "Link", fieldname: "billing_country", label: __("Billing Country"), reqd: 0, options:"Country"},
 				{fieldtype: "Data", fieldname: "billing_phone", label: __("Billing Phone"), reqd: 0},
 				{fieldtype: "Data", fieldname: "billing_fax", label: __("Billing Fax"), reqd: 0},
-				{fieldtype: "Data", fieldname: "billing_email_id", label: __("Billing Email ID"), reqd: 0},
+				{fieldtype: "Data", fieldname: "billing_email_id", label: __("Billing Email ID"), reqd: 1},
 				{fieldtype: "Column Break", fieldname: "column_break_1"},
 				{fieldtype: "Data", fieldname: "shipping_address_1", label: __("Shipping Address 1"), reqd: 0},
 				{fieldtype: "Data", fieldname: "shipping_address_2", label: __("Shipping Address 2"), reqd: 0},
