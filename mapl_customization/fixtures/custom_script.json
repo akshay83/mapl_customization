@@ -142,5 +142,14 @@
   "name": "Address-Client", 
   "script": "frappe.ui.form.on(\"Address\",\"refresh\", function(frm) {\n\t\tif (!frm.doc.__islocal && !cur_frm.is_dirty()) {\n\t\t\tfrm.add_custom_button(__('Update Address'), function() {\n\t\t            frappe.call({\n\t\t                method: \"mapl_customization.customizations_for_mapl.update_address.update_address\",\n\t\t                args: {\n\t\t                    \"address_name\": frm.doc.name,\n\t\t                },\n\n                \t\tcallback: function(r) {\n\t\t\t\t\tif(!r.exc) {\n\t\t\t\t\t\tfrappe.msgprint(__(\"Address Updated Across All Relevant Documents\"));\n\t\t\t\t\t}\t\t       \n\t\t\t\t}\n\t\t            });\n\t\t\t});\n\t\t} else {\n\t\t\tfrappe.msgprint(__(\"Please Save Changes Before Updating\"));\n\t\t}\n});", 
   "script_type": "Client"
+ }, 
+ {
+  "docstatus": 0, 
+  "doctype": "Custom Script", 
+  "dt": "Quotation", 
+  "modified": "2017-05-14 19:27:21.260308", 
+  "name": "Quotation-Client", 
+  "script": "frappe.ui.form.on(\"Quotation\", \"onload\", function(frm) {\n\tfrappe.db.get_value(\"User\",frappe.boot.user.name,\"user_group\", function(r) \n\t\t{ \n\t\t\tif (r.user_group) { \n\t\t\t\tvar grp = r.user_group;\n\t\t\t\tif (grp == \"Geeta Bhawan\") {\n\t\t\t\t\tcur_frm.set_value('naming_series','MAPL/GB/QTN/.YYYY./.######');\n\t\t\t\t} else if (grp == \"Vijay Nagar\") {\n\t\t\t\t\tcur_frm.set_value('naming_series','MAPL/VN/QTN/.YYYY./.######');\n\t\t\t\t} else if (grp == \"Ranjeet Hanuman\") {\n\t\t\t\t\tcur_frm.set_value('naming_series','MAPL/RH/QTN/.YYYY./.######');\n\t\t\t\t}\n\t\t\t} \n\t\t});\t\n});\nfrappe.ui.form.on(\"Quotation\", \"refresh\", function(frm) {\n\tif (frm.doc.__islocal) {\n\t\tcur_frm.set_value('tc_name','Quotation Terms & Conditions');\n\t\tcur_frm.set_value('valid_till', frappe.datetime.add_days(Today, 15));\n\t}\n});\n", 
+  "script_type": "Client"
  }
 ]
