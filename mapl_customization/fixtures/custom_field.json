@@ -4329,7 +4329,7 @@
   "width": null
  }, 
  {
-  "allow_on_submit": 0, 
+  "allow_on_submit": 1, 
   "bold": 0, 
   "collapsible": 0, 
   "collapsible_depends_on": null, 
@@ -4349,7 +4349,7 @@
   "in_standard_filter": 0, 
   "insert_after": "order_type", 
   "label": "Valid Till", 
-  "modified": "2017-05-14 17:55:37.932035", 
+  "modified": "2017-05-15 17:05:24.154500", 
   "name": "Quotation-valid_till", 
   "no_copy": 0, 
   "options": null, 
@@ -4403,7 +4403,7 @@
   "width": null
  }, 
  {
-  "allow_on_submit": 0, 
+  "allow_on_submit": 1, 
   "bold": 0, 
   "collapsible": 0, 
   "collapsible_depends_on": null, 
@@ -4423,7 +4423,7 @@
   "in_standard_filter": 0, 
   "insert_after": "introduction", 
   "label": "Introductory Information", 
-  "modified": "2017-05-14 17:55:39.105203", 
+  "modified": "2017-05-15 17:05:14.210102", 
   "name": "Quotation-introductory_information", 
   "no_copy": 0, 
   "options": null, 
@@ -4477,7 +4477,7 @@
   "width": null
  }, 
  {
-  "allow_on_submit": 0, 
+  "allow_on_submit": 1, 
   "bold": 0, 
   "collapsible": 0, 
   "collapsible_depends_on": null, 
@@ -4497,7 +4497,7 @@
   "in_standard_filter": 0, 
   "insert_after": "closing_information", 
   "label": "Closing Comments", 
-  "modified": "2017-05-14 17:55:40.074613", 
+  "modified": "2017-05-15 17:05:03.878589", 
   "name": "Quotation-closing_comments", 
   "no_copy": 0, 
   "options": null, 
@@ -4514,7 +4514,7 @@
   "width": null
  }, 
  {
-  "allow_on_submit": 0, 
+  "allow_on_submit": 1, 
   "bold": 0, 
   "collapsible": 0, 
   "collapsible_depends_on": null, 
@@ -4534,7 +4534,7 @@
   "in_standard_filter": 0, 
   "insert_after": "valid_till", 
   "label": "Is Inclusive of Taxes", 
-  "modified": "2017-05-14 18:06:00.862425", 
+  "modified": "2017-05-15 17:04:56.715479", 
   "name": "Quotation-is_inclusive_of_taxes", 
   "no_copy": 0, 
   "options": null, 
@@ -4588,7 +4588,7 @@
   "width": null
  }, 
  {
-  "allow_on_submit": 0, 
+  "allow_on_submit": 1, 
   "bold": 0, 
   "collapsible": 0, 
   "collapsible_depends_on": null, 
@@ -4608,7 +4608,7 @@
   "in_standard_filter": 0, 
   "insert_after": "bank_details", 
   "label": "Show Bank Details", 
-  "modified": "2017-05-15 16:32:21.273789", 
+  "modified": "2017-05-15 17:04:41.808618", 
   "name": "Quotation-show_bank_details", 
   "no_copy": 0, 
   "options": null, 
@@ -4662,7 +4662,7 @@
   "width": null
  }, 
  {
-  "allow_on_submit": 0, 
+  "allow_on_submit": 1, 
   "bold": 0, 
   "collapsible": 0, 
   "collapsible_depends_on": null, 
@@ -4682,7 +4682,7 @@
   "in_standard_filter": 0, 
   "insert_after": "bank_details_cb", 
   "label": "Bank", 
-  "modified": "2017-05-15 16:32:22.484115", 
+  "modified": "2017-05-15 17:04:07.870529", 
   "name": "Quotation-bank", 
   "no_copy": 0, 
   "options": "Bank Detail", 
