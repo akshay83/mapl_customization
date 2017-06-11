@@ -46,6 +46,9 @@ doc_events = {
 	},
 	"Purchase Invoice" : {
 		"on_update_after_submit":"mapl_customization.customizations_for_mapl.purchase_invoice_hooks.purchase_invoice_on_update_after_submit", 
+	},
+	"Sales Invoice" : {
+		"on_update_after_submit":"mapl_customization.customizations_for_mapl.sales_invoice_hooks.sales_invoice_on_update_after_submit", 
 	}
 }
 app_include_css = "/assets/mapl_customization/css/custom_css.css"
