@@ -18,6 +18,7 @@ def sales_invoice_on_update_after_submit(doc, method):
 	doc.db_update()
 
 	if cint(doc.update_stock):
+		doc.update_serial_no(in_cancel=True)
 		doc.update_stock_ledger()
 
 	frappe.db.sql("""delete from `tabGL Entry` where voucher_no=%(vname)s""", {
@@ -28,6 +29,7 @@ def sales_invoice_on_update_after_submit(doc, method):
 	doc.db_update()
 
 	if cint(doc.update_stock):
+		doc.update_serial_no()
 		doc.update_stock_ledger()
 
 	doc.make_gl_entries()
