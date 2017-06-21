@@ -5,7 +5,7 @@ from frappe.utils import today
 from erpnext.accounts.utils import get_fiscal_year
 from frappe.utils import cstr, cint
 from erpnext.stock.stock_ledger import update_entries_after
-from erpnext.controllers.stock_controller import get_warehouse_account, update_gl_entries_after
+from erpnext.controllers.stock_controller import update_gl_entries_after
 
 
 def sales_invoice_on_update_after_submit(doc, method):
@@ -18,7 +18,6 @@ def sales_invoice_on_update_after_submit(doc, method):
 	doc.db_update()
 
 	if cint(doc.update_stock):
-		doc.update_serial_no(in_cancel=True)
 		doc.update_stock_ledger()
 
 	frappe.db.sql("""delete from `tabGL Entry` where voucher_no=%(vname)s""", {
@@ -29,7 +28,6 @@ def sales_invoice_on_update_after_submit(doc, method):
 	doc.db_update()
 
 	if cint(doc.update_stock):
-		doc.update_serial_no()
 		doc.update_stock_ledger()
 
 	doc.make_gl_entries()

@@ -6,7 +6,7 @@ from erpnext.accounts.utils import get_fiscal_year
 from frappe.utils import cstr, cint
 from erpnext.stock.stock_ledger import update_entries_after
 from erpnext.accounts.doctype.gl_entry.gl_entry import update_outstanding_amt
-from erpnext.controllers.stock_controller import get_warehouse_account, update_gl_entries_after
+from erpnext.controllers.stock_controller import update_gl_entries_after
 
 
 def purchase_invoice_on_update_after_submit(doc, method):
