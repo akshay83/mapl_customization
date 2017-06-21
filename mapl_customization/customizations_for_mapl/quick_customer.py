@@ -42,7 +42,7 @@ def make_customer(args):
 	validate(args)
 	customer_keys = args.keys()
 	customer_doc = frappe.new_doc("Customer")
-	customer_doc.salutaion = args["salutation"]
+	customer_doc.salutation = args["salutation"]
 	customer_doc.customer_name = args["customer_name"]
 	customer_doc.customer_group = args["customer_group"]
 	customer_doc.territory = args["territory"]

@@ -6,7 +6,7 @@ custom.customer_quick_entry = function (doc) {
 			title: __("Quick Customer Entry"),
 			fields: [
 				{fieldtype: "Select", fieldname: "customer_type", label: __("Customer Type"), reqd: 1, options: "Company\nIndividual", default: "Individual"},
-				{fieldtype: "Select", fieldname: "salutation", label: __("Salutation"), reqd:0, options: "Mr\nMrs\nMiss\nMs\nM/s\nDr", default: "Mr"},
+				{fieldtype: "Link", fieldname: "salutation", label: __("Salutation"), reqd:0, options: "Salutation"},
 				{fieldtype: "Data", fieldname: "customer_name", label: __("Customer Name"), reqd: 1},
 				{fieldtype: "Data", fieldname: "company_name", label: __("Company Name"), reqd: 0},
 				{fieldtype: "Data", fieldname: "tax_id", label: __("Tax ID"), reqd: 0},
