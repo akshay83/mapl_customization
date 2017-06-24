@@ -1,3 +1,5 @@
+@media screen and (min-width: 916px) {
+
 .module-body {
 	padding-left:200px;
 }
@@ -79,11 +81,11 @@
 	margin-top: 15px;
 }
 .after-save {
-    position: fixed;
-    z-index: 1025;
-    width: 500px;
+	position: fixed;
+	z-index: 1025;
+	width: 500px;
 	bottom: 10px;
-    height: 250px;
+	height: 250px;
 	background: #0094cd;
 	overflow-y:hidden;	
 	box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
@@ -201,4 +203,5 @@ a {
 }
 #page-desktop {
 	background-color: #252525 !important;
+}
 }

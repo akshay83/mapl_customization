@@ -2,6 +2,7 @@ frappe.provide('frappe.pages');
 frappe.provide('frappe');
 
 $(document).ready(function() {
+  if (screen.width >= 961) {
     var navbar = $('div').find('.navbar-header');
 
     var collapse_button = '<button id="side-bar-menu" type="button" class="btn btn-default collapsible-button" onclick="doSideBar()"> \
@@ -10,14 +11,17 @@ $(document).ready(function() {
 
     navbar.prepend(collapse_button);
     $('#side-bar-menu').hide();
+  }
 });
 
 $(document).on("page-change", function() {
+  if (screen.width >= 961) {
     if (frappe.get_route_str() == '') {
              $('#side-bar-menu').hide();
     } else {
              $('#side-bar-menu').show();
     }
+  }
 });
 
 
@@ -33,7 +37,7 @@ doSideBar = function() {
 }
 
 $(document).click(function(e){
-
+  if (screen.width >= 961) {
     if (e.target.id == 'side-bar-menu') {
         return;
     }
@@ -41,6 +45,6 @@ $(document).click(function(e){
         return;
     }
     $('div').find('.col-md-2.layout-side-section').hide();
-
+  }
 });
 
