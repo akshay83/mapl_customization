@@ -4,6 +4,7 @@ import erpnext
 from frappe import _
 from frappe.core.doctype.doctype.doctype import validate_fields_for_doctype
 from frappe.custom.doctype.customize_form.customize_form import docfield_properties
+from frappe.utils import flt
 
 def save_customization(self):
 	if not self.doc_type:
