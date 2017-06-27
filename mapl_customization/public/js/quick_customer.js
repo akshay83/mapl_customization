@@ -25,6 +25,8 @@ custom.customer_quick_entry = function (doc) {
 				{fieldtype: "Data", fieldname: "billing_phone", label: __("Billing Phone"), reqd: 0},
 				{fieldtype: "Data", fieldname: "billing_fax", label: __("Billing Fax"), reqd: 0},
 				{fieldtype: "Data", fieldname: "billing_email_id", label: __("Billing Email ID"), reqd: 1},
+				{fieldtype: "Data", fieldname: "billing_gst_id", label: __("GST ID"), reqd: 0},
+				{fieldtype: "Select", fieldname: "billing_gst_state", label: __("GST State"), reqd: 0, options: "Andhra Pradesh\nArunachal Pradesh\nAssam\nBihar\nChandigarh\nChattisgarh\nDadra and Nagar Haveli\nDaman and Diu\nDelhi\nGoa\nGujarat\nHaryana\nHimachal Pradesh\nJammu and Kashmir\nJharkhand\nKarnataka\nKerala\nLakshadweep Islands\nMadhya Pradesh\nMaharashtra\nManipur\nMeghalaya\nMizoram\nNagaland\nOdisha\nPondicherry\nPunjab\nRajasthan\nSikkim\nTamil Nadu\nTelangana\nTripura\nUttar Pradesh\nUttarakhand\nWest Bengal"},
 				{fieldtype: "Column Break", fieldname: "column_break_1"},
 				{fieldtype: "Data", fieldname: "shipping_address_1", label: __("Shipping Address 1"), reqd: 0},
 				{fieldtype: "Data", fieldname: "shipping_address_2", label: __("Shipping Address 2"), reqd: 0},
@@ -34,6 +36,8 @@ custom.customer_quick_entry = function (doc) {
 				{fieldtype: "Data", fieldname: "shipping_phone", label: __("Shipping Phone"), reqd: 0},
 				{fieldtype: "Data", fieldname: "shipping_fax", label: __("Shipping Fax"), reqd: 0},
 				{fieldtype: "Data", fieldname: "shipping_email_id", label: __("Shipping Email ID"), reqd: 0},
+				{fieldtype: "Data", fieldname: "shiping_gst_id", label: __("GST ID"), reqd: 0},
+				{fieldtype: "Select", fieldname: "shipping_gst_state", label: __("GST State"), reqd: 0, options: "Andhra Pradesh\nArunachal Pradesh\nAssam\nBihar\nChandigarh\nChattisgarh\nDadra and Nagar Haveli\nDaman and Diu\nDelhi\nGoa\nGujarat\nHaryana\nHimachal Pradesh\nJammu and Kashmir\nJharkhand\nKarnataka\nKerala\nLakshadweep Islands\nMadhya Pradesh\nMaharashtra\nManipur\nMeghalaya\nMizoram\nNagaland\nOdisha\nPondicherry\nPunjab\nRajasthan\nSikkim\nTamil Nadu\nTelangana\nTripura\nUttar Pradesh\nUttarakhand\nWest Bengal"},
 				{fieldtype: "Check", fieldname: "shipping_preferred", label: __("Is Preferred Shipping Address") }
 			]
 		});    

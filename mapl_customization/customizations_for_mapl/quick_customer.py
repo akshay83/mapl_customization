@@ -1,5 +1,6 @@
 import frappe
 import json
+from erpnext.regional.india.utils import validate_gstin_for_india
 
 @frappe.whitelist()
 def do_quick_entry(args):
@@ -38,11 +39,37 @@ def validate(args):
 	if "billing_city" not in customer_keys:
 		frappe.throw("Need Billing City")
 
+	validate_gstid(args)
+
+
+def validate_gstid(args):
+	customer_keys = args.keys()
+
+	if "billing_gstid" in customer_keys:
+		if "billing_gst_state" not in customer_keys:
+			frappe.throw("Select Billing GST State")
+
+		validate_gstin_for_india({
+				"gstin":args["billing_gstid"], 
+				"gst_state":args["billing_gst_state"]
+			},None)
+
+	if "shipping_address_1" in customer_keys:
+		if "shipping_gstid" in customer_keys:
+			if "shipping_gst_state" not in customer_keys:
+				frappe.throw("Select Shipping GST State")
+
+			validate_gstin_for_india({
+					"gstin":args["shipping_gstid"], 
+					"gst_state":args["shipping_gst_state"]
+				},None)
+
+
 def make_customer(args):
 	validate(args)
 	customer_keys = args.keys()
 	customer_doc = frappe.new_doc("Customer")
-	customer_doc.salutation = args["salutation"]
+	customer_doc.salutation = args["salutation"] if "salutation" in customer_keys else None
 	customer_doc.customer_name = args["customer_name"]
 	customer_doc.customer_group = args["customer_group"]
 	customer_doc.territory = args["territory"]
@@ -68,6 +95,8 @@ def enter_billing_address(args, customer):
 	address_doc.fax = args["billing_fax"] if "billing_fax" in address_keys else None
 	address_doc.phone = args["billing_phone"] if "billing_phone" in address_keys else None
 	address_doc.email_id = args["billing_email_id"] if "billing_email_id" in address_keys else None
+	address_doc.gstin = args["billing_gst_id"] if "billing_gst_id" in address_keys else None
+	address_doc.gst_state = args["billing_gst_state"] if "billing_gst_state" in address_keys else None
 	address_doc.append('links', dict(link_doctype='Customer', link_name=customer.name))
 	address_doc.autoname()
 	address_doc.save()
@@ -88,6 +117,8 @@ def enter_shipping_address(args, customer):
 	address_doc.fax = args["shipping_fax"] if "shipping_fax" in address_keys else None
 	address_doc.phone = args["shipping_phone"] if "shipping_phone" in address_keys else None
 	address_doc.email_id = args["shipping_email_id"] if "shipping_email_id" in address_keys else None
+	address_doc.gstin = args["shipping_gst_id"] if "shipping_gst_id" in address_keys else None
+	address_doc.gst_state = args["shipping_gst_state"] if "shipping_gst_state" in address_keys else None
 	address_doc.append('links', dict(link_doctype='Customer', link_name=customer.name))
 	address_doc.autoname()
 	address_doc.save()
