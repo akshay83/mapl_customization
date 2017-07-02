@@ -13,12 +13,12 @@ def get_party_name(party, party_type):
 
 @frappe.whitelist()
 def get_primary_billing_address(party, party_type):
-	from frappe.geo.doctype.address.address import get_default_address
+	from frappe.contacts.doctype.address.address import get_default_address
 	return get_default_address(party_type.lower(), party)
 
 @frappe.whitelist()
 def fetch_address_details_payments_receipts(party_address):
-	from frappe.geo.doctype.address.address import get_address_display
+	from frappe.contacts.doctype.address.address import get_address_display
 	return get_address_display(party_address)
 	
 
@@ -106,7 +106,7 @@ def get_current_stock_at_all_warehouse(item_code, date=None):
 @frappe.whitelist()
 def get_effective_stock_at_all_warehouse(item_code, date=None):
 	return frappe.db.sql("""SELECT NAME,`OPENING STOCK`,`IN QTY`, `OUT QTY`,
-  	(`OPENING STOCK`+`IN QTY`-`OUT QTY`) AS `CLOSING STOCK`,`UNCONFIRMED`, `UNDELIVERED`,`DEFECTIVE` FROM (
+  	(`OPENING STOCK`+`IN QTY`-`OUT QTY`) AS `CLOSING STOCK`,`UNCONFIRMED`, `UNDELIVERED`,`DEFECTIVE`,`OPEN ORDER` FROM (
 		
     SELECT OUTSTK.NAME, 
     
@@ -125,6 +125,10 @@ def get_effective_stock_at_all_warehouse(item_code, date=None):
     IFNULL((SELECT SUM(INV_ITEM.QTY-INV_ITEM.DELIVERED_QTY) FROM `tabSales Invoice` INV, 
 		`tabSales Invoice Item` INV_ITEM WHERE INV_ITEM.PARENT=INV.NAME AND INV.DOCSTATUS=1 AND INV_ITEM.WAREHOUSE=OUTSTK.NAME AND
 		INV_ITEM.DELIVERED_QTY<>INV_ITEM.QTY AND INV.UPDATE_STOCK=0 AND INV_ITEM.ITEM_CODE=%(item_code)s AND INV.POSTING_DATE<=%(date)s),0) AS `UNDELIVERED`,
+
+    IFNULL((SELECT SUM(INV_ITEM.QTY-INV_ITEM.DELIVERED_QTY) FROM `tabSales Order` INV, 
+		`tabSales Order Item` INV_ITEM WHERE INV_ITEM.PARENT=INV.NAME AND INV.DOCSTATUS=1 AND INV_ITEM.WAREHOUSE=OUTSTK.NAME AND
+		INV_ITEM.DELIVERED_QTY<>INV_ITEM.QTY AND INV_ITEM.ITEM_CODE=%(item_code)s AND INV.TRANSACTION_DATE<=%(date)s),0) AS `OPEN ORDER`,
 		
     IFNULL((SELECT COUNT(*) FROM `tabStock Problem` PROB WHERE PROB.item=%(item_code)s AND PROB.WAREHOUSE=OUTSTK.NAME AND PROB.STATUS='Open'),0) AS `DEFECTIVE`
 		

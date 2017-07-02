@@ -204,4 +204,7 @@ a {
 #page-desktop {
 	background-color: #252525 !important;
 }
+.radio, .checkbox {
+	height: 44px;
+}
 }
