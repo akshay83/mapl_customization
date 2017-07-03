@@ -64,6 +64,10 @@ app_include_js = ["/assets/mapl_customization/js/side_bar.js",
 				#"/assets/mapl_customization/js/scan.js"
 				]
 
+jenv_filter = [
+    'json_load:mapl_customization.customizations_for_mapl.jinja.json_load'
+]
+
 #Monkey Patch
 from mapl_customization.customizations_for_mapl.monkey_patch import do_monkey_patch
 do_monkey_patch()
