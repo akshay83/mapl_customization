@@ -24,7 +24,8 @@ doc_events = {
 	"Sales Order": {
 		"validate" : "mapl_customization.customizations_for_mapl.finance_validation.sales_order_validate",
 		"before_cancel": "mapl_customization.customizations_for_mapl.pe_on_sales_order.before_cancel_sales_order",
-		"on_submit": "mapl_customization.customizations_for_mapl.pe_on_sales_order.make_payment_entry_with_sales_order"
+		"on_submit": "mapl_customization.customizations_for_mapl.pe_on_sales_order.make_payment_entry_with_sales_order",
+		"validate": "mapl_customization.customizations_for_mapl.pe_on_sales_order.validate"
 	},
 	"Payment Entry": {
 		"validate": "mapl_customization.customizations_for_mapl.finance_validation.payment_entry_validate",
