@@ -69,6 +69,8 @@ def make_payment_entry_with_sales_order(doc, method):
 		payment_entry.save()
 		payment_entry.submit()
 
+		frappe.db.set_value("Sales Order Payment", p.name, "payment_entry_reference", payment_entry.name)
+
 		frappe.msgprint("Payment entry {0} Made".format(payment_entry.name))
 
 
