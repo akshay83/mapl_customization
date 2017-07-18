@@ -61,7 +61,6 @@ app_include_js = ["/assets/mapl_customization/js/side_bar.js",
 				"/assets/mapl_customization/js/core.js",
 				"/assets/mapl_customization/js/lz-string.min.js",
 				"/assets/mapl_customization/js/quick_customer.js"
-				#"/assets/mapl_customization/js/scan.js"
 				]
 
 jenv_filter = [
