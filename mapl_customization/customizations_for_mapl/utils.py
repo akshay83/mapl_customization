@@ -20,7 +20,7 @@ def get_primary_billing_address(party, party_type):
 def fetch_address_details_payments_receipts(party_address):
 	from frappe.contacts.doctype.address.address import get_address_display
 	return get_address_display(party_address)
-	
+
 
 @frappe.whitelist()
 def validate_input_serial(args,rows,is_vehicle=1):
@@ -44,6 +44,9 @@ def validate_input_serial(args,rows,is_vehicle=1):
 			if "key_no_"+rows not in serial_keys:
 				frappe.throw("Check Key No At Row "+rows)
 
+			if "color_"+rows not in serial_keys:
+				frappe.throw("Check Color At Row "+rows)
+
 		if is_vehicle==0:
 			if "chassis_no_"+rows not in serial_keys:
 				frappe.throw("Check Serial No At Row "+rows)
@@ -64,6 +67,8 @@ def purchase_receipt_on_submit(doc,method):
 				serial_doc.chassis_no = serials
 				serial_doc.engine_no = engine_nos[index]
 				serial_doc.key_no = key_nos[index]
+				serial_doc.color = color[index]
+				serial_doc.year_of_manufacture = i.year_of_manufacture
 				serial_doc.save()
 				index = index+1
 
@@ -73,8 +78,9 @@ def purchase_receipt_validate(doc, method):
 			chassis_nos = i.serial_no.split("\n")
 			engine_nos = i.engine_nos.split("\n")
 			key_nos = i.key_nos.split("\n")
+			color = i.color.split("\n")
 
-			if len(chassis_nos) != len(engine_nos) != len(key_nos):
+			if len(chassis_nos) != len(engine_nos) != len(key_nos) != len(color):
 				frappe.throw("Check Entered Serial Nos Values")
 
 def check_receipt_in_journal_entry(doc, method):
