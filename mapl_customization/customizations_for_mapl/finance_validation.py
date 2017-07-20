@@ -20,3 +20,6 @@ def vehicle_validation(doc, method):
 	for i in doc.items:
 		if cint(i.is_vehicle) and len(doc.items)>1:
 			frappe.throw("A Sales Invoice can have only Single Vehicle and No Other Item")
+
+		if cint(i.is_vehicle) and len(i.serial_no.split('\n'))>1:
+			frappe.throw("A Sales Invoice can have only ONE Vehicle")
