@@ -1,7 +1,7 @@
 import frappe
 import json
 import datetime
-
+from frappe.utils import cint 
 
 @frappe.whitelist()
 def get_party_name(party, party_type):
@@ -55,10 +55,11 @@ def validate_input_serial(args,rows,is_vehicle=1):
 
 def purchase_receipt_on_submit(doc,method):
 	for i in doc.items:
-		if i.is_vehicle == 1:
+		if cint(i.is_vehicle):
 			chassis_nos = i.serial_no.split("\n")
 			engine_nos = i.engine_nos.split("\n")
 			key_nos = i.key_nos.split("\n")
+			color = i.color.split("\n")
 
 			index = 0
 			for serials in chassis_nos:
@@ -74,14 +75,23 @@ def purchase_receipt_on_submit(doc,method):
 
 def purchase_receipt_validate(doc, method):
 	for i in doc.items:
-		if i.is_vehicle == 1:
+		if cint(i.is_vehicle):
 			chassis_nos = i.serial_no.split("\n")
 			engine_nos = i.engine_nos.split("\n")
 			key_nos = i.key_nos.split("\n")
 			color = i.color.split("\n")
 
-			if len(chassis_nos) != len(engine_nos) != len(key_nos) != len(color):
+			throw_error = False
+			if len(chassis_nos) != len(engine_nos):
+				throw_error = True
+			if not throw_error and len(engine_nos) != len(key_nos):
+				throw_error = True
+			if not throw_error and len(key_nos) != len(color):
+				throw_error = True
+
+			if throw_error:
 				frappe.throw("Check Entered Serial Nos Values")
+
 
 def check_receipt_in_journal_entry(doc, method):
 	if (doc.receipt_link or doc.payment_link):

@@ -18,9 +18,6 @@ doc_events = {
 	"Item" : {
 		"validate" : "mapl_customization.customizations_for_mapl.item_hooks.item_validate"
 	},
-	"Sales Invoice" : {
-		"validate" : "mapl_customization.customizations_for_mapl.finance_validation.sales_invoice_validate"
-	},
 	"Sales Order": {
 		"validate" : "mapl_customization.customizations_for_mapl.finance_validation.sales_order_validate",
 		"before_cancel": "mapl_customization.customizations_for_mapl.pe_on_sales_order.before_cancel_sales_order",
@@ -37,22 +34,19 @@ doc_events = {
 	},
 	"Purchase Invoice" : {
 		"on_submit" : "mapl_customization.customizations_for_mapl.utils.purchase_receipt_on_submit",
-		"validate" : "mapl_customization.customizations_for_mapl.utils.purchase_receipt_validate"
+		"validate" : "mapl_customization.customizations_for_mapl.utils.purchase_receipt_validate",
+		"on_update_after_submit":"mapl_customization.customizations_for_mapl.purchase_invoice_hooks.purchase_invoice_on_update_after_submit"
 	},
 	"Journal Entry" : {
 		"before_cancel" : "mapl_customization.customizations_for_mapl.utils.check_receipt_in_journal_entry"
 	},
 	"Sales Invoice" : {
-		"before_save": "mapl_customization.customizations_for_mapl.workflow_hooks.before_save_salesinvoice"
+		"validate" : "mapl_customization.customizations_for_mapl.finance_validation.sales_invoice_validate",
+		"before_save": "mapl_customization.customizations_for_mapl.workflow_hooks.before_save_salesinvoice",
+		"on_update_after_submit":"mapl_customization.customizations_for_mapl.sales_invoice_hooks.sales_invoice_on_update_after_submit"
 	},
 	"Selling Settings" : {
 		"on_update": "mapl_customization.customizations_for_mapl.workflow_hooks.on_update_selling_settings"
-	},
-	"Purchase Invoice" : {
-		"on_update_after_submit":"mapl_customization.customizations_for_mapl.purchase_invoice_hooks.purchase_invoice_on_update_after_submit", 
-	},
-	"Sales Invoice" : {
-		"on_update_after_submit":"mapl_customization.customizations_for_mapl.sales_invoice_hooks.sales_invoice_on_update_after_submit", 
 	}
 }
 app_include_css = "/assets/mapl_customization/css/custom_css.css"
