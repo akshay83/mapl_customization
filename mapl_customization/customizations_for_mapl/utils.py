@@ -4,6 +4,22 @@ import datetime
 from frappe.utils import cint 
 
 @frappe.whitelist()
+def make_document_editable(doctype, doc_name):
+	doc = frappe.get_doc(doctype, doc_name)
+	if doc.docstatus != 2:
+		frappe.throw("Document Not yet Cancelled or Still in Draft Mode, Cannot make in Editable")
+		return
+
+	doc.docstatus = 0
+	doc.cancel_reason = None
+	for d in doc.get_all_children():
+		d.docstatus = 0
+		d.db_update()
+
+	doc.db_update()
+	frappe.db.commit()
+
+@frappe.whitelist()
 def get_party_name(party, party_type):
 	doc = frappe.get_doc(party_type, party)
 	if (party_type == "Customer"):
