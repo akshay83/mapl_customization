@@ -74,6 +74,7 @@ def mapl_customer_query(doctype, txt, searchfield, start, page_len, filters):
               ({key} like %(txt)s
                 or cust.customer_name like %(txt)s
                 or cust.primary_contact_no like %(txt)s
+		or cust.vehIcle_no like %(txt)s
                 or cust.secondary_contact_no like %(txt)s) and cust.disabled=0)
             ) 
             as temp_tb group by name order by customer_name, name limit %(start)s, %(page_len)s""".format(**{

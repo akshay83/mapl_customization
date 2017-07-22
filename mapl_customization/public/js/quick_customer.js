@@ -10,6 +10,7 @@ custom.customer_quick_entry = function (doc) {
 				{fieldtype: "Data", fieldname: "customer_name", label: __("Customer Name"), reqd: 1},
 				{fieldtype: "Data", fieldname: "company_name", label: __("Company Name"), reqd: 0},
 				{fieldtype: "Data", fieldname: "tax_id", label: __("Tax ID"), reqd: 0},
+				{fieldtype: "Data", fieldname: "vehicle_no", label: __("Vehicle No"), reqd: 0},
 				{fieldtype: "Column Break", fieldname: "column_break_2"},
 				{fieldtype: "Link", fieldname: "customer_group", label: __("Customer Group"), reqd: 1, options: "Customer Group"},
 				{fieldtype: "Link", fieldname: "territory", label: __("Territory"), reqd: 1, options: "Territory"},
