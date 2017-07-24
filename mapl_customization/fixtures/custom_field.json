@@ -6460,7 +6460,7 @@
   "width": null
  }, 
  {
-  "allow_on_submit": 0, 
+  "allow_on_submit": 1, 
   "bold": 0, 
   "collapsible": 0, 
   "collapsible_depends_on": null, 
@@ -6481,7 +6481,7 @@
   "in_standard_filter": 0, 
   "insert_after": "col_break3", 
   "label": "MOP Rate", 
-  "modified": "2017-07-24 14:55:31.854785", 
+  "modified": "2017-07-24 15:10:00.621494", 
   "name": "Sales Invoice Item-mop_rate", 
   "no_copy": 0, 
   "options": null, 
