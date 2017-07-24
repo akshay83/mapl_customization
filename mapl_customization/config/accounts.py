@@ -34,7 +34,15 @@ def get_data():
 					"is_query_report":True,
 					"name":"Sales Taxes Report",
 					"description":"Generates a Report for Different Sales Taxes"
+				},
+				{
+					"type":"report",
+					"doctype": "Sales Invoice",
+					"is_query_report":True,
+					"name":"Simple Sales Report",
+					"description":"Generates a Report for Sales"
 				}
+
 			]
 		}
 	       ]

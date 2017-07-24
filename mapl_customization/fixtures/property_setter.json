@@ -5098,5 +5098,22 @@
   "property": "read_only_onload", 
   "property_type": "Check", 
   "value": null
+ }, 
+ {
+  "_assign": null, 
+  "_comments": null, 
+  "_liked_by": null, 
+  "_user_tags": null, 
+  "default_value": null, 
+  "doc_type": "Sales Invoice Item", 
+  "docstatus": 0, 
+  "doctype": "Property Setter", 
+  "doctype_or_field": "DocField", 
+  "field_name": "item_code", 
+  "modified": "2017-07-24 12:50:25.174851", 
+  "name": "Sales Invoice Item-item_code-width", 
+  "property": "width", 
+  "property_type": null, 
+  "value": "240"
  }
 ]

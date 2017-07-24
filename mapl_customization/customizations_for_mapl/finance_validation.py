@@ -28,7 +28,7 @@ def vehicle_validation(doc, method):
 
 def negative_stock_validation(doc, method):
 	for i in doc.items:
-		if (i.actual_qty <= 0 and (i.item_code and frappe.db.get_value("Item", i.item_code, "is_stock_item")):
+		if (i.actual_qty <= 0 and (i.item_code and frappe.db.get_value("Item", i.item_code, "is_stock_item"))):
 			frappe.msgprint("Negative Stock for {0}, Please verify before Submitting".format(i.item_code))
 
 def validate_hsn_code(doc, method):
