@@ -1,4 +1,4 @@
-frappe.query_reports['Simple Sales Report'] = {
+frappe.query_reports['Finance Outstanding'] = {
         "filters": [
                 {
                         "fieldname":"from_date",
@@ -20,17 +20,10 @@ frappe.query_reports['Simple Sales Report'] = {
                         "default": "%%"
                 },
                 {
-                        "fieldname":"brand",
-                        "label":__("Brand"),
+                        "fieldname":"finance_co",
+                        "label":__("Finance Company"),
                         "fieldtype": "Link",
-                        "options": "Brand",
-                        "default": "%%"
-                },
-                {
-                        "fieldname":"item_group",
-                        "label":__("Item Group"),
-                        "fieldtype": "Link",
-                        "options": "Item Group",
+                        "options": "Hypothecation Company",
                         "default": "%%"
                 }
 
