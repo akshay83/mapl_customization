@@ -129,9 +129,9 @@
   "docstatus": 0, 
   "doctype": "Custom Script", 
   "dt": "Journal Entry", 
-  "modified": "2017-03-05 13:58:43.222219", 
+  "modified": "2017-07-26 14:06:45.650712", 
   "name": "Journal Entry-Client", 
-  "script": "   cur_frm.set_query(\"party\",\"accounts\", function(doc, cdt, cdn) {\n\tvar jvd = frappe.get_doc(cdt, cdn);\n   \treturn{\n\t\tquery: \"mapl_customization.customizations_for_mapl.queries.select_customer_supplier_query\",\n        \tfilters: {'party_type':jvd.party_type }\n\t}\n   });\n", 
+  "script": "   cur_frm.set_query(\"party\",\"accounts\", function(doc, cdt, cdn) {\n\tvar jvd = frappe.get_doc(cdt, cdn);\n   \treturn{\n\t\tquery: \"mapl_customization.customizations_for_mapl.queries.select_customer_supplier_query\",\n        \tfilters: {'party_type':jvd.party_type }\n\t}\n   });\n\nfrappe.ui.form.on(\"Journal Entry\", \"refresh\", function(frm) {\n   if (!frm.doc.__islocal && !cur_frm.is_dirty() && frm.doc.docstatus==2) {\n\t\t\tfrm.page.add_menu_item(__('Make Document Editable'), function() { \n\t\t\t\tif (cur_frm.is_dirty()) {\n\t\t\t\t\tfrappe.msgprint(__(\"Please Save Changes Before Updating\"));\n\t\t\t\t\treturn;\n\t\t\t\t}\n\t            frappe.call({\n\t\t                method: \"mapl_customization.customizations_for_mapl.utils.make_document_editable\",\n\t\t                args: {\n\t\t                    \"doctype\": frm.doc.doctype,\n\t\t\t\t\t\t    \"doc_name\": frm.doc.name\n\t\t                },\n                \t\tcallback: function(r) {\n\t\t\t\t\t\t\tif(!r.exc) {\n\t\t\t\t\t\t\t\tfrappe.msgprint(__(\"Success\"));\n                                frm.reload_doc();\n\t\t\t\t\t\t\t}\t\t       \n\t\t\t\t\t\t}\n\t            });\n\t\t\t});   \n   }\n});", 
   "script_type": "Client"
  }, 
  {
