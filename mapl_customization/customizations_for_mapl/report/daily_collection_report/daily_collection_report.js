@@ -18,6 +18,13 @@ frappe.query_reports['Daily Collection Report'] = {
 			"fieldtype": "Link",
 			"options": "Letter Head",
 			"default": "Vijay Nagar"
+		},
+		{
+			"fieldname":"mop",
+			"label":__("Mode of Payment"),
+			"fieldtype": "Link",
+			"options": "Mode of Payment",
+			"default": "%%"
 		}
 	]
 }

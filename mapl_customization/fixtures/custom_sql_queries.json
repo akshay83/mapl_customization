@@ -30,9 +30,9 @@
   "description": null, 
   "docstatus": 0, 
   "doctype": "Custom SQL Queries", 
-  "modified": "2017-07-20 18:44:34.956223", 
+  "modified": "2017-07-24 19:52:44.554470", 
   "name": "Entry Checks", 
-  "query": "select * from (\n  (select sum(paid_amount) as `Payment Entry Sum` from `tabPayment Entry` where docstatus=1) pes,\n  (select sum(debit) as `GL Payment Sum` from `tabGL Entry` where voucher_type = 'Payment Entry') pe,\n  (select sum(grand_total) as `Sales Invoice Sum` from `tabSales Invoice` where docstatus=1) tsi,\n  (select sum(debit) as `GL Sales Sum` from `tabGL Entry` where voucher_type = 'Sales Invoice' and party_type is not null) tge \n  )", 
+  "query": "select * from (\n  (select sum(paid_amount) as `Payment Entry Sum` from `tabPayment Entry` where docstatus=1) pes,\n  (select sum(debit) as `GL Payment Sum` from `tabGL Entry` where voucher_type = 'Payment Entry') pe,\n  (select sum(grand_total) as `Sales Invoice Sum` from `tabSales Invoice` where docstatus=1) tsi,\n  (select sum(debit) as `GL Sales Sum` from `tabGL Entry` where voucher_type = 'Sales Invoice' and party_type is not null) tsge,\n  (select sum(grand_total) as `Purchase Invoice Sum` from `tabPurchase Invoice` where docstatus=1) tpi,\n  (select sum(credit) as `GL Purchase Sum` from `tabGL Entry` where voucher_type = 'Purchase Invoice' and party_type is not null) tpge \n  )", 
   "query_name": "Entry Checks"
  }, 
  {
