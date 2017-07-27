@@ -14,7 +14,7 @@ frappe.query_reports['Simple Stock Report'] = {
 					  "label":__("From Date"),
 					  "fieldtype": "Date",
 					  "width":"100",
-					  "default":sys_defaults.year_start_date
+					  "default":frappe.sys_defaults.year_start_date
 					},
 					{
 					  "fieldname":"to_date",

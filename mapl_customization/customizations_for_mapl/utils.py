@@ -109,10 +109,6 @@ def purchase_receipt_validate(doc, method):
 				frappe.throw("Check Entered Serial Nos Values")
 
 
-def check_receipt_in_journal_entry(doc, method):
-	if (doc.receipt_link or doc.payment_link):
-		frappe.throw("Cannot Cancel/Delete - Linked With a Receipt/Payments");
-
 @frappe.whitelist()
 def get_party_balance(party, party_type, company):
 	outstanding_amount = frappe.db.sql("""select sum(debit) - sum(credit)

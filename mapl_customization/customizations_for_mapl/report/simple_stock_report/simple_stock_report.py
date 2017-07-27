@@ -125,6 +125,15 @@ def get_global_condition(filters):
 			"brand":filters.get("brand")
 			})
 
+	if filters.get("item_code"):
+		if len(global_condition) <= 0:
+			global_condition += " where "
+		else:
+			global_condition += " and "
+
+		global_condition += " item_code = '%s'" % frappe.db.escape(filters.get("item_code"), percent=False)
+
+
 	return global_condition
 
 
