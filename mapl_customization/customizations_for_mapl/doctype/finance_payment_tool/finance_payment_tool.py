@@ -18,7 +18,8 @@ def make_jv(doc_name):
 		return
 
 	for i in payment_doc.payment_details:
-		if i.internal_customer and not cint(i.imported):
+		if i.internal_customer and not cint(i.imported) \
+			and not frappe.db.exists("Journal Entry", { "cheque_no": i.transaction_id, "docstatus":1}):
 			jv = frappe.new_doc("Journal Entry")
 			jv.naming_series = 'MAPL/FIN-JV/.YYYY./.######'
 			jv.posting_date = i.transaction_date

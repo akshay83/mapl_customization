@@ -35,3 +35,13 @@ def validate_hsn_code(doc, method):
 	for i in doc.items:
 		if not i.gst_hsn_code:
 			frappe.throw("HSN Code not found for {0}".format(i.item_code))
+
+def validate_stock_entry_serial_no(doc, method):
+	for i in doc.items:
+		if i.serial_no and i.s_warehouse:
+			snos = i.serial_no.split('\n')
+			for s in snos:
+				if i.s_warehouse != frappe.db.get_value("Serial No", s, "warehouse"):
+					frappe.throw("""Item {0} with Serial No {1} Not in Warehouse {2}""".format(i.item_code, s, i.s_warehouse))
+
+

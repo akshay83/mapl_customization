@@ -44,7 +44,10 @@ doc_events = {
 	},
 	"Selling Settings" : {
 		"on_update": "mapl_customization.customizations_for_mapl.workflow_hooks.on_update_selling_settings"
-	}
+	},
+        "Stock Entry" : {
+                "validate": "mapl_customization.customizations_for_mapl.finance_validation.validate_stock_entry_serial_no"
+        }
 }
 app_include_css = "/assets/mapl_customization/css/custom_css.css"
 app_include_js = ["/assets/mapl_customization/js/side_bar.js",

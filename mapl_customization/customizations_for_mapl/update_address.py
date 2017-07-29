@@ -1,6 +1,6 @@
 import frappe
 import erpnext
-from frappe.geo.doctype.address.address import get_address_display
+from frappe.contacts.doctype.address.address import get_address_display
 
 
 @frappe.whitelist()

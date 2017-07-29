@@ -3,119 +3,138 @@
 
 from __future__ import unicode_literals
 import frappe
-from frappe.utils import formatdate
+import json
 
 def execute(filters=None):
-	if not filters:
-		filters = {}
-
-	columns = get_columns(filters)
-	data = get_data(filters=filters)
-	return columns, data
-
-def get_data(filters):
-	result_rows = []
-	rows = get_data_query(filters)
-	for r in rows:
-		build_row = {}
-		build_row["sales_invoice"] = r.name
-		build_row["posting_date"] = formatdate(r.posting_date,"dd-MM-YYYY")
-		build_row["tin_no"] = r.tax_id
-		build_row["customer"] = r.customer_name
-		build_row["rate"] = r.rate
-		build_row["charge_type"] = r.charge_type
-		build_row[r.account_head+" "+str(r.rate)] = \
-			r.tax_amount_after_discount_amount
-		result_rows.append(build_row)
-	return result_rows	
-
-def get_columns(filters):
-	distinct_rows = get_column_query(filters)
-
+	columns, data = [], []
 	columns = [
 		{
-			"fieldname":"sales_invoice",
-			"label":"Sales Invoice No",
+			"fieldname":"invoice_name",
+			"label":"Invoice Name",
 			"fieldtype":"Link",
-			"options":"Sales Invoice"
+			"options":"Sales Invoice" if (filters.get("document_type") and filters["document_type"]=="Sales") else "Purchase Invoice",
+			"width": 150
+		},
+		{
+			"fieldname":"invoice_no",
+			"label":"Invoice No",
+			"fieldtype":"Data",
+			"width": 150
 		},
 		{
 			"fieldname":"posting_date",
 			"label":"Posting Date",
-			"fieldtype:":"Date"
+			"fieldtype:":"Date",
+			"width": 100
 		},
 		{
-			"fieldname":"customer",
-			"label":"Customer Name",
-			"fieldtype":"Data"
+			"fieldname":"party_name",
+			"label":"Party Name",
+			"fieldtype:":"Data",
+			"width": 125
 		},
 		{
-			"fieldname":"tin_no",
-			"label":"Tin No",
-			"fieldtype":"Data"
+			"fieldname":"party_gstin",
+			"label":"Party GSTIN",
+			"fieldtype:":"Data",
+			"width": 100
 		},
 		{
-			"fieldname":"rate",
-			"label":"Rate",
-			"fieldtype":"Float"
-		},
-		{
-			"fieldname":"charge_type",
-			"label":"Charge Type",
-			"fieldtype":"Data"
+			"fieldname":"taxable_amt",
+			"label":"Taxable Amount",
+			"fieldtype:":"Float",
+			"width": 100
 		}
 	]
-	for rows in distinct_rows:
-		columns.append({
-			"fieldname":rows.account_head+" "+str(rows.rate),
-			"label":rows.account_head+" "+str(rows.rate),
-			"fieldtype":"Float"
-		})
+	columns.extend(get_columns(filter))
+	data = get_query(filters)
+	return columns, data
 
+
+def get_columns(filters):
+	columns = []
+	query = """select distinct tax_type,tax_rate from `tabItem Tax` order by tax_rate desc"""
+	for d in frappe.db.sql(query, as_dict=1):
+		build_column = {}
+		build_column["fieldname"] = d.tax_type+"-"+str(float(d.tax_rate))+"%"
+		build_column["label"] = d.tax_type+"-"+str(d.tax_rate)+"%"
+		build_column["fieldtype"] = "Float"
+		build_column["width"] = 125
+		columns.append(build_column)
 	return columns
 
-def get_condition(filters):
-	condition = ""
+
+
+def get_conditions(filters):
+	conditions = ""
+
+	if filters.get("from_date"):
+		conditions += " and sales.posting_date >= '%s'" % frappe.db.escape(filters["from_date"])
+
+
+	if filters.get("to_date"):
+		conditions += " and sales.posting_date <= '%s'" % frappe.db.escape(filters["to_date"])
+
+
+	return conditions
+
+
+def get_document_specific_columns(filters):
+	if filters.get("document_type"):
+		if filters["document_type"] == "Sales":
+			return """,sales.customer_gstin as gstin, sales.customer_name as party_name, sales.name as inv_no"""
+	return """,sales.supplier_gstin as gstin,sales.supplier_name as party_name,sales.bill_no as inv_no"""
+
+
+
+def get_query(filters):
+	rows = []
+	query = """select 
+			    sales.name, 
+			    sales.posting_date, 
+			    taxes.item_wise_tax_detail, 
+			    taxes.account_head, 
+			    sales.net_total
+			    {doc_columns}
+			  from 
+			    `tab{doctype} Taxes and Charges`  taxes,
+			    `tab{doctype} Invoice` sales 
+			  where 
+			    taxes.parent=sales.name 
+			    and taxes.charge_type != 'Actual' 
+			    and sales.docstatus = 1
+			    {condition}
+			  order by sales.name"""
+
+	temp_name = None
+	build_row = {}
+
+	for d in frappe.db.sql(query.format(**{
+				"doctype":"Sales" if (filters.get("document_type") and filters["document_type"]=="Sales") else "Purchase",
+				"doc_columns": get_document_specific_columns(filters),
+				"condition":get_conditions(filters)
+				}), as_dict=1):
+		if d.item_wise_tax_detail:
+
+			if not temp_name or temp_name != d.name:
+				if temp_name:
+					rows.append(build_row)
+
+				build_row = {}
+				build_row["invoice_name"] = d.name
+				build_row["invoice_no"] = d.inv_no
+				build_row["posting_date"] = d.posting_date
+				build_row["party_gstin"] = d.gstin
+				build_row["taxable_amt"] = d.net_total
+				build_row["party_name"] = d.party_name
+				temp_name = d.name
 	
-	if filters:
-		if filters.get("fromdate"):
-			condition += " and inv.posting_date>=%(fromdate)s"
+			tax_json = d.item_wise_tax_detail
+			if isinstance(tax_json, basestring):
+				tax_json = json.loads(tax_json)
 
-		if filters.get("todate"):
-			condition += " and inv.posting_date<=%(todate)s"
+			for key, val in tax_json.items():
+				build_key = d.account_head+"-"+str(float(val[0]))+"%"
+				build_row[build_key] = build_row.get(build_key,0) + val[1]
 
-	return condition
-
-def get_column_query(filters):
-	condition = get_condition(filters)
-
-	query = """select distinct taxes.rate,taxes.account_head,taxes.charge_type
-		from `tabSales Invoice` inv, `tabSales Taxes and Charges` taxes
-		where taxes.parent = inv.name and inv.docstatus = 1 and inv.company=%(company)s {condition} 
-		order by taxes.rate""".format(**{
-			"condition":condition
-			})
-
-	return frappe.db.sql(query, { 
-			'fromdate': str(filters.get("fromdate","")),
-			'todate':str(filters.get("todate","")),
-			'company':filters.get("company","")
-			},as_dict=True)	
-
-def get_data_query(filters):
-	condition = get_condition(filters)
-
-	query = """select inv.name,cust.customer_name,cust.tax_id,inv.posting_date,
-		taxes.rate,taxes.charge_type,taxes.account_head,taxes.tax_amount_after_discount_amount
-		 from `tabSales Invoice` inv, `tabSales Taxes and Charges` taxes,
-		`tabCustomer` cust where taxes.parent = inv.name and cust.name=inv.customer and 
-		inv.docstatus = 1 and inv.company=%(company)s {condition} order by taxes.rate""".format(**{
-			"condition":condition
-			})
-
-	return frappe.db.sql(query, { 
-			'fromdate': str(filters.get("fromdate","")),
-			'todate':str(filters.get("todate","")),
-			'company':filters.get("company","")
-			},as_dict=True)	
-		
+	return rows
