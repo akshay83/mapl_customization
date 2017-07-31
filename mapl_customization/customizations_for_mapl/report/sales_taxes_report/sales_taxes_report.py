@@ -101,7 +101,8 @@ def get_query(filters):
 			    `tab{doctype} Invoice` sales 
 			  where 
 			    taxes.parent=sales.name 
-			    and taxes.charge_type != 'Actual' 
+			    and (taxes.charge_type != 'Actual' 
+				or taxes.account_head in (select distinct tax_type from `tabItem Tax`))
 			    and sales.docstatus = 1
 			    {condition}
 			  order by sales.name"""
