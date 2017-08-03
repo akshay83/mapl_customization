@@ -6,6 +6,7 @@ from __future__ import unicode_literals
 import frappe
 from frappe.model.document import Document
 from frappe.utils import cint
+from erpnext.accounts.doctype.journal_entry.journal_entry import get_party_account_and_balance
 
 class FinancePaymentTool(Document):
 	pass
@@ -24,11 +25,15 @@ def make_jv(doc_name):
 			jv.naming_series = 'MAPL/FIN-JV/.YYYY./.######'
 			jv.posting_date = i.transaction_date
 			jv.cheque_no = i.transaction_id
+			jv.cheque_date = i.transaction_date
+			jv.company = payment_doc.company
 
 			ac1 = jv.append("accounts")
 			ac1.party_type = 'Customer'
 			ac1.party = i.internal_customer
 			ac1.credit_in_account_currency = i.amount_paid
+			ac1.account = get_party_account_and_balance(payment_doc.company, \
+				'Customer', i.internal_customer)['account']
 
 			ac2 = jv.append("accounts")
 			ac2.account = payment_doc.account_paid_to
