@@ -110,11 +110,13 @@ def get_query(filters):
 	temp_name = None
 	build_row = {}
 
-	for d in frappe.db.sql(query.format(**{
+	query = query.format(**{
 				"doctype":"Sales" if (filters.get("document_type") and filters["document_type"]=="Sales") else "Purchase",
 				"doc_columns": get_document_specific_columns(filters),
 				"condition":get_conditions(filters)
-				}), as_dict=1):
+				})
+
+	for d in frappe.db.sql(query, as_dict=1):
 		if d.item_wise_tax_detail:
 
 			if not temp_name or temp_name != d.name:
@@ -129,7 +131,7 @@ def get_query(filters):
 				build_row["taxable_amt"] = d.net_total
 				build_row["party_name"] = d.party_name
 				temp_name = d.name
-	
+
 			tax_json = d.item_wise_tax_detail
 			if isinstance(tax_json, basestring):
 				tax_json = json.loads(tax_json)
@@ -138,4 +140,5 @@ def get_query(filters):
 				build_key = d.account_head+"-"+str(float(val[0]))+"%"
 				build_row[build_key] = build_row.get(build_key,0) + val[1]
 
+	rows.append(build_row)
 	return rows
