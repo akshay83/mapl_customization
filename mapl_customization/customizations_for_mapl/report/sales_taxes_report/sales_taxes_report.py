@@ -28,6 +28,12 @@ def execute(filters=None):
 			"width": 100
 		},
 		{
+			"fieldname":"invoice_date",
+			"label":"Invoice Date",
+			"fieldtype:":"Date",
+			"width": 100
+		},
+		{
 			"fieldname":"party_name",
 			"label":"Party Name",
 			"fieldtype:":"Data",
@@ -44,7 +50,20 @@ def execute(filters=None):
 			"label":"Taxable Amount",
 			"fieldtype:":"Float",
 			"width": 100
+		},
+		{
+			"fieldname":"charge_type",
+			"label":"Charged As",
+			"fieldtype:":"Data",
+			"width": 75
+		},
+		{
+			"fieldname":"total_tax",
+			"label":"Total Tax",
+			"fieldtype:":"Float",
+			"width": 100
 		}
+
 	]
 	columns.extend(get_columns(filter))
 	data = get_query(filters)
@@ -82,8 +101,8 @@ def get_conditions(filters):
 def get_document_specific_columns(filters):
 	if filters.get("document_type"):
 		if filters["document_type"] == "Sales":
-			return """,sales.customer_gstin as gstin, sales.customer_name as party_name, sales.name as inv_no"""
-	return """,sales.supplier_gstin as gstin,sales.supplier_name as party_name,sales.bill_no as inv_no"""
+			return """,sales.customer_gstin as gstin, sales.customer_name as party_name, sales.name as inv_no, sales.posting_date as inv_date"""
+	return """,sales.supplier_gstin as gstin,sales.supplier_name as party_name,sales.bill_no as inv_no,sales.bill_date as inv_date"""
 
 
 
@@ -94,7 +113,9 @@ def get_query(filters):
 			    sales.posting_date, 
 			    taxes.item_wise_tax_detail, 
 			    taxes.account_head, 
-			    sales.net_total
+			    sales.net_total,
+			    taxes.charge_type,
+			    taxes.tax_amount
 			    {doc_columns}
 			  from 
 			    `tab{doctype} Taxes and Charges`  taxes,
@@ -126,11 +147,15 @@ def get_query(filters):
 				build_row = {}
 				build_row["invoice_name"] = d.name
 				build_row["invoice_no"] = d.inv_no
+				build_row["invoice_date"] = d.inv_date
 				build_row["posting_date"] = d.posting_date
 				build_row["party_gstin"] = d.gstin
 				build_row["taxable_amt"] = d.net_total
 				build_row["party_name"] = d.party_name
+				build_row["charge_type"] = d.charge_type
 				temp_name = d.name
+
+			build_row["total_tax"] = build_row.get("total_tax",0) + d.tax_amount
 
 			tax_json = d.item_wise_tax_detail
 			if isinstance(tax_json, basestring):
@@ -138,7 +163,16 @@ def get_query(filters):
 
 			for key, val in tax_json.items():
 				build_key = d.account_head+"-"+str(float(val[0]))+"%"
-				build_row[build_key] = build_row.get(build_key,0) + val[1]
+				if d.charge_type != 'Actual':
+					build_row[build_key] = build_row.get(build_key,0) + val[1]
+				else:
+					net_amount = frappe.db.get_value("{doctype} Invoice Item".format(**{
+							"doctype":"Sales" if (filters.get("document_type") and filters["document_type"]=="Sales") else "Purchase",
+							}), {
+							"parent": d.name,
+							"item_code": key
+							}, "net_amount")
+					build_row[build_key] = build_row.get(build_key, 0) + round((net_amount * float(val[0]) / 100),2)
 
 	rows.append(build_row)
 	return rows

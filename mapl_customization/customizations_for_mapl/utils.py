@@ -70,6 +70,7 @@ def validate_input_serial(args,rows,is_vehicle=1):
 	return True
 
 def purchase_receipt_on_submit(doc,method):
+	validate_hsn_code(doc, method)
 	for i in doc.items:
 		if cint(i.is_vehicle):
 			chassis_nos = i.serial_no.split("\n")
@@ -107,6 +108,13 @@ def purchase_receipt_validate(doc, method):
 
 			if throw_error:
 				frappe.throw("Check Entered Serial Nos Values")
+
+
+def validate_hsn_code(doc, method):
+	for i in doc.items:
+		if not i.gst_hsn_code:
+			frappe.throw("HSN Code not found for {0}".format(i.item_code))
+
 
 
 @frappe.whitelist()
