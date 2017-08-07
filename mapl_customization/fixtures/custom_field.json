@@ -4674,7 +4674,7 @@
   "width": null
  }, 
  {
-  "allow_on_submit": 0, 
+  "allow_on_submit": 1, 
   "bold": 0, 
   "collapsible": 0, 
   "collapsible_depends_on": null, 
@@ -4695,7 +4695,7 @@
   "in_standard_filter": 0, 
   "insert_after": "batch_no", 
   "label": "Finance Serial No", 
-  "modified": "2017-04-12 13:41:49.411321", 
+  "modified": "2017-08-07 12:59:42.130898", 
   "name": "Sales Invoice Item-finance_serial_no", 
   "no_copy": 0, 
   "options": null, 
@@ -6992,7 +6992,7 @@
   "width": null
  }, 
  {
-  "allow_on_submit": 0, 
+  "allow_on_submit": 1, 
   "bold": 0, 
   "collapsible": 0, 
   "collapsible_depends_on": null, 
@@ -7013,7 +7013,7 @@
   "in_standard_filter": 0, 
   "insert_after": "column_break_warehouse", 
   "label": "Reference Details", 
-  "modified": "2017-08-05 19:47:15.432371", 
+  "modified": "2017-08-07 20:12:32.692330", 
   "name": "Sales Invoice-reference_details", 
   "no_copy": 0, 
   "options": null, 
