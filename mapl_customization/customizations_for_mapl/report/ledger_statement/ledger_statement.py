@@ -1,0 +1,158 @@
+# Copyright (c) 2013, Akshay Mehta and contributors
+# For license information, please see license.txt
+
+from __future__ import unicode_literals
+import frappe
+
+def execute(filters=None):
+	columns, data = [], []
+	columns = [
+		{
+			"fieldname":"posting_date",
+			"label":"Date",
+			"fieldtype":"Date",
+			"width": 100
+		},
+		{
+			"fieldname":"voucher_type",
+			"label":"Type",
+			"fieldtype":"Data",
+			"width": 150
+		},
+		{
+			"fieldname":"voucher_no",
+			"label":"Voucher Ref",
+			"fieldtype:":"Data",
+			"width": 150
+		},
+		{
+			"fieldname":"remarks",
+			"label":"Remarks",
+			"fieldtype:":"Text",
+			"width": 250
+		},
+		{
+			"fieldname":"debit",
+			"label":"Debit",
+			"fieldtype:":"Currency",
+			"width": 125
+		},
+		{
+			"fieldname":"credit",
+			"label":"Credit",
+			"fieldtype:":"Currency",
+			"width": 125
+		}
+
+	]
+
+	if ((filters.get("party") and filters.get("party_type")) or filters.get("account") \
+		and filters.get("from_date") and filters.get("to_date")):
+		data = get_details(filters)
+
+	return columns, data
+
+
+def get_conditions(filters):
+	conditions = ""
+
+	if filters.get("from_date"):
+		conditions += " posting_date >= '%s'" % frappe.db.escape(filters["from_date"])
+
+
+	if filters.get("to_date"):
+		conditions += " and posting_date <= '%s'" % frappe.db.escape(filters["to_date"])
+
+	return conditions
+
+
+def get_account_filters(filters):
+	conditions = ""
+
+	if filters.get("account"):
+		conditions += " and account = '%s'" % filters["account"]
+
+	if filters.get("party_type"):
+		conditions += " and party_type = '%s'" % filters["party_type"]
+
+	if filters.get("party"):
+		conditions += " and party = '%s'" % filters["party"]
+
+
+	return conditions
+
+
+def get_opening(filters):
+	query = """select 
+			  ifnull(sum(debit-credit),0) as opening_balance
+			from 
+			  `tabGL Entry` 
+			where
+			  posting_date < '{start_date}'
+			  {condition}"""
+	build_row = {}
+
+	query = query.format(**{
+				"start_date":frappe.db.escape(filters["from_date"]),
+				"condition": get_account_filters(filters)
+				})
+
+	for q in frappe.db.sql(query, as_dict=1):
+		build_row["remarks"] = "Opening Balance"
+		if q.opening_balance <=0:
+			build_row["credit"] = abs(q.opening_balance)
+		else:
+			build_row["debit"] = abs(q.opening_balance)
+
+	return build_row
+
+
+
+def get_details(filters):
+	opening = get_opening(filters)
+	total_credit = opening.get("credit",0)
+	total_debit = opening.get("debit",0)
+	rows = []
+	rows.append(opening)
+
+	query = """select 
+			  posting_date,
+			  voucher_type,
+			  voucher_no,
+			  remarks,
+			  debit,
+			  credit
+			from 
+			  `tabGL Entry` 
+			where
+			  {date_range}
+			  {condition}
+			order by posting_date"""
+
+	build_row = {}
+
+	query = query.format(**{
+				"date_range": get_conditions(filters),
+				"condition":get_account_filters(filters)
+				})
+
+	for d in frappe.db.sql(query, as_dict=1):
+		build_row = {}
+		build_row["posting_date"] = d.posting_date
+		build_row["voucher_type"] = d.voucher_type
+		build_row["voucher_no"] = d.voucher_no
+		build_row["remarks"] = d.remarks
+		build_row["debit"] = d.debit
+		build_row["credit"] = d.credit
+		total_credit += d.credit
+		total_debit += d.debit
+		rows.append(build_row)
+
+	rows.append({"remarks": "Total", "debit":total_debit, "credit":total_credit})
+
+	rows.append({"remarks":"Closing Balance",
+			"debit": (total_debit-total_credit) if (total_debit>total_credit) else 0,
+			"credit": (total_credit-total_debit) if (total_credit>total_debit) else 0
+		    })
+
+	return rows

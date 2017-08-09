@@ -52,5 +52,14 @@
   "name": "Negative Entry Check", 
   "query": "select parent, item_code, warehouse from `tabSales Invoice Item` where actual_qty&lt;= 0 and docstatus=1", 
   "query_name": "Negative Entry Check"
+ }, 
+ {
+  "description": null, 
+  "docstatus": 0, 
+  "doctype": "Custom SQL Queries", 
+  "modified": "2017-08-08 14:08:18.193745", 
+  "name": "GFK Sales Report", 
+  "query": "select \n  details.brand,\n  details.item_code, \n  sum(qty) as qty, \n  avg(rate) as rate \nfrom \n  `tabSales Invoice Item` details, \n  `tabSales Invoice` inv \nwhere \n  inv.name=details.parent \n  and inv.docstatus = 1 \n  and inv.posting_date&gt;='2017-07-01' \n  and inv.posting_date&lt;='2017-07-31' \n  and (details.brand='LG' or details.brand='Samsung')\ngroup by item_code \norder by brand, item_code ", 
+  "query_name": "GFK Sales Report"
  }
 ]
