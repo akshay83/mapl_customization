@@ -153,8 +153,18 @@ def monkey_patch_for_serial_validation():
 	from monkey_patch_serial import set_purchase_details as spd
 	serial_no.SerialNo.set_purchase_details = spd 
 
+def monkey_patch_salary_slip_for_rounding():
+	from erpnext.hr.doctype.salary_slip.salary_slip import SalarySlip
+	from monkey_patch_salary_slip import sum_components as sc
+	SalarySlip.sum_components = sc
+
+	from monkey_patch_salary_slip import update_component_row as ucr
+	SalarySlip.update_component_row = ucr
+
+
 def do_monkey_patch():
 	monkey_patch_for_allow_on_submit()
 	monkey_patch_allow_transition_from_0_to_2()
 	monkey_patch_for_serial_validation()
 	monkey_patch_payment_entry_validate()
+	monkey_patch_salary_slip_for_rounding()

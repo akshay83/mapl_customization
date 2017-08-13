@@ -13,6 +13,8 @@ def select_customer_supplier_query(doctype, txt, searchfield, start, page_len, f
 		return mapl_customer_query(doctype, txt, searchfield, start, page_len, filters)
 	elif filters.get("party_type")=="Supplier":
 		return supplier_query(doctype, txt, searchfield, start, page_len, filters)
+	elif filters.get("party_type")=="Employee":
+		return employee_query(doctype, txt, searchfield, start, page_len, filters)
 
 def mapl_address_query (doctype, txt, searchfield, start, page_len, filters):
 	fields = ["addr.name","dyn.link_name","addr.address_line1", "addr.address_line2"]
@@ -50,7 +52,6 @@ def mapl_address_query (doctype, txt, searchfield, start, page_len, filters):
 			})
 
 
-			
 
 # searches for customer
 def mapl_customer_query(doctype, txt, searchfield, start, page_len, filters):
@@ -103,6 +104,24 @@ def supplier_query(doctype, txt, searchfield, start, page_len, filters):
 		order by name, supplier_name
 		limit %(start)s, %(page_len)s """.format(**{
 			'field': fields,
+			'key': searchfield,
+			'mcond':get_match_cond(doctype)
+		}), {
+			'txt': "%%%s%%" % txt,
+			'_txt': txt.replace("%", ""),
+			'start': start,
+			'page_len': page_len
+		})
+
+
+def employee_query(doctype, txt, searchfield, start, page_len, filters):
+	return frappe.db.sql("""select name, employee_name from `tabEmployee`
+			where docstatus < 2
+			and ({key} like %(txt)s
+			or employee_name like %(txt)s)
+			{mcond}
+			order by name, employee_name
+			limit %(start)s, %(page_len)s """.format(**{
 			'key': searchfield,
 			'mcond':get_match_cond(doctype)
 		}), {

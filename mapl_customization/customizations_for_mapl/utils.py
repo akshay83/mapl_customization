@@ -24,8 +24,10 @@ def get_party_name(party, party_type):
 	doc = frappe.get_doc(party_type, party)
 	if (party_type == "Customer"):
 		return doc.customer_name
-	else:
+	elif (party_type == "Supplier"):
 		return doc.supplier_name
+	elif (party_type == "Employee"):
+		return doc.employee_name
 
 @frappe.whitelist()
 def get_primary_billing_address(party, party_type):
