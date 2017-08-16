@@ -39,6 +39,7 @@ doc_events = {
 	},
 	"Sales Invoice" : {
 		"validate" : "mapl_customization.customizations_for_mapl.finance_validation.sales_invoice_validate",
+		"on_submit" : "mapl_customization.customizations_for_mapl.finance_validation.sales_on_submit_validation",
 		"before_save": "mapl_customization.customizations_for_mapl.workflow_hooks.before_save_salesinvoice",
 		"on_update_after_submit":"mapl_customization.customizations_for_mapl.sales_invoice_hooks.sales_invoice_on_update_after_submit"
 	},

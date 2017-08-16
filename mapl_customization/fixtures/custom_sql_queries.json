@@ -30,9 +30,9 @@
   "description": null, 
   "docstatus": 0, 
   "doctype": "Custom SQL Queries", 
-  "modified": "2017-07-24 19:52:44.554470", 
+  "modified": "2017-08-15 20:30:23.099792", 
   "name": "Entry Checks", 
-  "query": "select * from (\n  (select sum(paid_amount) as `Payment Entry Sum` from `tabPayment Entry` where docstatus=1) pes,\n  (select sum(debit) as `GL Payment Sum` from `tabGL Entry` where voucher_type = 'Payment Entry') pe,\n  (select sum(grand_total) as `Sales Invoice Sum` from `tabSales Invoice` where docstatus=1) tsi,\n  (select sum(debit) as `GL Sales Sum` from `tabGL Entry` where voucher_type = 'Sales Invoice' and party_type is not null) tsge,\n  (select sum(grand_total) as `Purchase Invoice Sum` from `tabPurchase Invoice` where docstatus=1) tpi,\n  (select sum(credit) as `GL Purchase Sum` from `tabGL Entry` where voucher_type = 'Purchase Invoice' and party_type is not null) tpge \n  )", 
+  "query": "select * from (\n  (select sum(paid_amount) as `Payment Entry Sum` from `tabPayment Entry` where docstatus=1) pes,\n  (select sum(debit) as `GL Payment Sum` from `tabGL Entry` where voucher_type = 'Payment Entry') pe,\n  (select sum(grand_total) as `Sales Invoice Sum` from `tabSales Invoice` where docstatus=1) tsi,\n  (select sum(debit-credit) as `GL Sales Sum` from `tabGL Entry` where voucher_type = 'Sales Invoice' and party_type is not null) tsge,\n  (select sum(grand_total) as `Purchase Invoice Sum` from `tabPurchase Invoice` where docstatus=1) tpi,\n  (select sum(credit) as `GL Purchase Sum` from `tabGL Entry` where voucher_type = 'Purchase Invoice' and party_type is not null) tpge,\n  (select sum(stock_value_difference) as `GL Stock Sum` from `tabStock Ledger Entry` where voucher_type = 'Stock Entry') segl,\n  (select sum(value_difference) as `Stock Entry Sum` from `tabStock Entry` where docstatus=1) sesu\n  )", 
   "query_name": "Entry Checks"
  }, 
  {
@@ -61,5 +61,14 @@
   "name": "GFK Sales Report", 
   "query": "select \n  details.brand,\n  details.item_code, \n  sum(qty) as qty, \n  avg(rate) as rate \nfrom \n  `tabSales Invoice Item` details, \n  `tabSales Invoice` inv \nwhere \n  inv.name=details.parent \n  and inv.docstatus = 1 \n  and inv.posting_date&gt;='2017-07-01' \n  and inv.posting_date&lt;='2017-07-31' \n  and (details.brand='LG' or details.brand='Samsung')\ngroup by item_code \norder by brand, item_code ", 
   "query_name": "GFK Sales Report"
+ }, 
+ {
+  "description": null, 
+  "docstatus": 0, 
+  "doctype": "Custom SQL Queries", 
+  "modified": "2017-08-15 20:10:36.703268", 
+  "name": "Stock Entry GL Check", 
+  "query": "select asum,name,purpose from (select sum(stock_value_difference) as `asum`, voucher_no from `tabStock Ledger Entry` sle where voucher_type = 'Stock Entry' group by voucher_no) a, `tabStock Entry` b where a.voucher_no = b.name and b.docstatus=1 and a.asum &lt;&gt; b.value_difference", 
+  "query_name": "Stock Entry GL Check"
  }
 ]

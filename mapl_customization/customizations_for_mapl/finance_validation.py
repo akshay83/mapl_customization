@@ -2,10 +2,12 @@ import frappe
 from frappe.utils import cint
 
 def sales_invoice_validate(doc, method):
-	finance_validate(doc, method)
 	negative_stock_validation(doc, method)
-	validate_hsn_code(doc, method)
+
+def sales_on_submit_validation(doc, method):
 	vehicle_validation(doc, method)
+	validate_hsn_code(doc, method)
+	finance_validate(doc, method)
 
 def sales_order_validate(doc, method):
 	finance_validate(doc, method)
@@ -23,7 +25,7 @@ def vehicle_validation(doc, method):
 		if cint(i.is_vehicle) and len(doc.items)>1:
 			frappe.throw("A Sales Invoice can have only Single Vehicle and No Other Item")
 
-		if cint(i.is_vehicle) and len(i.serial_no.split('\n'))>1:
+		if cint(i.is_vehicle) and len(i.serial_no.strip(' \n').split('\n'))>1:
 			frappe.throw("A Sales Invoice can have only ONE Vehicle")
 
 def negative_stock_validation(doc, method):
