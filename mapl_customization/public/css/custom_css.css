@@ -1,8 +1,5 @@
 @media screen and (min-width: 916px) {
 
-.module-body {
-	padding-left:200px;
-}
 .like-disabled-input {
 	background: #eee;
 	border: 1px solid #d1d8dd;
@@ -207,4 +204,19 @@ a {
 .radio, .checkbox {
 	height: 44px;
 }
+.page-body {
+	width: 100%;
 }
+.page-head > .container {
+	width: 100%;
+}
+}
+@media screen and (max-device-width: 1135px) {
+	.page-title { 
+		width:50%;
+	}
+	.page-actions {
+		width:50%;
+	}
+}
+

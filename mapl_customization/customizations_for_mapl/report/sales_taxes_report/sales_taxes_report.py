@@ -161,18 +161,24 @@ def get_query(filters):
 			if isinstance(tax_json, basestring):
 				tax_json = json.loads(tax_json)
 
-			for key, val in tax_json.items():
-				build_key = d.account_head+"-"+str(float(val[0]))+"%"
-				if d.charge_type != 'Actual':
+
+			if d.charge_type != 'Actual':
+				for key, val in tax_json.items():
+					build_key = d.account_head+"-"+str(float(val[0]))+"%"
 					build_row[build_key] = build_row.get(build_key,0) + val[1]
-				else:
-					net_amount = frappe.db.get_value("{doctype} Invoice Item".format(**{
-							"doctype":"Sales" if (filters.get("document_type") and filters["document_type"]=="Sales") else "Purchase",
-							}), {
-							"parent": d.name,
-							"item_code": key
-							}, "net_amount")
-					build_row[build_key] = build_row.get(build_key, 0) + round((net_amount * float(val[0]) / 100),2)
+			else:
+				doc = frappe.get_doc("{doctype} Invoice".format(**{
+						"doctype":"Sales" if (filters.get("document_type") and filters["document_type"]=="Sales") else "Purchase",
+						}), d.name)
+
+				for i in doc.items:
+
+					txs = frappe.get_doc("Item", i.item_code).taxes
+
+					for t in txs:
+						build_key = d.account_head+"-"+str(float(t.tax_rate))+"%"
+						if t.tax_type==d.account_head:
+							build_row[build_key] = build_row.get(build_key, 0) + round((i.net_amount * float(t.tax_rate) / 100),2)
 
 	rows.append(build_row)
 	return rows

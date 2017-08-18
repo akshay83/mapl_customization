@@ -26,6 +26,18 @@ def execute(filters=None):
 			"width": 150
 		},
 		{
+			"fieldname":"against",
+			"label":"Against A/c",
+			"fieldtype":"Data",
+			"width": 150
+		},
+		{
+			"fieldname":"against_name",
+			"label":"Against Name",
+			"fieldtype":"Data",
+			"width": 150
+		},
+		{
 			"fieldname":"remarks",
 			"label":"Remarks",
 			"fieldtype:":"Text",
@@ -120,10 +132,21 @@ def get_details(filters):
 			  voucher_type,
 			  voucher_no,
 			  remarks,
+			  against,
 			  debit,
-			  credit
+			  credit,
+			   if(against is not null and length(against)<=10,
+				        if(against like 'Cust-%',
+				          (select customer_name from `tabCustomer` where name = gl.against),
+				          if (against like 'Supp-%',
+				            (select supplier_name from `tabSupplier` where name = gl.against),
+				            null
+				          )
+				        ),
+				        null
+			  ) as `against_name`
 			from 
-			  `tabGL Entry` 
+			  `tabGL Entry` gl
 			where
 			  {date_range}
 			  {condition}
@@ -144,6 +167,8 @@ def get_details(filters):
 		build_row["remarks"] = d.remarks
 		build_row["debit"] = d.debit
 		build_row["credit"] = d.credit
+		build_row["against"] = d.against
+		build_row["against_name"] = d.against_name
 		total_credit += d.credit
 		total_debit += d.debit
 		rows.append(build_row)
