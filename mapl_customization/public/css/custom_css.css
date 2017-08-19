@@ -210,13 +210,11 @@ a {
 .page-head > .container {
 	width: 100%;
 }
-}
-@media screen and (max-device-width: 1135px) {
 	.page-title { 
-		width:50%;
+		width:55%;
 	}
 	.page-actions {
-		width:50%;
+		width:45%;
 	}
 }
 

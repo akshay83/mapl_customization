@@ -48,7 +48,10 @@ doc_events = {
 	},
         "Stock Entry" : {
                 "validate": "mapl_customization.customizations_for_mapl.finance_validation.validate_stock_entry_serial_no"
-        }
+        },
+	"Salary Slip" : {
+		"before_save": "mapl_customization.customizations_for_mapl.salary_slip_hooks.salary_slip_before_save"
+	}
 }
 app_include_css = "/assets/mapl_customization/css/custom_css.css"
 app_include_js = ["/assets/mapl_customization/js/side_bar.js",

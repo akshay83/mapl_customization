@@ -32,7 +32,8 @@ def mapl_address_query (doctype, txt, searchfield, start, page_len, filters):
 			from `tabAddress` addr, `tabDynamic Link` dyn where dyn.parent=addr.name and 
 			(addr.{key} like %(txt)s
 			or address_line1 like %(txt)s
-			or address_line2 like %(txt)s)
+			or address_line2 like %(txt)s
+			or city like %(txt)s)
 			{condition} {mcond}
 			order by
 			if(locate(%(_txt)s, addr.name), locate(%(_txt)s, addr.name), 99999),
