@@ -218,3 +218,11 @@ a {
 	}
 }
 
+::-webkit-scrollbar {
+    width: 5px;  /* remove scrollbar space */
+    height: 5px;
+}
+::-webkit-scrollbar-thumb {
+    background: #fdd70d;  /* optional: just make scrollbar invisible */
+}
+

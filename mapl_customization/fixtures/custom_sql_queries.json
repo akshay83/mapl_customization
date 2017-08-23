@@ -30,9 +30,9 @@
   "description": null, 
   "docstatus": 0, 
   "doctype": "Custom SQL Queries", 
-  "modified": "2017-08-15 20:30:23.099792", 
+  "modified": "2017-08-19 19:00:55.291683", 
   "name": "Entry Checks", 
-  "query": "select * from (\n  (select sum(paid_amount) as `Payment Entry Sum` from `tabPayment Entry` where docstatus=1) pes,\n  (select sum(debit) as `GL Payment Sum` from `tabGL Entry` where voucher_type = 'Payment Entry') pe,\n  (select sum(grand_total) as `Sales Invoice Sum` from `tabSales Invoice` where docstatus=1) tsi,\n  (select sum(debit-credit) as `GL Sales Sum` from `tabGL Entry` where voucher_type = 'Sales Invoice' and party_type is not null) tsge,\n  (select sum(grand_total) as `Purchase Invoice Sum` from `tabPurchase Invoice` where docstatus=1) tpi,\n  (select sum(credit) as `GL Purchase Sum` from `tabGL Entry` where voucher_type = 'Purchase Invoice' and party_type is not null) tpge,\n  (select sum(stock_value_difference) as `GL Stock Sum` from `tabStock Ledger Entry` where voucher_type = 'Stock Entry') segl,\n  (select sum(value_difference) as `Stock Entry Sum` from `tabStock Entry` where docstatus=1) sesu\n  )", 
+  "query": "select * from (\n  (select sum(paid_amount) as `Payment Entry Sum` from `tabPayment Entry` where docstatus=1) pes,\n  (select sum(debit) as `GL Payment Sum` from `tabGL Entry` where voucher_type = 'Payment Entry') pe,\n  (select sum(grand_total) as `Sales Invoice Sum` from `tabSales Invoice` where docstatus=1) tsi,\n  (select sum(debit-credit) as `GL Sales Sum` from `tabGL Entry` where voucher_type = 'Sales Invoice' and party_type is not null) tsge,\n  (select sum(grand_total) as `Purchase Invoice Sum` from `tabPurchase Invoice` where docstatus=1) tpi,\n  (select sum(credit) as `GL Purchase Sum` from `tabGL Entry` where voucher_type = 'Purchase Invoice' and party_type is not null) tpge,\n  (select sum(stock_value_difference) as `GL Stock Sum` from `tabStock Ledger Entry` where voucher_type = 'Stock Entry') segl,\n  (select sum(value_difference) as `Stock Entry Sum` from `tabStock Entry` where docstatus=1) sesu,\n  (select sum(total_debit) as `Journal Entry Sum` from `tabJournal Entry` where docstatus=1) jesu,\n  (select sum(debit) as `GL Journal Sum` from `tabGL Entry` where voucher_type='Journal Entry') gljs\n  )", 
   "query_name": "Entry Checks"
  }, 
  {
@@ -70,5 +70,23 @@
   "name": "Stock Entry GL Check", 
   "query": "select asum,name,purpose from (select sum(stock_value_difference) as `asum`, voucher_no from `tabStock Ledger Entry` sle where voucher_type = 'Stock Entry' group by voucher_no) a, `tabStock Entry` b where a.voucher_no = b.name and b.docstatus=1 and a.asum &lt;&gt; b.value_difference", 
   "query_name": "Stock Entry GL Check"
+ }, 
+ {
+  "description": null, 
+  "docstatus": 0, 
+  "doctype": "Custom SQL Queries", 
+  "modified": "2017-08-20 19:30:44.560955", 
+  "name": "Exchange Details", 
+  "query": "select\n  inv.posting_date,\n  inv.letter_head,\n  inv.name,\n  inv.customer_name,\n  det.exchange_details,\n  group_concat(det.item_code) as `items_bought`\nfrom\n  `tabSales Invoice` inv,\n  `tabSales Invoice Item` det\nwhere\n  det.parent = inv.name\n  and inv.docstatus = 1\n  and det.under_exchange = 1\ngroup by\n  det.parent\norder by \n  inv.letter_head,\n  inv.posting_date", 
+  "query_name": "Exchange Details"
+ }, 
+ {
+  "description": null, 
+  "docstatus": 0, 
+  "doctype": "Custom SQL Queries", 
+  "modified": "2017-08-20 20:10:21.236281", 
+  "name": "SLE vs BIN Stock", 
+  "query": "select * from (\nselect it.brand, it.item_group, it.item_code,\n(select sum(actual_qty) from `tabBin` where item_code=it.item_code) as bin_qty,\n(select sum(actual_qty) from `tabStock Ledger Entry` where item_code=it.item_code) as sle_qty\nfrom `tabItem` it group by it.item_code\n) a where bin_qty&lt;&gt;sle_qty", 
+  "query_name": "SLE vs BIN Stock"
  }
 ]
