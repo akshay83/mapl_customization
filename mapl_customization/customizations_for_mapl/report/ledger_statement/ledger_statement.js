@@ -63,7 +63,7 @@ frappe.query_reports["Ledger Statement"] = {
 			"fieldname":"party_name",
 			"label": __("Party Name"),
 			"fieldtype": "Data",
-			"hidden": 1
+			"read_only": 1
 		}
 	]
 }

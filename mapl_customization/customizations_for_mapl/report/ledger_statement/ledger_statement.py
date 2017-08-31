@@ -38,12 +38,6 @@ def execute(filters=None):
 			"width": 150
 		},
 		{
-			"fieldname":"remarks",
-			"label":"Remarks",
-			"fieldtype:":"Text",
-			"width": 250
-		},
-		{
 			"fieldname":"debit",
 			"label":"Debit",
 			"fieldtype:":"Currency",
@@ -54,6 +48,18 @@ def execute(filters=None):
 			"label":"Credit",
 			"fieldtype:":"Currency",
 			"width": 125
+		},
+		{
+			"fieldname":"chq_no",
+			"label":"Reference No",
+			"fieldtype:":"Data",
+			"width": 125
+		},
+		{
+			"fieldname":"remarks",
+			"label":"Remarks",
+			"fieldtype:":"Text",
+			"width": 250
 		}
 
 	]
@@ -110,7 +116,7 @@ def get_opening(filters):
 				})
 
 	for q in frappe.db.sql(query, as_dict=1):
-		build_row["remarks"] = "Opening Balance"
+		build_row["voucher_type"] = "Opening Balance"
 		if q.opening_balance <=0:
 			build_row["credit"] = abs(q.opening_balance)
 		else:
@@ -132,6 +138,13 @@ def get_details(filters):
 			  voucher_type,
 			  voucher_no,
 			  remarks,
+			  if((voucher_type like 'Journal %'),
+			    (select cheque_no from `tabJournal Entry` where name=voucher_no),
+			    if((voucher_type like 'Payment %'), 
+			      (select reference_no from `tabPayment Entry` where name=voucher_no),
+			      null
+			    )
+			  ) as chq_no,
 			  against,
 			  debit,
 			  credit,
@@ -169,13 +182,14 @@ def get_details(filters):
 		build_row["credit"] = d.credit
 		build_row["against"] = d.against
 		build_row["against_name"] = d.against_name
+		build_row["chq_no"] = d.chq_no
 		total_credit += d.credit
 		total_debit += d.debit
 		rows.append(build_row)
 
-	rows.append({"remarks": "Total", "debit":total_debit, "credit":total_credit})
+	rows.append({"voucher_type": "Total", "debit":total_debit, "credit":total_credit})
 
-	rows.append({"remarks":"Closing Balance",
+	rows.append({"voucher_type":"Closing Balance",
 			"debit": (total_debit-total_credit) if (total_debit>total_credit) else 0,
 			"credit": (total_credit-total_debit) if (total_credit>total_debit) else 0
 		    })

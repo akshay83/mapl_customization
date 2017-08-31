@@ -207,6 +207,13 @@ a {
 .page-body {
 	width: 100%;
 }
+.list-item__content--id {
+	flex: 2;
+	justify-content: initial;
+}
+.list-item.list-item--head > .list-item__content.hidden-xs.hidden-sm {
+	flex: 2;
+}
 .page-head > .container {
 	width: 100%;
 }

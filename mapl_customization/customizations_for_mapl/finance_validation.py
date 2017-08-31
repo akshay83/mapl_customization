@@ -3,6 +3,7 @@ from frappe.utils import cint
 
 def sales_invoice_validate(doc, method):
 	negative_stock_validation(doc, method)
+	taxes_and_charges_validation(doc, method)
 
 def sales_on_submit_validation(doc, method):
 	vehicle_validation(doc, method)
@@ -32,6 +33,14 @@ def negative_stock_validation(doc, method):
 	for i in doc.items:
 		if (i.actual_qty <= 0 and (i.item_code and frappe.db.get_value("Item", i.item_code, "is_stock_item"))):
 			frappe.msgprint("Negative Stock for {0}, Please verify before Submitting".format(i.item_code))
+
+def taxes_and_charges_validation(doc, method):
+	if doc.total_taxes_and_charges == 0:
+		frappe.msgprint("No Taxes and Charges Applied, Please ensure if this is Ok!!")
+	else:
+		for i in doc.items:
+			if i.net_rate == i.rate:
+				frappe.msgprint("""Taxes Does not seems to be Applied on Item {0}, Please ensure if this is Ok!!""".format(i.item_code))
 
 def validate_hsn_code(doc, method):
 	for i in doc.items:

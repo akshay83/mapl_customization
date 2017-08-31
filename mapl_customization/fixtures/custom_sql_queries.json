@@ -88,5 +88,41 @@
   "name": "SLE vs BIN Stock", 
   "query": "select * from (\nselect it.brand, it.item_group, it.item_code,\n(select sum(actual_qty) from `tabBin` where item_code=it.item_code) as bin_qty,\n(select sum(actual_qty) from `tabStock Ledger Entry` where item_code=it.item_code) as sle_qty\nfrom `tabItem` it group by it.item_code\n) a where bin_qty&lt;&gt;sle_qty", 
   "query_name": "SLE vs BIN Stock"
+ }, 
+ {
+  "description": null, 
+  "docstatus": 0, 
+  "doctype": "Custom SQL Queries", 
+  "modified": "2017-08-28 19:21:18.929679", 
+  "name": "Serial No Warehouse Check", 
+  "query": "select \n  a.name,\n  a.warehouse,\n  s.warehouse,\n  s.item_code\nfrom \n  (select \n        sum(\n          ent.actual_qty /\n            (LENGTH(TRIM(TRAILING '\\n' FROM ent.serial_no)) - \n              LENGTH(REPLACE(TRIM(TRAILING '\\n' FROM ent.serial_no), '\\n', '')) + 1)) as qty,\n        ent.warehouse, \n        serial.name, \n        serial.item_code, \n        ent.voucher_no \n      from `tabStock Ledger Entry` ent, \n           `tabSerial No` serial \n      where \n        ent.serial_no like concat('%',serial.name,'%') \n        and ent.item_code=serial.item_code \n      group by \n        serial.name, warehouse) a, \n  `tabSerial No` s \nwhere \n  a.name=s.name \n  and a.qty&gt;=1\n  and a.warehouse&lt;&gt;s.warehouse", 
+  "query_name": "Serial No Warehouse Check"
+ }, 
+ {
+  "description": null, 
+  "docstatus": 0, 
+  "doctype": "Custom SQL Queries", 
+  "modified": "2017-08-29 18:22:54.326433", 
+  "name": "Tax Check", 
+  "query": "(select \n  inv.posting_date, \n  item.parent, \n  item.item_code, \n  inv.reference_details, \n  item.rate, \n  inv.grand_total \n from `tabSales Invoice Item` item, \n      `tabSales Invoice` inv, \n      `tabSales Taxes and Charges` tax \n where inv.name=item.parent \n  and inv.name=tax.parent \n  and tax.included_in_print_rate=1 \n  and item.net_rate=item.rate \n  and item.rate&gt;0 \n  and inv.docstatus=1 \n order by posting_date, parent) \n  union all\n(select \n  inv.posting_date, \n  inv.name, \n  null, \n  inv.reference_details, \n  inv.grand_total,  \n  inv.grand_total \n from `tabSales Invoice` inv \n where inv.docstatus = 1 \n  and inv.total_taxes_and_charges = 0\n  and inv.grand_total&gt;0)", 
+  "query_name": "Tax Check"
+ }, 
+ {
+  "description": null, 
+  "docstatus": 0, 
+  "doctype": "Custom SQL Queries", 
+  "modified": "2017-08-29 18:58:20.223414", 
+  "name": "Sale Report", 
+  "query": "select \n  inv.letter_head,\n  inv.name,\n  inv.posting_date,\n  inv.customer_name,\n  addr.address_line1,\n  addr.address_line2,\n  addr.city,\n  cust.primary_contact_no,\n  item.brand, \n  item.item_group,\n  item.item_code,\n  trim(trailing '\\n' FROM item.serial_no) as serial_no,\n  item.rate\nfrom `tabSales Invoice` inv,\n   `tabSales Invoice Item` item,\n   `tabCustomer` cust,\n   `tabAddress` addr\nwhere\n   inv.name=item.parent\n   and inv.docstatus=1\n   and inv.name=item.parent\n   and item.brand = 'LG'\n   and inv.customer=cust.name\n   and addr.address_title=cust.name \n   and addr.name=inv.customer_address \n   and inv.posting_date&gt;='2017-08-01'     \norder by inv.posting_date, inv.name", 
+  "query_name": "Sale Report"
+ }, 
+ {
+  "description": null, 
+  "docstatus": 0, 
+  "doctype": "Custom SQL Queries", 
+  "modified": "2017-08-30 16:26:30.265575", 
+  "name": "Letter Head Check", 
+  "query": "(select 'Payment Entry', name, party_name, letter_head from `tabPayment Entry` where (name like '%RH%' and docstatus=1 and letter_head not like '%Ranjeet%') or (name like '%GB%' and docstatus=1 and letter_head not like '%Geeta%') or (name like '%VN%' and docstatus=1 and letter_head not like '%Vijay N%'))\nunion all\n(select 'Sales Invoice', name, customer_name, letter_head from `tabSales Invoice` where (name like '%RH%' and docstatus=1 and letter_head not like '%Ranjeet%') or (name like '%GB%' and docstatus=1 and letter_head not like '%Geeta%') or (name like '%VN%' and docstatus=1 and letter_head not like '%Vijay N%'))", 
+  "query_name": "Letter Head Check"
  }
 ]

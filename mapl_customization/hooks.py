@@ -58,8 +58,12 @@ app_include_js = ["/assets/mapl_customization/js/side_bar.js",
 				"/assets/mapl_customization/js/form_comments.js",
 				"/assets/mapl_customization/js/core.js",
 				"/assets/mapl_customization/js/lz-string.min.js",
-				"/assets/mapl_customization/js/quick_customer.js"
+				"/assets/mapl_customization/js/quick_customer.js",
+				"/assets/mapl_customization/js/monkey_patch_list_view.js"
 				]
+
+doctype_list_js = {"Payment Entry" : "/public/js/payment_entry_list.js",
+			"Sales Invoice" : "/public/js/sales_invoice_list.js"}
 
 jenv_filter = [
     'json_load:mapl_customization.customizations_for_mapl.jinja.json_load'

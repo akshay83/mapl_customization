@@ -1,0 +1,27 @@
+{
+ "add_total_row": 0, 
+ "apply_user_permissions": 1, 
+ "creation": "2017-08-28 20:32:08.358404", 
+ "disabled": 0, 
+ "docstatus": 0, 
+ "doctype": "Report", 
+ "idx": 0, 
+ "is_standard": "Yes", 
+ "modified": "2017-08-28 20:34:47.527958", 
+ "modified_by": "Administrator", 
+ "module": "Customizations for MAPL", 
+ "name": "Reference Outstanding", 
+ "owner": "Administrator", 
+ "query": "select \n    sales.name as `Invoice No:Data:150`,\n    sales.letter_head as `Letter Head:Data:100`, \n    sales.posting_date as `Date:Date:100`,\n    sales.customer as `Customer:Link/Customer:150`,\n    sales.customer_name as `Customer Name:Data:200`,\n    sales.referred_by as `Referred By:Data:150`,\n    sales.special_remarks as `Reference Details:Data:100`,\n    sales.grand_total as `Invoice Amount:Float:100`,    \n    (select sum(grd.grand_total) from `tabSales Invoice` grd\n      where \n          grd.customer = sales.customer\n            and grd.docstatus = 1) as `Total Customer Billing:Float:125`,\n    (select ifnull(sum(debit),0)-ifnull(sum(credit),0) \n      from `tabGL Entry` \n        where \n          party=sales.customer \n            and party_type='Customer') as `Current Customer Balance:Float:125`\nfrom `tabSales Invoice` as sales \nwhere \n    sales.docstatus= 1 \n    and sales.delayed_payment = 1 \norder by `Current Customer Balance:Float:125` desc, sales.posting_date, sales.customer_name", 
+ "ref_doctype": "Sales Invoice", 
+ "report_name": "Reference Outstanding", 
+ "report_type": "Query Report", 
+ "roles": [
+  {
+   "role": "Accounts Manager"
+  }, 
+  {
+   "role": "Accounts User"
+  }
+ ]
+}
