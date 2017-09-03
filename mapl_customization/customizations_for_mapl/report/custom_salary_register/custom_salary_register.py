@@ -219,7 +219,7 @@ def get_employee_details(filters):
 
 		if build_row.get("total_loan",0) == 0:
 			build_row["total_loan"] = e.total_loan_repayment
-		build_row["net_pay"] = build_row.get("total_earnings",0)-(build_row.get("total_deductions")-build_row.get("total_loan",0))
+		build_row["net_pay"] = build_row.get("total_earnings",0)-(build_row.get("total_deductions")+build_row.get("total_loan",0))
 		rows.append(build_row)
 
 	return rows
