@@ -129,6 +129,7 @@ def get_query(filters):
 			  order by sales.name"""
 
 	temp_name = None
+	temp_account_head = None
 	build_row = {}
 
 	query = query.format(**{
@@ -136,6 +137,11 @@ def get_query(filters):
 				"doc_columns": get_document_specific_columns(filters),
 				"condition":get_conditions(filters)
 				})
+
+	#if filters.get("document_type") and filters["document_type"] == "Sales":
+	#	query = get_sales_query().format(**{
+	#				"condition":get_conditions(filters)
+	#				})
 
 	for d in frappe.db.sql(query, as_dict=1):
 		if d.item_wise_tax_detail:
@@ -154,6 +160,7 @@ def get_query(filters):
 				build_row["party_name"] = d.party_name
 				build_row["charge_type"] = d.charge_type
 				temp_name = d.name
+				temp_account_head = d.item_tax_rate
 
 			build_row["total_tax"] = build_row.get("total_tax",0) + d.tax_amount
 
@@ -182,3 +189,40 @@ def get_query(filters):
 
 	rows.append(build_row)
 	return rows
+
+
+def get_sales_query():
+	return """
+			select
+                            sales.name,
+                            cust.customer_name,
+                            concat(ifnull(addr.city,''),',',ifnull(addr.state,'')) as place,
+                            concat(ifnull(addr.gst_state,''),',',ifnull(addr.gst_state_number,'')) as gst_state,
+                            item.item_tax_rate,
+                            sales.posting_date,
+                            taxes.item_wise_tax_detail,
+                            taxes.account_head,
+                            (item.net_amount) as taxable_amt,
+                            taxes.charge_type,
+                            (item.amount-item.net_amount) as tax_amount,
+                            sales.customer_gstin as gstin,
+                            sales.customer_name as party_name,
+                            taxes.included_in_print_rate
+                          from
+                            `tabSales Taxes and Charges`  taxes,
+                            `tabSales Invoice` sales,
+                            `tabSales Invoice Item` item,
+                            `tabCustomer` cust,
+                            `tabAddress` addr
+                          where
+                            taxes.parent=sales.name
+                            and item.parent=sales.name
+                            and sales.customer=cust.name 
+                            and addr.address_title = cust.name 
+                            and sales.customer_address=addr.name  
+                            and (taxes.charge_type != 'Actual'
+                                or taxes.account_head in (select distinct tax_type from `tabItem Tax`))
+                            and sales.docstatus = 1
+			    {condition}
+                          order by sales.name, item.item_tax_rate, account_head
+	"""

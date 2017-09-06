@@ -100,6 +100,12 @@ def get_default_columns(filters):
 			"width":50
 		},
 		{
+			"fieldname":"leave_availed",
+			"label":"Leave Availed",
+			"fieldtype":"Int",
+			"width":50
+		},
+		{
 			"fieldname":"base",
 			"label":"Base",
 			"fieldtype":"Float",
@@ -190,6 +196,7 @@ def get_employee_details(filters):
 					  slip.total_working_days,
 					  slip.leave_without_pay,
 					  slip.payment_days,
+					  slip.leave_availed,
 					  slip.total_loan_repayment,
 					  struct.base
 					from 
@@ -212,6 +219,7 @@ def get_employee_details(filters):
 		build_row["designation"] = e.designation
 		build_row["total_present"] = e.payment_days
 		build_row["leave_without_pay"] = e.leave_without_pay
+		build_row["leave_availed"] = e.leave_availed
 		build_row["base"] = e.base
 
 		build_row.update(get_earnings_and_deductions(e.name))

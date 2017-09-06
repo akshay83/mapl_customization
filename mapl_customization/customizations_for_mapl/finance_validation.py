@@ -4,6 +4,7 @@ from frappe.utils import cint
 def sales_invoice_validate(doc, method):
 	negative_stock_validation(doc, method)
 	taxes_and_charges_validation(doc, method)
+	validate_stock_entry_serial_no(doc, method)
 
 def sales_on_submit_validation(doc, method):
 	vehicle_validation(doc, method)
@@ -49,10 +50,16 @@ def validate_hsn_code(doc, method):
 
 def validate_stock_entry_serial_no(doc, method):
 	for i in doc.items:
-		if i.serial_no and i.s_warehouse:
+		warehouse = None
+		if doc.doctype.lower() != 'stock entry':
+			warehouse = i.warehouse
+		else:
+			warehouse = i.s_warehouse
+
+		if i.serial_no and warehouse:
 			snos = i.serial_no.strip(' \n').split('\n')
 			for s in snos:
-				if i.s_warehouse != frappe.db.get_value("Serial No", s, "warehouse"):
-					frappe.throw("""Item {0} with Serial No {1} Not in Warehouse {2}""".format(i.item_code, s, i.s_warehouse))
+				if warehouse != frappe.db.get_value("Serial No", s, "warehouse"):
+					frappe.throw("""Item {0} with Serial No {1} Not in Warehouse {2}""".format(i.item_code, s, warehouse))
 
 

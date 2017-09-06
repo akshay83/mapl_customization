@@ -43,6 +43,24 @@ def get_data():
 				}
 
 			]
+		},
+		{
+			"label": _("Banking and Payments"),
+			"items": [
+				{
+					"type": "doctype",
+					"name": "Finance Payment Tool",
+				},
+				{
+					"type": "doctype",
+					"name": "Adjustments Set Off Tool",
+				},
+				{
+					"type": "doctype",
+					"name": "Salary Payment Tool",
+				}
+			]
 		}
+
 	       ]
 

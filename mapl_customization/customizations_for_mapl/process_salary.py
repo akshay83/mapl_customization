@@ -1,4 +1,5 @@
 import frappe
+import erpnext
 import json
 from frappe.utils import cint
 from mapl_customization.customizations_for_mapl.report.custom_salary_register.custom_salary_register import get_employee_details
@@ -35,6 +36,7 @@ def process_staff_salaries_jv(payable_account, date, filters, director):
 			ac1.debit_in_account_currency = amount
 		elif amount < 0:
 			ac1.credit_in_account_currency = abs(amount)
+		ac1.cost_center = erpnext.get_default_cost_center(account[0].company)
 
 	jv.save()
 
