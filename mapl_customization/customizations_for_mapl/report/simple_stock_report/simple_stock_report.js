@@ -50,6 +50,12 @@ frappe.query_reports['Simple Stock Report'] = {
 					  "options":"Company",
 					  "default":frappe.defaults.get_user_default("Company"),
 					  "width":"150"
+					},
+					{
+  					"fieldname":"group_by_warehouse",
+					"fieldtype":"Check",
+					"label":"Show Stock as per Warehouse",
+					"default":"0"
 					}
 			   ]	
 

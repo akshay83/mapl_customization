@@ -36,7 +36,7 @@ def process_staff_salaries_jv(payable_account, date, filters, director):
 			ac1.debit_in_account_currency = amount
 		elif amount < 0:
 			ac1.credit_in_account_currency = abs(amount)
-		ac1.cost_center = erpnext.get_default_cost_center(account[0].company)
+		ac1.cost_center = 'Main - MAPL' #erpnext.get_default_cost_center(account[0].company)
 
 	jv.save()
 

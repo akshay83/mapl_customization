@@ -153,7 +153,10 @@ def get_details(filters):
 				          (select customer_name from `tabCustomer` where name = gl.against),
 				          if (against like 'Supp-%',
 				            (select supplier_name from `tabSupplier` where name = gl.against),
-				            null
+				            if (against like 'EMP/%',
+						(select employee_name from `tabEmployee` where name = gl.against),
+						null
+					    )
 				          )
 				        ),
 				        null

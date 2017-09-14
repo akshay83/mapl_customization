@@ -124,5 +124,23 @@
   "name": "Letter Head Check", 
   "query": "(select 'Payment Entry', name, party_name, letter_head from `tabPayment Entry` where (name like '%RH%' and docstatus=1 and letter_head not like '%Ranjeet%') or (name like '%GB%' and docstatus=1 and letter_head not like '%Geeta%') or (name like '%VN%' and docstatus=1 and letter_head not like '%Vijay N%'))\nunion all\n(select 'Sales Invoice', name, customer_name, letter_head from `tabSales Invoice` where (name like '%RH%' and docstatus=1 and letter_head not like '%Ranjeet%') or (name like '%GB%' and docstatus=1 and letter_head not like '%Geeta%') or (name like '%VN%' and docstatus=1 and letter_head not like '%Vijay N%'))", 
   "query_name": "Letter Head Check"
+ }, 
+ {
+  "description": null, 
+  "docstatus": 0, 
+  "doctype": "Custom SQL Queries", 
+  "modified": "2017-09-11 16:09:21.664028", 
+  "name": "Serial Nos for Price Drop", 
+  "query": "select \n  name,\n  item_code,\n  brand,\n  delivery_date\nfrom \n  `tabSerial No`\nwhere\n  item_code regexp ('43M5100|43K5300|43M5570')\n  and (delivery_date is null or delivery_date &gt;= '2017-09-01')\norder by \n  item_code", 
+  "query_name": "Serial Nos for Price Drop"
+ }, 
+ {
+  "description": null, 
+  "docstatus": 0, 
+  "doctype": "Custom SQL Queries", 
+  "modified": "2017-09-12 16:20:06.851293", 
+  "name": "Cash Sales Total", 
+  "query": "select \n  posting_date,\n  sum(grand_total) as `Total`\nfrom\n  `tabSales Invoice`\nwhere\n  docstatus = 1\n  and posting_date&gt;='2017-09-01'\n  and posting_date&lt;='2017-09-12'\n  and customer_name like 'CASH S%'\ngroup by posting_date\norder by posting_date", 
+  "query_name": "Cash Sales Total"
  }
 ]
