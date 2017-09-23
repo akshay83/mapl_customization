@@ -14,6 +14,13 @@ def get_data():
 					"description": "Shows Finance Outstanding"
 				},
 				{
+					"type": "report",
+					"doctype": "Sales Invoice",
+					"is_query_report": True,
+					"name": "Reference Outstanding",
+					"description": "Shows Pending Payments for Referred Cases"
+				},
+				{
 					"type":"report",
 					"doctype": "Sales Invoice",
 					"is_query_report":True,

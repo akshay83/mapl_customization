@@ -142,5 +142,14 @@
   "name": "Cash Sales Total", 
   "query": "select \n  posting_date,\n  sum(grand_total) as `Total`\nfrom\n  `tabSales Invoice`\nwhere\n  docstatus = 1\n  and posting_date&gt;='2017-09-01'\n  and posting_date&lt;='2017-09-12'\n  and customer_name like 'CASH S%'\ngroup by posting_date\norder by posting_date", 
   "query_name": "Cash Sales Total"
+ }, 
+ {
+  "description": null, 
+  "docstatus": 0, 
+  "doctype": "Custom SQL Queries", 
+  "modified": "2017-09-18 16:06:30.234163", 
+  "name": "Tax Vs State Query", 
+  "query": "select \n  inv.customer,\n  inv.customer_name,\n  addr.state,\n  addr.gst_state,\n  inv.taxes_and_charges\nfrom\n  `tabSales Invoice` inv,\n  `tabCustomer` cust,\n  `tabAddress` addr \nwhere\n  cust.name=inv.customer\n  and inv.docstatus = 1\n  and inv.posting_date &gt;= '2017-08-01'\n  and inv.posting_date &lt;= '2017-08-31'\n  and addr.address_title=cust.name\norder by\n  inv.posting_date", 
+  "query_name": "Tax Vs State Query"
  }
 ]

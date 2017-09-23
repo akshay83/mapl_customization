@@ -40,6 +40,12 @@ def execute(filters=None):
 			"width": 125
 		},
 		{
+			"fieldname":"supplier_type",
+			"label":"Supplier Type",
+			"fieldtype:":"Data",
+			"width": 100
+		},
+		{
 			"fieldname":"party_gstin",
 			"label":"Party GSTIN",
 			"fieldtype:":"Data",
@@ -101,8 +107,10 @@ def get_conditions(filters):
 def get_document_specific_columns(filters):
 	if filters.get("document_type"):
 		if filters["document_type"] == "Sales":
-			return """,sales.customer_gstin as gstin, sales.customer_name as party_name, sales.name as inv_no, sales.posting_date as inv_date"""
-	return """,sales.supplier_gstin as gstin,sales.supplier_name as party_name,sales.bill_no as inv_no,sales.bill_date as inv_date"""
+			return """,sales.customer_gstin as gstin, sales.customer_name as party_name, sales.name as inv_no, sales.posting_date as inv_date,
+				(select concat(ifnull(concat(addr.state,','),''),addr.gst_state) from `tabAddress` addr where addr.name=sales.customer_address) as state"""
+	return """,sales.supplier_gstin as gstin,sales.supplier_name as party_name,sales.bill_no as inv_no,sales.bill_date as inv_date,
+		  (select supplier_type from `tabSupplier` where name=sales.supplier) as supplier_type"""
 
 
 
@@ -159,6 +167,7 @@ def get_query(filters):
 				build_row["taxable_amt"] = d.net_total
 				build_row["party_name"] = d.party_name
 				build_row["charge_type"] = d.charge_type
+				build_row["supplier_type"] = d.supplier_type if d.supplier_type else d.state
 				temp_name = d.name
 				temp_account_head = d.item_tax_rate
 
