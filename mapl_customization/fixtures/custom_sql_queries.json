@@ -3,9 +3,9 @@
   "description": null, 
   "docstatus": 0, 
   "doctype": "Custom SQL Queries", 
-  "modified": "2017-04-23 16:25:00.380654", 
+  "modified": "2017-09-28 18:53:31.956900", 
   "name": "Current Stock", 
-  "query": "select item.item_code, item.brand, ifnull((select qty_after_transaction from `tabStock Ledger Entry` det where docstatus=1 and item_code=item.item_code order by posting_date, posting_time desc limit 1),0) as Qty from `tabItem` item order by item.brand, item.item_code", 
+  "query": "select \n  item.item_code, \n  item.brand, \n  sum(actual_qty) as Qty\nfrom \n  `tabItem` item, \n  `tabStock Ledger Entry` det \nwhere \n  item.item_code like '24lh454%' \n  and det.item_code=item.item_code \n  and det.docstatus=1 \n  and det.posting_date&lt;='2017-08-31' \ngroup by \n  item.item_code\norder by \n  item.brand, \n  item.item_code,\n  det.posting_date, \n  det.posting_time", 
   "query_name": "Current Stock"
  }, 
  {
@@ -129,9 +129,9 @@
   "description": null, 
   "docstatus": 0, 
   "doctype": "Custom SQL Queries", 
-  "modified": "2017-09-11 16:09:21.664028", 
+  "modified": "2017-10-07 20:55:24.808632", 
   "name": "Serial Nos for Price Drop", 
-  "query": "select \n  name,\n  item_code,\n  brand,\n  delivery_date\nfrom \n  `tabSerial No`\nwhere\n  item_code regexp ('43M5100|43K5300|43M5570')\n  and (delivery_date is null or delivery_date &gt;= '2017-09-01')\norder by \n  item_code", 
+  "query": "select \n  serial.name,\n  serial.item_code,\n  serial.brand,\n  serial.delivery_date,\n  min(sle.posting_date) as purchase_date,\n  count(*)\nfrom \n  `tabSerial No` serial,\n  `tabStock Ledger Entry` sle\nwhere\n  sle.item_code=serial.item_code\n  and serial.item_code regexp ('49E400|43ES480|49ES480|49ES630|55ES500|49EX600|55EX600')\n  and sle.voucher_no not in (select name from `tabStock Entry` where purpose='Material Transfer')  \n  and serial.name regexp REPLACE(TRIM(TRAILING '\\n' FROM sle.serial_no), '\\n', '|')\n  and (serial.delivery_date is null or serial.delivery_date &gt;= '2017-10-01')\ngroup by\n  serial.name\norder by \n  item_code", 
   "query_name": "Serial Nos for Price Drop"
  }, 
  {

@@ -112,6 +112,24 @@ def purchase_receipt_validate(doc, method):
 				frappe.throw("Check Entered Serial Nos Values")
 
 
+def purchase_receipt_before_submit(doc, method):
+	purchase_receipt_serial_no_validate_before_submit(doc, method)
+
+def purchase_receipt_serial_no_validate_before_submit(doc, method):
+	for i in doc.items:
+		if not i.serial_no:
+			continue
+
+		snos = i.serial_no.strip(' \n').split('\n')
+		snos = "|".join(snos)
+
+		rows = frappe.db.sql("""select name from `tabSerial No` where name regexp '%s' and warehouse is not null and warehouse <> ''""" % snos)
+
+		for r in rows:
+			frappe.throw("""Atleast One of The Serial No(s) for Item {0} Already Exists. Please Verify""".format(i.item_code))
+
+
+
 def validate_hsn_code(doc, method):
 	for i in doc.items:
 		if not i.gst_hsn_code:
