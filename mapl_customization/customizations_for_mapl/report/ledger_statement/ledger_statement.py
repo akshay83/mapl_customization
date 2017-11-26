@@ -146,8 +146,8 @@ def get_details(filters):
 			    )
 			  ) as chq_no,
 			  against,
-			  debit,
-			  credit,
+			  sum(debit) as debit,
+			  sum(credit) as credit,
 			   if(against is not null and length(against)<=10,
 				        if(against like 'Cust-%',
 				          (select customer_name from `tabCustomer` where name = gl.against),
@@ -166,6 +166,7 @@ def get_details(filters):
 			where
 			  {date_range}
 			  {condition}
+			group by voucher_no
 			order by posting_date"""
 
 	build_row = {}

@@ -151,5 +151,23 @@
   "name": "Tax Vs State Query", 
   "query": "select \n  inv.customer,\n  inv.customer_name,\n  addr.state,\n  addr.gst_state,\n  inv.taxes_and_charges\nfrom\n  `tabSales Invoice` inv,\n  `tabCustomer` cust,\n  `tabAddress` addr \nwhere\n  cust.name=inv.customer\n  and inv.docstatus = 1\n  and inv.posting_date &gt;= '2017-08-01'\n  and inv.posting_date &lt;= '2017-08-31'\n  and addr.address_title=cust.name\norder by\n  inv.posting_date", 
   "query_name": "Tax Vs State Query"
+ }, 
+ {
+  "description": null, 
+  "docstatus": 0, 
+  "doctype": "Custom SQL Queries", 
+  "modified": "2017-10-30 15:30:57.495136", 
+  "name": "Samsung Sales for Uploading", 
+  "query": "select\n  item.item_code,\n  item.brand,\n  item.item_group,\n  concat('\"',serial.name,'\"') as serial_no,\n  sales.customer_name,\n  sales.posting_date,\n  sales.address_display,\n  cust.primary_contact_no,\n  details.rate\nfrom\n  `tabSerial No` serial,\n  `tabItem` item,\n  `tabSales Invoice` sales,\n  `tabSales Invoice Item` details,\n  `tabCustomer` cust\n where\n  item.item_code=serial.item_code\n  and sales.name=serial.sales_invoice\n  and sales.docstatus=1\n  and cust.name=sales.customer\n  and sales.posting_date&gt;='2017-09-01'\n  and item.brand='Samsung'\n  and details.parent=sales.name\norder by\n  item.item_code, \n  serial.name, \n  sales.posting_date, \n  sales.customer_name", 
+  "query_name": "Samsung Sales for Uploading"
+ }, 
+ {
+  "description": null, 
+  "docstatus": 0, 
+  "doctype": "Custom SQL Queries", 
+  "modified": "2017-11-17 20:14:30.020750", 
+  "name": "Warehouse Mismatch Issue", 
+  "query": "select * from (select \n  concat('\"',serial.name,'\"') as serial_no, \n  serial.item_code, \n  serial.warehouse, \n  (select \n    sle.warehouse\n  from \n    `tabStock Ledger Entry` sle\n  where\n    sle.item_code=serial.item_code\n    and sle.serial_no like concat('%',serial.name,'%')\n    and actual_qty&gt;0\n  order by posting_date desc,creation desc limit 1) as was_in_warehouse,\n  (select \n    sle.warehouse\n  from\n   `tabStock Ledger Entry` sle\n  where\n    sle.item_code=serial.item_code\n    and sle.serial_no like concat('%',serial.name,'%')\n    and actual_qty &lt; 0\n    and voucher_type not like '%Stock En%'\n  order by posting_date desc,creation desc limit 1) as sold_from_warehouse\nfrom \n  `tabSerial No` serial) data\nwhere\n  sold_from_warehouse &lt;&gt; was_in_warehouse", 
+  "query_name": "Warehouse Mismatch Issue"
  }
 ]

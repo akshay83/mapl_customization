@@ -49,6 +49,9 @@ def validate_hsn_code(doc, method):
 			frappe.throw("HSN Code not found for {0}".format(i.item_code))
 
 def validate_stock_entry_serial_no(doc, method):
+	if doc.doctype.lower() != 'stock entry' and doc.is_return:
+		return
+
 	for i in doc.items:
 		warehouse = None
 		if doc.doctype.lower() != 'stock entry':

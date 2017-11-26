@@ -1,0 +1,75 @@
+<style>
+.print-format {
+	min-height: 8.3in;
+	max-width: 11.69in;
+	padding: 0.3in;
+}
+.print-format td {
+	padding: 3px !important;
+}
+</style>
+
+<span style="font-size:11px;">
+
+<h2 class="text-center">{%= __("Statement of Account") %}</h2>
+<h4 class="text-center">
+	{% if (filters.party_name) { %}
+		{%= filters.party_name %}
+	{% } else if (filters.party) { %}
+		{%= filters.party %}
+	{% } else if (filters.account) { %}
+		{%= filters.account %}
+	{% } %}
+</h4>
+<h5 class="text-center">
+	{%= dateutil.str_to_user(filters.from_date) %}
+	{%= __("to") %}
+	{%= dateutil.str_to_user(filters.to_date) %}
+</h5>
+<hr>
+<table class="table-bordered" style="width:100%;">
+	<thead>
+		<tr>
+			<th style="width: 08%">{%= __("Date") %}</th>
+			{% if (filters.account) { %}
+				<th style="width: 12%">{%= __("Voucher Ref") %}</th>
+				<th style="width: 25%">{%= __("Party") %}</th>
+			{% } else { %}
+				<th style="width: 37%">{%= __("Details") %}</th>
+			{% } %}
+			<th style="width: 10%">{%= __("Debit") %}</th>
+			<th style="width: 10%">{%= __("Credit") %}</th>
+			<th style="width: 10%">{%= __("Reference") %}</th>
+			<th style="width: 25%">{%= __("Remarks") %}</th>
+		</tr>
+	</thead>
+	<tbody>
+		{% for(var i=0, l=data.length; i<l; i++) { %}
+			<tr>
+				<td>{%= dateutil.str_to_user(data[i]["posting_date"]) %}</td>
+				<td>{%= data[i]["voucher_type"] %}
+					{% if (data[i]["posting_date"]) { %}
+					<br>{%= data[i]["voucher_no"] %}
+					{% } %}
+				</td>
+				{% if (filters.account) { %}
+					<td>
+						{% if (data[i]["against_name"] && data[i]["against_name"] != "") { %}				
+							{%= data[i]["against_name"] %}
+						{% } else { %}
+							{% if (data[i]["against"]) { %}
+								{%= data[i]["against"] %}
+							{% } %}
+						{% } %}
+					</td>
+				{% } %}
+				<td style="text-align: right">{%= format_currency(data[i]["debit"]) %}</td>
+				<td style="text-align: right">{%= format_currency(data[i]["credit"]) %}</td>
+				<td> {%= data[i]["chq_no"] %} </td>
+				<td> {%= data[i]["remarks"] %} </td>
+			</tr>
+		{% } %}
+	</tbody>
+</table>
+<p class="text-right text-muted">Printed On {%= dateutil.str_to_user(dateutil.get_datetime_as_string()) %}</p>
+</span>
