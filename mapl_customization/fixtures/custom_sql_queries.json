@@ -138,9 +138,9 @@
   "description": null, 
   "docstatus": 0, 
   "doctype": "Custom SQL Queries", 
-  "modified": "2017-09-12 16:20:06.851293", 
+  "modified": "2017-12-06 16:21:01.857488", 
   "name": "Cash Sales Total", 
-  "query": "select \n  posting_date,\n  sum(grand_total) as `Total`\nfrom\n  `tabSales Invoice`\nwhere\n  docstatus = 1\n  and posting_date&gt;='2017-09-01'\n  and posting_date&lt;='2017-09-12'\n  and customer_name like 'CASH S%'\ngroup by posting_date\norder by posting_date", 
+  "query": "select \n  posting_date,\n  sum(grand_total) as `Total`\nfrom\n  `tabSales Invoice`\nwhere\n  docstatus = 1\n  and posting_date&gt;='2017-12-05'\n  and posting_date&lt;='2017-12-05'\n  and customer_name like 'CASH S%'\n  and letter_head like 'Geeta %'\ngroup by posting_date\norder by posting_date", 
   "query_name": "Cash Sales Total"
  }, 
  {
