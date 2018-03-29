@@ -169,5 +169,14 @@
   "name": "Warehouse Mismatch Issue", 
   "query": "select * from (select \n  concat('\"',serial.name,'\"') as serial_no, \n  serial.item_code, \n  serial.warehouse, \n  (select \n    sle.warehouse\n  from \n    `tabStock Ledger Entry` sle\n  where\n    sle.item_code=serial.item_code\n    and sle.serial_no like concat('%',serial.name,'%')\n    and actual_qty&gt;0\n  order by posting_date desc,creation desc limit 1) as was_in_warehouse,\n  (select \n    sle.warehouse\n  from\n   `tabStock Ledger Entry` sle\n  where\n    sle.item_code=serial.item_code\n    and sle.serial_no like concat('%',serial.name,'%')\n    and actual_qty &lt; 0\n    and voucher_type not like '%Stock En%'\n  order by posting_date desc,creation desc limit 1) as sold_from_warehouse\nfrom \n  `tabSerial No` serial) data\nwhere\n  sold_from_warehouse &lt;&gt; was_in_warehouse", 
   "query_name": "Warehouse Mismatch Issue"
+ }, 
+ {
+  "description": "Lists Sales Invoices where Taxable Amount is 0 while it should have been not 0.", 
+  "docstatus": 0, 
+  "doctype": "Custom SQL Queries", 
+  "modified": "2018-03-19 18:31:28.850915", 
+  "name": "Tax Amount vs Taxable Amount Mismatch", 
+  "query": "select \n  item.parent, \n  item.item_code, \n  item.base_rate, \n  item.net_amount \nfrom \n  `tabSales Invoice Item` item,\n  `tabSales Invoice` inv \nwhere \n  inv.name=item.parent \n  and inv.docstatus=1 \n  and inv.posting_date&gt;='2018-02-01' \n  and inv.posting_date&lt;='2018-02-28' \n  and item.base_rate*item.qty=item.net_amount", 
+  "query_name": "Tax Amount vs Taxable Amount Mismatch"
  }
 ]

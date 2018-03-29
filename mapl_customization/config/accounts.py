@@ -47,6 +47,13 @@ def get_data():
 					"is_query_report":True,
 					"name":"Daily Collection Report",
 					"description":"Generates a Daily Collection Report"
+				},
+				{
+					"type": "report",
+					"doctype": "GL Entry",
+					"is_query_report": True,
+					"name": "Cash Book",
+					"description": "Display Daily Cash Register"
 				}
 
 			]

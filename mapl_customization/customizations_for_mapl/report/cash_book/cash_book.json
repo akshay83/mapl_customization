@@ -1,0 +1,30 @@
+{
+ "add_total_row": 0,
+ "apply_user_permissions": 1,
+ "creation": "2018-03-23 16:40:06.829763",
+ "disabled": 0,
+ "docstatus": 0,
+ "doctype": "Report",
+ "idx": 0,
+ "is_standard": "Yes",
+ "modified": "2018-03-23 18:24:46.344572",
+ "modified_by": "Administrator",
+ "module": "Customizations for MAPL",
+ "name": "Cash Book",
+ "owner": "Administrator",
+ "query": "select * from ((select \n  'Opening' as `Date:Date:200`,\n  null as `Debit:Float:200`,\n  null as `Credit:Float:200`,\n  sum(debit-credit) as `Balance:Float:300`\nfrom \n  `tabGL Entry` \nwhere\n  account like 'Cash%%'\n  and posting_date < %(from_date)s)\nunion all\n(select \n  posting_date as `Date:Date:200`,\n  sum(debit) as `Debit:Float:200`,\n  sum(credit) as `Credit:Float:200`,\n  sum(debit-credit) as `Balance:Float:300`\nfrom \n(select \n  derived.*,\n  if (against like 'EMP%%', \n      (select employee_name from `tabEmployee Loan` where employee=derived.against limit 1),\n        if (against like 'CUST%%', \n          (select customer_name from `tabCustomer` where name=against),\n            null)) as `EMPNAME`        \nfrom \n    ((select \n      pay_entry.letter_head,\n      gl_entry.voucher_no,\n      gl_entry.voucher_type,\n      gl_entry.posting_date,\n      gl_entry.debit,\n      gl_entry.credit,\n      gl_entry.against,\n      gl_entry.against_voucher_type,\n      gl_entry.remarks\n    from \n      `tabGL Entry` gl_entry,\n      `tabPayment Entry` pay_entry\n    where \n      gl_entry.account like 'Cash%%' \n      and gl_entry.voucher_type like 'Paym%%'\n      and pay_entry.docstatus = 1\n      and pay_entry.name=gl_entry.voucher_no)\n  union all\n    (select \n      journal_entry.letter_head,      \n      gl_entry.voucher_no,\n      gl_entry.voucher_type,  \n      gl_entry.posting_date,\n      gl_entry.debit,\n      gl_entry.credit,\n      gl_entry.against,\n      gl_entry.against_voucher_type,\n      gl_entry.remarks      \n    from\n      `tabGL Entry` gl_entry,\n      `tabJournal Entry` journal_entry\n    where \n      gl_entry.account like 'Cash%%' \n      and gl_entry.voucher_type like 'Journ%%'\n      and journal_entry.docstatus = 1\n      and journal_entry.name=gl_entry.voucher_no)\n    ) as derived\nwhere posting_date>=%(from_date)s and posting_date<=%(to_date)s\norder by posting_date, voucher_type, voucher_no) as net_derived\ngroup by posting_date)) as a",
+ "ref_doctype": "GL Entry",
+ "report_name": "Cash Book",
+ "report_type": "Script Report",
+ "roles": [
+  {
+   "role": "Accounts User"
+  },
+  {
+   "role": "Accounts Manager"
+  },
+  {
+   "role": "Auditor"
+  }
+ ]
+}
