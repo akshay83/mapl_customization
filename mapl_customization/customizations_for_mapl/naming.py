@@ -1,6 +1,7 @@
 import frappe
 from frappe.model.naming import make_autoname
 from erpnext.accounts.utils import get_fiscal_year
+from frappe.utils import getdate, today
 
 def set_auto_name(doc, method):
 	#print "DEBUG -----------------------------AUTO NAME------------------------"
@@ -41,7 +42,10 @@ def set_auto_name(doc, method):
 		abbr = frappe.db.get_value("Company", doc.company, "abbr")
 		#print "DEBUG:"+abbr
 
-		fiscal_year =  str(get_fiscal_year(date=doc.posting_date)[0])
+		dt = doc.posting_date if doc.posting_date else today()
+		if doc.doctype in ("Sales Order", "Purchase Receipt"):
+			dt = doc.transaction_date
+		fiscal_year =  str(get_fiscal_year(date=dt)[0])
 		#print "DEBUG:"+fiscal_year
 
 		short_fiscal_year = fiscal_year[2:4] + "-" + fiscal_year[7:9]

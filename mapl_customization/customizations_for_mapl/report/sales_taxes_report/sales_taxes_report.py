@@ -16,6 +16,12 @@ def execute(filters=None):
 			"width": 150
 		},
 		{
+			"fieldname":"reporting_name",
+			"label":"Reporting Name",
+			"fieldtype":"Data",
+			"width": 150
+		},
+		{
 			"fieldname":"invoice_no",
 			"label":"Invoice No",
 			"fieldtype":"Data",
@@ -125,6 +131,7 @@ def get_query(filters):
 	query = """select 
 			    sales.name, 
 			    sales.posting_date, 
+			    sales.reporting_name,
 			    taxes.item_wise_tax_detail, 
 			    taxes.account_head, 
 			    sales.net_total,
@@ -166,6 +173,7 @@ def get_query(filters):
 
 				build_row = {}
 				build_row["invoice_name"] = d.name
+				build_row["reporting_name"] = d.reporting_name
 				build_row["invoice_no"] = d.inv_no
 				build_row["invoice_date"] = d.inv_date
 				build_row["posting_date"] = d.posting_date
@@ -211,6 +219,7 @@ def get_sales_query():
 	return """
 			select
                             sales.name,
+			    sales.reporting_name,
                             cust.customer_name,
                             concat(ifnull(addr.city,''),',',ifnull(addr.state,'')) as place,
                             concat(ifnull(addr.gst_state,''),',',ifnull(addr.gst_state_number,'')) as gst_state,
