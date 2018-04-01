@@ -15,6 +15,9 @@ fixtures = ["Custom Field", "Property Setter", "Stock Settings", "Selling Settin
 		 "Print Format", "Letter Head", "Workflow", "Workflow State", "Workflow Action", "Custom SQL Queries"]
 
 doc_events = {
+	"*" : {
+		"autoname" : "mapl_customization.customizations_for_mapl.naming.set_auto_name"
+	},
 	"Item" : {
 		"validate" : "mapl_customization.customizations_for_mapl.item_hooks.item_validate"
 	},

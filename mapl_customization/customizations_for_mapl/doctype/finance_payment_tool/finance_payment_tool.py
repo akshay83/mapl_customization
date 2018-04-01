@@ -7,6 +7,8 @@ import frappe
 from frappe.model.document import Document
 from frappe.utils import cint
 from erpnext.accounts.doctype.journal_entry.journal_entry import get_party_account_and_balance
+from erpnext.accounts.utils import get_fiscal_year
+from frappe.model.naming import make_autoname
 
 class FinancePaymentTool(Document):
 	pass
@@ -18,11 +20,17 @@ def make_jv(doc_name):
 	if not payment_doc:
 		return
 
+	abbr = frappe.db.get_value("Company", payment_doc.company, "abbr")
+
 	for i in payment_doc.payment_details:
 		if i.internal_customer and not cint(i.imported) \
 			and not frappe.db.exists("Journal Entry", { "cheque_no": i.transaction_id, "docstatus":1}):
 			jv = frappe.new_doc("Journal Entry")
-			jv.naming_series = 'MAPL/FIN-JV/.YYYY./.######'
+
+			fiscal_year = get_fiscal_year(date=i.transaction_date)[0]
+			short_fiscal_year = fiscal_year[2,4] + "-" + fiscal_year[7:9]
+			jv.naming_series = abbr+"/FIN-JV/"+short_fiscal_year+"/"+".######"
+
 			jv.posting_date = i.transaction_date
 			jv.cheque_no = i.transaction_id
 			jv.cheque_date = i.transaction_date

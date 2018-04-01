@@ -27,6 +27,13 @@ def execute(filters=None):
 			"fieldtype:":"Float",
 			"precision": 2,
 			"width": 200
+		},
+		{
+			"fieldname":"running_balance",
+			"label":"Balance",
+			"fieldtype:":"Float",
+			"precision": 2,
+			"width": 200
 		}
 	]
 
@@ -116,6 +123,7 @@ def get_details(filters):
 		build_row["credit"] = d.credit
 		total_credit += d.credit
 		total_debit += d.debit
+		build_row["running_balance"] = str(flt(abs(total_debit-total_credit),2)) + ("Cr" if (total_debit-total_credit) < 0 else "Dr")
 		rows.append(build_row)
 
 	rows.append({"posting_date": "Total", "debit":total_debit, "credit":total_credit})
