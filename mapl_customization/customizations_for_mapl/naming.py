@@ -25,6 +25,9 @@ def set_auto_name(doc, method):
 	if doc.doctype in ("Sales Invoice", "Purchase Invoice", "Payment Entry", "Delivery Note", \
 			"Stock Entry", "Journal Entry", "Sales Order", "Purchase Receipt", "Quotation"):
 
+		if doc.doctype == "Journal Entry" and 'FIN' in doc.naming_series:
+			return
+
 		user = frappe.session.user
 		user_group = frappe.db.get_value("User", user, "user_group")
 

@@ -178,5 +178,41 @@
   "name": "Tax Amount vs Taxable Amount Mismatch", 
   "query": "select \n  item.parent, \n  item.item_code, \n  item.base_rate, \n  item.net_amount \nfrom \n  `tabSales Invoice Item` item,\n  `tabSales Invoice` inv \nwhere \n  inv.name=item.parent \n  and inv.docstatus=1 \n  and inv.posting_date&gt;='2018-02-01' \n  and inv.posting_date&lt;='2018-02-28' \n  and item.base_rate*item.qty=item.net_amount", 
   "query_name": "Tax Amount vs Taxable Amount Mismatch"
+ }, 
+ {
+  "description": null, 
+  "docstatus": 0, 
+  "doctype": "Custom SQL Queries", 
+  "modified": "2018-05-26 14:12:32.833944", 
+  "name": "GST Detailed Report", 
+  "query": "select *, \n cast((net_amount*tax_rate/100) as decimal(17,2)) as total_tax,\n if(flag,cast((net_amount*tax_rate/100) as decimal(17,2)),0) as IGST,\n if(flag,0,cast(((net_amount*tax_rate/100)/2) as decimal(17,2))) as SGST from (\n  select \n  item.parent, \n  sales.reporting_name,\n  sales.posting_date,  \n  sales.customer_name,\n  (select \n    b_addr.gstin \n   from \n    `tabAddress` b_addr \n   where \n    b_addr.address_title=cust.name \n    and b_addr.name=sales.customer_address\n  ) as billing_gstin,\n  addr.gstin,\n  addr.city,\n  addr.state,\n  addr.gst_state_number,\n  item.item_code, \n  item.description, \n  item.item_group, \n  item.gst_hsn_code, \n  left(right(item.item_tax_rate,5),4) as tax_rate, \n  sum(item.qty) as qty, \n  cast(avg(item.net_rate) as decimal(17,2)) as net_rate,   \n  cast(sum(item.net_amount) as decimal(17,2)) as net_amount,\n  \n  ((gst_state_number&lt;&gt;0 and gst_state_number&lt;&gt;23) or \n  ((gstin is not null and gstin&lt;&gt;'' and left(gstin,2)&lt;&gt;23) or\n  (state is not null and state not regexp ('MADHYA PRADESH|M.P.|M.P|MP')) and\n  (state is not null and state&lt;&gt;''))) as flag\n\nfrom \n  `tabSales Invoice Item` item,\n  `tabSales Invoice` sales,\n  `tabAddress` addr,\n  `tabCustomer` cust\nwhere \n  sales.docstatus=1\n  and sales.name=item.parent\n  and addr.address_title=cust.name\n  and sales.shipping_address_name=addr.name\n  and sales.posting_date&gt;='2017-08-01'\n  and sales.posting_date&lt;='2017-08-31'\ngroup by\n  item.gst_hsn_code,\n  item.parent,\n  tax_rate\norder by\n  sales.name,\n  sales.posting_date) a", 
+  "query_name": "GST Detailed Report"
+ }, 
+ {
+  "description": null, 
+  "docstatus": 0, 
+  "doctype": "Custom SQL Queries", 
+  "modified": "2018-04-19 18:24:59.006117", 
+  "name": "Posting Date Problem", 
+  "query": "select \n  max(pe.name), \n  pe.posting_date \nfrom \n  `tabSales Invoice` pe \nwhere \n  pe.name &lt; (select \n      max(name) \n     from \n       `tabSales Invoice` \n     where \n        posting_date = (pe.posting_date - interval 1 day) \n      and letter_head like '%vija%' \n      and posting_date&lt; '2018-04-01' \n      and docstatus=1) \n  and pe.letter_head like '%vija%' \n  and posting_date &lt; '2018-04-01' \n  and docstatus=1 \ngroup by \n  pe.posting_date", 
+  "query_name": "Posting Date Problem"
+ }, 
+ {
+  "description": null, 
+  "docstatus": 0, 
+  "doctype": "Custom SQL Queries", 
+  "modified": "2018-05-07 13:17:34.554631", 
+  "name": "Current Salaries", 
+  "query": "select \n  e.branch,\n  se.employee_name, \n  se.parent,\n  se.base \nfrom \n  `tabSalary Structure Employee` se,\n  `tabEmployee` e\nwhere \n  se.from_date &lt;= '2018-04-01'\n  and (se.to_date is null or se.to_date &gt;= '2018-04-30')\n  and se.parent in (select name from `tabSalary Structure`\n        where is_active = 'Yes')\n  and e.name=se.employee\n  and e.status='Active'", 
+  "query_name": "Current Salaries"
+ }, 
+ {
+  "description": null, 
+  "docstatus": 0, 
+  "doctype": "Custom SQL Queries", 
+  "modified": "2018-05-29 13:13:23.287089", 
+  "name": "Monthly Invoice Nos", 
+  "query": "select\n  concat(monthname(posting_date),' ',year(posting_date)) as `Month`,\n  letter_head as `Branch`,\n  min(name) as `Starting Invoice No`,\n  max(name) as `End Invoice No`\nfrom\n  `tabSales Invoice`\nwhere\n  posting_date &gt;= '2018-01-01'\n  and posting_date &lt;= '2018-03-31'\ngroup by\n  letter_head,\n  month(posting_date)\norder by\n  letter_head,\n  month(posting_date)", 
+  "query_name": "Monthly Invoice Nos"
  }
 ]

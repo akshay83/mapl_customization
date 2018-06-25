@@ -5,7 +5,7 @@
 from __future__ import unicode_literals
 import frappe
 from frappe.model.document import Document
-from frappe.utils import cint
+from frappe.utils import cint, getdate
 from erpnext.accounts.doctype.journal_entry.journal_entry import get_party_account_and_balance
 from erpnext.accounts.utils import get_fiscal_year
 from frappe.model.naming import make_autoname
@@ -28,8 +28,11 @@ def make_jv(doc_name):
 			jv = frappe.new_doc("Journal Entry")
 
 			fiscal_year = get_fiscal_year(date=i.transaction_date)[0]
-			short_fiscal_year = fiscal_year[2,4] + "-" + fiscal_year[7:9]
-			jv.naming_series = abbr+"/FIN-JV/"+short_fiscal_year+"/"+".######"
+			short_fiscal_year = fiscal_year[2:4] + "-" + fiscal_year[7:9]
+			if getdate(i.transaction_date) <= getdate('2018-03-31'):
+				jv.naming_series = 'MAPL/FIN-JV/.YYYY./.######'
+			else:
+				jv.naming_series = abbr+"/FIN-JV/"+short_fiscal_year+"/"+".######"
 
 			jv.posting_date = i.transaction_date
 			jv.cheque_no = i.transaction_id
@@ -42,6 +45,7 @@ def make_jv(doc_name):
 			ac1.credit_in_account_currency = i.amount_paid
 			ac1.account = get_party_account_and_balance(payment_doc.company, \
 				'Customer', i.internal_customer)['account']
+			ac1.party_name = i.internal_customer_name
 
 			ac2 = jv.append("accounts")
 			ac2.account = payment_doc.account_paid_to
