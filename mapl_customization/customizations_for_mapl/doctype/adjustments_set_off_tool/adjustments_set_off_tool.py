@@ -82,17 +82,23 @@ def get_period_condition(filters):
 	conditions = ""
 
 	if filters.get("from_date"):
-		conditions += """ and sales.posting_date >= '%s'""" % filters["from_date"]
+		conditions += """ and gl_entry.posting_date >= '%s'""" % filters["from_date"]
 
 	if filters.get("to_date"):
-		conditions += """ and sales.posting_date <= '%s'""" % filters["to_date"]
+		conditions += """ and gl_entry.posting_date <= '%s'""" % filters["to_date"]
+
+	return conditions
+
+
+def get_finance_condition(filters):
+	conditions = ""
 
 	if filters.get("is_financed"):
 		if cint(filters["is_financed"]) == 0:
-			conditions += """ and sales.hypothecation is null """
+			conditions += """where data.`Hypothecation` <= 0"""
 
 		if cint(filters["is_financed"]) == 1:
-			conditions += """ and sales.hypothecation is not null """
+			conditions += """where data.`Hypothecation` > 0"""
 
 	return conditions
 
@@ -103,10 +109,10 @@ def get_condition(filters):
 	ta = filters.get("threshold_amount", 0)
 
 	if flt(tp) != 0:
-		conditions += """ abs(b.out_perc) < %s""" % tp
+		conditions += """ abs(`Percentage`) < %s""" % tp
 
 	elif flt(ta) != 0:
-		conditions += """ abs(b.current_balance) < %s""" % ta
+		conditions += """ abs(`Difference`) < %s""" % ta
 
 	return conditions
 
@@ -118,39 +124,53 @@ def fetch_details(filters):
 	if not filters.get("from_date") and not filters.get("to_date"):
 		return
 
-	update_query =	"""
-			select * from 
-			  (select *, 
-			      (((current_balance+total_dbd)/total_billing)*100) as out_perc 
-			    from 
-			    (select sales.customer_name,
-			      sales.customer,
-			      (select sum(grd.grand_total) 
-			         from `tabSales Invoice` grd
-			         where 
-			            grd.customer = sales.customer
-			              and grd.docstatus = 1) as `total_billing`,
-			      (select ifnull(sum(debit),0)-ifnull(sum(credit),0) 
-			          from `tabGL Entry` 
-			          where 
-			            party=sales.customer 
-			            and party_type='Customer') as `current_balance`,
-                              (select ifnull(sum(credit),0)-ifnull(sum(debit),0)
-                                  from `tabGL Entry`
-                                  where
-                                    against like '%Dealer Bu%'
-                                    and party=sales.customer
-                                    and party_type='Customer') as `total_dbd`
-			    from `tabSales Invoice` sales
-			    where sales.docstatus=1
-			       {period_condition}
-			    group by customer
-			    order by customer_name) a
-			  ) b
-			  where b.current_balance <> 0
-			  {threshold_condition} order by out_perc desc""".format(**{
+	update_query =	"""select * from (
+				select 
+				  *,
+				  cast(`Total Debit`-`Total Credit` as Decimal(17,2)) as `Difference`,
+				  cast((((`Total Debit`-`Total Credit`)/`Total Debit`)*100) as Decimal(8,2)) as `Percentage`
+				from
+				  (select 
+				    dump.party,
+				    customer.customer_name,
+				    cast(sum(dump.debit) as Decimal(17,2)) as `Total Debit`,
+				    cast(sum(dump.credit) as Decimal(17,2)) as `Total Credit`,
+				    count(dump.hypothecation) as `Hypothecation`
+				  from
+				  (select 
+				      gl_entry.voucher_type,
+				      gl_entry.voucher_no,
+				      gl_entry.posting_date,
+				      gl_entry.debit,
+				      gl_entry.credit,
+				      gl_entry.party,
+				      sales_invoice.hypothecation,
+				      sales_invoice.reference
+				    from   
+				      `tabGL Entry` gl_entry
+				      left join
+				      `tabSales Invoice` sales_invoice
+				      on
+				      gl_entry.voucher_no = sales_invoice.name
+				    where   
+				      gl_entry.party_type = 'Customer'
+				      {period_condition}
+				    order by 
+				      gl_entry.posting_date) as dump,
+				    `tabCustomer` customer
+				  where
+				    customer.name = dump.party
+				  group by 
+				    dump.party) as data
+				  {finance_condition}
+				) as final_data
+				where 
+				    abs(`Difference`) <> 0
+			            {threshold_condition}
+			""".format(**{
 				"period_condition": get_period_condition(filters),
-				"threshold_condition": get_condition(filters)
+				"threshold_condition": get_condition(filters),
+				"finance_condition": get_finance_condition(filters)
 			   })
 
 	details = frappe.db.sql(update_query, as_dict=1)
