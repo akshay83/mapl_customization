@@ -116,6 +116,9 @@ def purchase_receipt_before_submit(doc, method):
 	purchase_receipt_serial_no_validate_before_submit(doc, method)
 
 def purchase_receipt_serial_no_validate_before_submit(doc, method):
+	if doc.is_return:
+		return
+
 	for i in doc.items:
 		if not i.serial_no:
 			continue
