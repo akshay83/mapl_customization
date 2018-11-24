@@ -22,7 +22,8 @@ def execute(filters=None):
 		{
 			"fieldname":"voucher_no",
 			"label":"Voucher Ref",
-			"fieldtype:":"Data",
+			"fieldtype":"Dynamic Link",
+			"options":"voucher_type",
 			"width": 150
 		},
 		{

@@ -5,11 +5,14 @@ def sales_invoice_validate(doc, method):
 	negative_stock_validation(doc, method)
 	taxes_and_charges_validation(doc, method)
 	validate_stock_entry_serial_no(doc, method)
+	#validate_grand_total(doc, method)
 
 def sales_on_submit_validation(doc, method):
 	vehicle_validation(doc, method)
 	validate_hsn_code(doc, method)
 	finance_validate(doc, method)
+	validate_grand_total(doc, method)
+
 
 def sales_order_validate(doc, method):
 	finance_validate(doc, method)
@@ -47,6 +50,10 @@ def validate_hsn_code(doc, method):
 	for i in doc.items:
 		if not i.gst_hsn_code:
 			frappe.throw("HSN Code not found for {0}".format(i.item_code))
+
+def validate_grand_total(doc, method):
+	if not doc.grand_total:
+		frappe.throw("Invoice Total Should Be Non - Zero. Please Check Total Values")
 
 def validate_stock_entry_serial_no(doc, method):
 	if doc.doctype.lower() != 'stock entry' and doc.is_return:

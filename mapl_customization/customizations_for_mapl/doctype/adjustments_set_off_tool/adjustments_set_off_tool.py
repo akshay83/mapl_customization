@@ -103,6 +103,10 @@ def get_finance_condition(filters):
 	return conditions
 
 
+def get_cut_off_date(filters):
+	return """'%s'""" % filters["check_balance_till"]
+
+
 def get_condition(filters):
 	conditions = " and "
 	tp = filters.get("threshold_percentage", 0)
@@ -121,7 +125,7 @@ def fetch_details(filters):
 	if isinstance(filters, basestring):
 		filters = json.loads(filters)
 
-	if not filters.get("from_date") and not filters.get("to_date"):
+	if not filters.get("from_date") and not filters.get("to_date") and not filters.get("check_balance_till"):
 		return
 
 	update_query =	"""select * from (
@@ -135,7 +139,8 @@ def fetch_details(filters):
 				    customer.customer_name,
 				    cast(sum(dump.debit) as Decimal(17,2)) as `Total Debit`,
 				    cast(sum(dump.credit) as Decimal(17,2)) as `Total Credit`,
-				    count(dump.hypothecation) as `Hypothecation`
+				    count(dump.hypothecation) as `Hypothecation`,
+				    dump.`Current Balance` as `Current Balance`
 				  from
 				  (select 
 				      gl_entry.voucher_type,
@@ -145,7 +150,10 @@ def fetch_details(filters):
 				      gl_entry.credit,
 				      gl_entry.party,
 				      sales_invoice.hypothecation,
-				      sales_invoice.reference
+				      sales_invoice.reference,
+				      (select sum(debit-credit) from `tabGL Entry` 
+					where party=gl_entry.party 
+					and posting_date <= {cut_off_balance}) as `Current Balance`
 				    from   
 				      `tabGL Entry` gl_entry
 				      left join
@@ -165,12 +173,14 @@ def fetch_details(filters):
 				  {finance_condition}
 				) as final_data
 				where 
-				    abs(`Difference`) <> 0
+				    abs(`Current Balance`) <> 0
+				    and abs(`Difference`) <> 0
 			            {threshold_condition}
 			""".format(**{
 				"period_condition": get_period_condition(filters),
 				"threshold_condition": get_condition(filters),
-				"finance_condition": get_finance_condition(filters)
+				"finance_condition": get_finance_condition(filters),
+				"cut_off_balance": get_cut_off_date(filters)
 			   })
 
 	details = frappe.db.sql(update_query, as_dict=1)
