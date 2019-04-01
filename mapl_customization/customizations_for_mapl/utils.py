@@ -254,6 +254,13 @@ def validate_hsn_code(doc, method):
 		if not i.gst_hsn_code:
 			frappe.throw("HSN Code not found for {0}".format(i.item_code))
 
+def validate_customer_before_save(doc, method):
+	count = frappe.db.sql("""select ifnull(count(*),0) as `count_records` from `tabCustomer` where customer_name = %(name)s and primary_contact_no like %(contact)s""",
+				{ 'name': doc.customer_name, 'contact': doc.primary_contact_no }, as_dict=1)
+
+	for c in count:
+		if c.count_records > 0:
+			frappe.throw("""Customer Exists""")
 
 
 @frappe.whitelist()

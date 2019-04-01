@@ -55,6 +55,9 @@ doc_events = {
         },
 	"Salary Slip" : {
 		"before_save": "mapl_customization.customizations_for_mapl.salary_slip_hooks.salary_slip_before_save"
+	},
+	"Customer" : {
+		"before_insert": "mapl_customization.customizations_for_mapl.utils.validate_customer_before_save"
 	}
 }
 app_include_css = "/assets/mapl_customization/css/custom_css.css"
