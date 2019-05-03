@@ -7,12 +7,26 @@
  "doctype": "Report", 
  "idx": 0, 
  "is_standard": "Yes", 
- "modified": "2016-07-11 17:43:52.475109", 
+ "modified": "2019-05-02 13:07:36.876689", 
  "modified_by": "Administrator", 
  "module": "Customizations for MAPL", 
  "name": "Effective Stock Report", 
  "owner": "Administrator", 
  "ref_doctype": "Item", 
  "report_name": "Effective Stock Report", 
- "report_type": "Script Report"
+ "report_type": "Script Report", 
+ "roles": [
+  {
+   "role": "Stock User"
+  }, 
+  {
+   "role": "Stock Manager"
+  }, 
+  {
+   "role": "Sales User"
+  }, 
+  {
+   "role": "Sales Manager"
+  }
+ ]
 }

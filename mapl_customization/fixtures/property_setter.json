@@ -6305,5 +6305,22 @@
   "property": "width", 
   "property_type": null, 
   "value": "224"
+ }, 
+ {
+  "_assign": null, 
+  "_comments": null, 
+  "_liked_by": null, 
+  "_user_tags": null, 
+  "default_value": null, 
+  "doc_type": "Employee", 
+  "docstatus": 0, 
+  "doctype": "Property Setter", 
+  "doctype_or_field": "DocField", 
+  "field_name": "employee_name", 
+  "modified": "2019-04-06 16:20:05.700480", 
+  "name": "Employee-employee_name-width", 
+  "property": "width", 
+  "property_type": null, 
+  "value": "187"
  }
 ]

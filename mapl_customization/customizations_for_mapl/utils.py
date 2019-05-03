@@ -264,6 +264,23 @@ def validate_customer_before_save(doc, method):
 
 
 @frappe.whitelist()
+def get_money_in_words(number):
+	from frappe.utils import money_in_words
+	return money_in_words(number)
+
+@frappe.whitelist()
+def get_average_purchase_rate_for_item(item):
+	return frappe.db.sql("""select
+					 round(avg(sle.valuation_rate)*(1+(max(it.tax_rate)/100)),2) as avg_rate
+					from 
+					 `tabStock Ledger Entry` sle,
+					 `tabItem Tax` it
+					where 
+					  it.parent = sle.item_code 
+					  and sle.item_code = %s""", item)
+
+
+@frappe.whitelist()
 def get_party_balance(party, party_type, company):
 	outstanding_amount = frappe.db.sql("""select sum(debit) - sum(credit)
 			from `tabGL Entry` where party_type = %s and company=%s

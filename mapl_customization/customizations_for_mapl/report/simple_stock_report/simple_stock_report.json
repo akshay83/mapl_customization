@@ -7,12 +7,20 @@
  "doctype": "Report", 
  "idx": 0, 
  "is_standard": "Yes", 
- "modified": "2016-02-27 15:36:43.544363", 
+ "modified": "2019-05-02 13:05:48.590137", 
  "modified_by": "Administrator", 
  "module": "Customizations for MAPL", 
  "name": "Simple Stock Report", 
  "owner": "Administrator", 
  "ref_doctype": "Stock Ledger Entry", 
  "report_name": "Simple Stock Report", 
- "report_type": "Script Report"
+ "report_type": "Script Report", 
+ "roles": [
+  {
+   "role": "Stock User"
+  }, 
+  {
+   "role": "Stock Manager"
+  }
+ ]
 }

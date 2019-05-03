@@ -259,5 +259,14 @@
   "name": "GST Debit/Credit Notes", 
   "query": "select \n  data.name as `Voucher No`,\n  data.posting_date as `Date`,\n  ifnull(max(data.party_name), max(if(data.account regexp ('SGST|CGST|Supplier'),null,data.account))) as `Party`,\n  sum(if(data.account not regexp ('SGST|CGST|Supplier'),debit,0)) as `Total Value`,\n  sum(if(data.account like 'SGST%',credit,0)) as `SGST`,\n  sum(if(data.account like 'CGST%',credit,0)) as `CGST`,  \n  sum(if(data.account like 'Suppl%',credit,0)) as `Taxable Value`,\n  data.remark as `Remarks`\nfrom\n  (\n   select \n     JE.posting_date,\n     JE.name,\n     JEA.account,\n     JEA.party_name,\n     JEA.debit,\n     JEA.credit,\n     JE.remark\n   from\n     `tabJournal Entry` JE,\n     `tabJournal Entry Account` JEA\n   where\n     JE.name = JEA.parent\n     and JE.docstatus = 1\n     and JE.name in (\n      select \n        J1.parent\n      from\n        `tabJournal Entry Account` J1\n        inner join\n        `tabJournal Entry Account` J2\n        on J1.parent = J2.parent\n      where\n        J1.account like 'SGST%'\n        and J2.account like 'Supplier%'\n      order by\n        J1.parent\n      )\n    ) data\ngroup by\n  data.name\norder by\n  data.posting_date", 
   "query_name": "GST Debit/Credit Notes"
+ }, 
+ {
+  "description": null, 
+  "docstatus": 0, 
+  "doctype": "Custom SQL Queries", 
+  "modified": "2019-04-09 20:09:45.636737", 
+  "name": "Serial Nos - Wrong Purchase", 
+  "query": "select \n  name \nfrom \n  `tabSerial No` serial\nwhere \n  serial.name regexp \n  (select \n    replace(group_concat(serial_no separator '|'), '\\n', '|') \n   from \n    `tabPurchase Invoice Item` \n   where \n    parent = 'MAPL/PINV/VN/18-19/002004' \n   group by \n    parent)\n  and (select \n    count(*) \n    from \n    `tabStock Ledger Entry` \n    where \n    serial_no regexp serial.name) &lt;= 0", 
+  "query_name": "Serial Nos - Wrong Purchase"
  }
 ]

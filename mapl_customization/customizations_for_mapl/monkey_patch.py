@@ -199,6 +199,15 @@ def monkey_patch_purchase_gl_entry():
 	PurchaseInvoice.get_gl_entries = pig
 	PurchaseInvoice.alternative_gl_entries = age
 
+# Do Not Post Depreciation Entries Automatically
+def mp_post_depreciation_entries(date=None):
+	# cint missing in check Automatic Entries
+	pass
+
+def monkey_patch_depreciation_entries():
+	from erpnext.accounts.doctype.asset import depreciation
+	depreciation.post_depreciation_entries = mp_post_depreciation_entries
+
 def do_monkey_patch():
 	monkey_patch_for_allow_on_submit()
 	monkey_patch_allow_transition_from_0_to_2()
@@ -206,5 +215,6 @@ def do_monkey_patch():
 	monkey_patch_payment_entry_validate()
 	monkey_patch_salary_slip_for_rounding()
 	monkey_patch_journal_entry_validation_advance()
+	monkey_patch_depreciation_entries()
 	#monkey_patch_sales_gl_entry()
 	#monkey_patch_purchase_gl_entry()

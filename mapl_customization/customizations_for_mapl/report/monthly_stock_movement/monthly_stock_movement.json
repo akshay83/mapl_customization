@@ -7,12 +7,20 @@
  "doctype": "Report", 
  "idx": 0, 
  "is_standard": "Yes", 
- "modified": "2016-02-25 12:57:19.978192", 
+ "modified": "2019-05-02 13:07:53.056882", 
  "modified_by": "Administrator", 
  "module": "Customizations for MAPL", 
  "name": "Monthly Stock Movement", 
  "owner": "Administrator", 
  "ref_doctype": "Item", 
  "report_name": "Monthly Stock Movement", 
- "report_type": "Script Report"
+ "report_type": "Script Report", 
+ "roles": [
+  {
+   "role": "Stock Manager"
+  }, 
+  {
+   "role": "Stock User"
+  }
+ ]
 }
