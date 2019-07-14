@@ -43,6 +43,13 @@ def get_data():
 				},
 				{
 					"type":"report",
+					"doctype": "GL Entry",
+					"is_query_report":True,
+					"name":"Group Statement",
+					"description":"Generates a Group Statement for Multiple Customers"
+				},
+				{
+					"type":"report",
 					"doctype": "Payment Entry",
 					"is_query_report":True,
 					"name":"Daily Collection Report",

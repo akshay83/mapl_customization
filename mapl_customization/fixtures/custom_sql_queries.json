@@ -268,5 +268,23 @@
   "name": "Serial Nos - Wrong Purchase", 
   "query": "select \n  name \nfrom \n  `tabSerial No` serial\nwhere \n  serial.name regexp \n  (select \n    replace(group_concat(serial_no separator '|'), '\\n', '|') \n   from \n    `tabPurchase Invoice Item` \n   where \n    parent = 'MAPL/PINV/VN/18-19/002004' \n   group by \n    parent)\n  and (select \n    count(*) \n    from \n    `tabStock Ledger Entry` \n    where \n    serial_no regexp serial.name) &lt;= 0", 
   "query_name": "Serial Nos - Wrong Purchase"
+ }, 
+ {
+  "description": null, 
+  "docstatus": 0, 
+  "doctype": "Custom SQL Queries", 
+  "modified": "2019-05-23 19:15:34.381686", 
+  "name": "Parent Child Query", 
+  "query": "select \n  ig1.name,\n  ig1.parent_customer_group,\n  ig1.lft, ig1.rgt\nfrom \n  `tabCustomer Group` ig1,\n  (select name, parent_customer_group,lft, rgt from `tabCustomer Group` where name like '%All C%') ig2\nwhere\n  ig2.lft &lt;= ig1.lft \n  and ig2.rgt &gt;= ig1.rgt\n", 
+  "query_name": "Parent Child Query"
+ }, 
+ {
+  "description": null, 
+  "docstatus": 0, 
+  "doctype": "Custom SQL Queries", 
+  "modified": "2019-06-28 14:11:12.250868", 
+  "name": "Outstanding Accounts", 
+  "query": "select \n  dump.`Customer`,\n  dump.`Customer Name`,\n  dump.`Customer Group`,\n  dump.`Balance`,\n  case \n      when dump.`Is Finance` = -1 then 'Old Outstanding'\n      when dump.`Is Finance` = 1 then 'Finance'\n      when dump.`Is Finance` is NULL then NULL\n      else 'Reference Sale'\n  end as `Remarks`\nfrom\n((select \n  #0 as `Row Number`,\n  'Report AS ON' as `Customer`,\n  cast(now() as Date) as `Customer Name`,\n  NULL as `Customer Group`,\n  NULL as `Balance`,  \n  NULL as `Is Finance`\n)\nunion all\n(select \n  #@row_number:=ifnull(@row_number,0) + 1 as `Row Number`,\n  data.`Customer`,\n  data.`Customer Name`,\n  data.`Customer Group`,\n  data.`Balance`,\n  ifnull(sum(sales.is_finance), -1) as `Is Finance`\nfrom \n  (select \n    customer.name as `Customer`,\n    customer.customer_name as `Customer Name`,\n    customer.customer_group as `Customer Group`,\n    sum(gl_entry.debit-gl_entry.credit) as `Balance`\n  from\n    `tabGL Entry` gl_entry,\n    `tabCustomer` customer\n  where  \n    gl_entry.party_type = 'Customer'\n    and gl_entry.party = customer.name\n  group by\n    customer.name) as data left join \n  `tabSales Invoice` sales on (sales.customer = data.`Customer` and sales.docstatus = 1)\nwhere\n  data.`Balance` &gt; 1000 \ngroup by\n  data.`Customer`)) dump\norder by\n  dump.`Balance` is NULL desc,\n  dump.`Balance` desc ", 
+  "query_name": "Outstanding Accounts"
  }
 ]

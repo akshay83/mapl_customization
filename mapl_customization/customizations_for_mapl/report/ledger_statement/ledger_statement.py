@@ -3,71 +3,73 @@
 
 from __future__ import unicode_literals
 import frappe
+from frappe.utils import flt
 
 def execute(filters=None):
 	columns, data = [], []
 	columns = [
-		{
-			"fieldname":"posting_date",
-			"label":"Date",
-			"fieldtype":"Date",
-			"width": 100
-		},
-		{
-			"fieldname":"voucher_type",
-			"label":"Type",
-			"fieldtype":"Data",
-			"width": 150
-		},
-		{
-			"fieldname":"voucher_no",
-			"label":"Voucher Ref",
-			"fieldtype":"Dynamic Link",
-			"options":"voucher_type",
-			"width": 150
-		},
-		{
-			"fieldname":"against",
-			"label":"Against A/c",
-			"fieldtype":"Data",
-			"width": 150
-		},
-		{
-			"fieldname":"against_name",
-			"label":"Against Name",
-			"fieldtype":"Data",
-			"width": 150
-		},
-		{
-			"fieldname":"debit",
-			"label":"Debit",
-			"fieldtype:":"Currency",
-			"width": 125
-		},
-		{
-			"fieldname":"credit",
-			"label":"Credit",
-			"fieldtype:":"Currency",
-			"width": 125
-		},
-		{
-			"fieldname":"chq_no",
-			"label":"Reference No",
-			"fieldtype:":"Data",
-			"width": 125
-		},
-		{
-			"fieldname":"remarks",
-			"label":"Remarks",
-			"fieldtype:":"Text",
-			"width": 250
-		}
-
+			{
+				"fieldname":"posting_date",
+				"label":"Date",
+				"fieldtype":"Date",
+				"width": 100
+			},
+			{
+				"fieldname":"voucher_type",
+				"label":"Type",
+				"fieldtype":"Data",
+				"width": 150
+			},
+			{
+				"fieldname":"voucher_no",
+				"label":"Voucher Ref",
+				"fieldtype":"Dynamic Link",
+				"options":"voucher_type",
+				"width": 150
+			},
+			{
+				"fieldname":"against",
+				"label":"Against A/c",
+				"fieldtype":"Data",
+				"width": 150
+			},
+			{
+				"fieldname":"against_name",
+				"label":"Against Name",
+				"fieldtype":"Data",
+				"width": 150
+			},
+			{
+				"fieldname":"debit",
+				"label":"Debit",
+				"fieldtype":"Currency",
+				"width": 125
+			},
+			{
+				"fieldname":"credit",
+				"label":"Credit",
+				"fieldtype":"Currency",
+				"width": 125
+			},
+			{
+				"fieldname":"chq_no",
+				"label":"Reference No",
+				"fieldtype":"Data",
+				"width": 125
+			},
+			{
+				"fieldname":"remarks",
+				"label":"Remarks",
+				"fieldtype":"Text",
+				"width": 250
+			}
 	]
 
-	if ((filters.get("party") and filters.get("party_type")) or filters.get("account") \
-		and filters.get("from_date") and filters.get("to_date")):
-		data = get_details(filters)
+	data = get_individual_statement(filters)
+
+	#if ((filters.get("party") and filters.get("party_type")) or filters.get("account") \
+	#	and filters.get("from_date") and filters.get("to_date")):
+	#	data = get_individual_statement(filters)
 
 	return columns, data
 
@@ -127,7 +129,10 @@ def get_opening(filters):
 
 
 
-def get_details(filters):
+def get_individual_statement(filters):
+	if (not filters.get('party') and not filters.get('account')):
+		return []
+
 	opening = get_opening(filters)
 	total_credit = opening.get("credit",0)
 	total_debit = opening.get("debit",0)

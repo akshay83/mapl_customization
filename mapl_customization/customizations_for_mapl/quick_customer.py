@@ -80,6 +80,8 @@ def make_customer(args):
 	customer_doc.secondary_contact_no = args["secondary_contact_no"] if "secondary_contact_no" in customer_keys else None
 	customer_doc.company_name = args["company_name"] if "company_name" in customer_keys else None
 	customer_doc.vehicle_no = args["vehicle_no"] if "vehicle_no" in customer_keys else None
+	customer_doc.relation_to = args["relation_to"] if "relation_to" in customer_keys else None
+	customer_doc.relation_name = args["relation_name"] if "relation_name" in customer_keys else None
 	customer_doc.save()
 	return customer_doc
 

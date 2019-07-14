@@ -8,15 +8,17 @@ custom.customer_quick_entry = function (doc) {
 				{fieldtype: "Select", fieldname: "customer_type", label: __("Customer Type"), reqd: 1, options: "Company\nIndividual", default: "Individual"},
 				{fieldtype: "Link", fieldname: "salutation", label: __("Salutation"), reqd:0, options: "Salutation"},
 				{fieldtype: "Data", fieldname: "customer_name", label: __("Customer Name"), reqd: 1},
+				{fieldtype: "Select", fieldname: "relation_to", label: __("Relation To"), reqd: 0, options: "\nS/o\nD/o\nW/o", default: ""},
+				{fieldtype: "Data", fieldname: "relation_name", label: __("Relation Name"), reqd: 0, hidden: 1},
 				{fieldtype: "Data", fieldname: "company_name", label: __("Company Name"), reqd: 0},
 				{fieldtype: "Data", fieldname: "tax_id", label: __("Tax ID"), reqd: 0},
-				{fieldtype: "Data", fieldname: "vehicle_no", label: __("Vehicle No"), reqd: 0},
 				{fieldtype: "Column Break", fieldname: "column_break_2"},
 				{fieldtype: "Link", fieldname: "customer_group", label: __("Customer Group"), reqd: 1, options: "Customer Group"},
 				{fieldtype: "Link", fieldname: "territory", label: __("Territory"), reqd: 1, options: "Territory"},
 				{fieldtype: "Data", fieldname: "pan_no", label: __("PAN No"), reqd: 0},
 				{fieldtype: "Data", fieldname: "primary_contact_no", label: __("Primary Contact No"), reqd: 1},
 				{fieldtype: "Data", fieldname: "secondary_contact_no", label: __("Secondary Contact No"), reqd: 0},
+				{fieldtype: "Data", fieldname: "vehicle_no", label: __("Vehicle No"), reqd: 0},
 				{fieldtype: "Section Break", fieldname: "section_break_1"},
 				{fieldtype: "Data", fieldname: "billing_address_1", label: __("Billing Address 1"), reqd: 1},
 				{fieldtype: "Data", fieldname: "billing_address_2", label: __("Billing Address 2"), reqd: 0},
@@ -50,6 +52,12 @@ custom.customer_quick_entry = function (doc) {
 	$(fd.company_name.wrapper).toggle(fd.customer_type.get_value()==='Individual')
 	$(fd.customer_type.input).change(function() {
 		$(fd.company_name.wrapper).toggle(fd.customer_type.get_value()==='Individual');
+	});
+
+	fd.relation_to.$input.on("change", function (e) {
+		fd.relation_name.df.reqd = this.value != "";
+		fd.relation_name.df.hidden = this.value == "";
+		fd.relation_name.refresh();
 	});
 
 

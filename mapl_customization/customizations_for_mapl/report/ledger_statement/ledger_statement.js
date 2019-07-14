@@ -30,8 +30,7 @@ frappe.query_reports["Ledger Statement"] = {
 			"fieldname":"party_type",
 			"label": __("Party Type"),
 			"fieldtype": "Link",
-			"options": "Party Type",
-			"default": ""
+			"options": "Party Type"
 		},
 		{
 			"fieldname":"party",
@@ -45,7 +44,7 @@ frappe.query_reports["Ledger Statement"] = {
 				}
 				return party_type;
 			},
-			on_change: function() {
+			"on_change": function() {
 				var party_type = frappe.query_report_filters_by_name.party_type.get_value();
 				var party = frappe.query_report_filters_by_name.party.get_value();
 				if(!party_type || !party) {
@@ -57,7 +56,7 @@ frappe.query_reports["Ledger Statement"] = {
 				frappe.db.get_value(party_type, party, fieldname, function(value) {
 					frappe.query_report_filters_by_name.party_name.set_value(value[fieldname]);
 				});
-			}
+			},
 		},
 		{
 			"fieldname":"party_name",
