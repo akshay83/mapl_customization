@@ -41,6 +41,12 @@ def execute(filters=None):
 		"fieldtype": "Float",
 		"width": 80
 	})
+	columns.append({
+		"fieldname":"total_leaves",
+		"label":"Total Leaves",
+		"fieldtype": "Int",
+		"width": 80
+	})
 	data = get_employee_details(filters)
 	return columns, data
 
@@ -94,14 +100,20 @@ def get_default_columns(filters):
 			"width":50
 		},
 		{
-			"fieldname":"total_present",
-			"label":"Present Days",
+			"fieldname":"total_payment_days",
+			"label":"Payment Days",
 			"fieldtype":"Int",
 			"width":50
 		},
 		{
 			"fieldname":"leave_availed",
 			"label":"Leave Availed",
+			"fieldtype":"Int",
+			"width":50
+		},
+		{
+			"fieldname":"total_present_days",
+			"label":"Present Days",
 			"fieldtype":"Int",
 			"width":50
 		},
@@ -220,9 +232,10 @@ def get_employee_details(filters):
 		build_row["branch"] = e.branch
 		build_row["department"] = e.department
 		build_row["designation"] = e.designation
-		build_row["total_present"] = e.payment_days
+		build_row["total_payment_days"] = e.payment_days
 		build_row["leave_without_pay"] = e.leave_without_pay
 		build_row["leave_availed"] = e.leave_availed
+		build_row["total_present_days"] = (e.payment_days - e.leave_availed)
 		build_row["base"] = e.base
 
 		build_row.update(get_earnings_and_deductions(e.name))
@@ -231,6 +244,7 @@ def get_employee_details(filters):
 		if build_row.get("total_loan",0) == 0:
 			build_row["total_loan"] = e.total_loan_repayment
 		build_row["net_pay"] = build_row.get("total_earnings",0)-(build_row.get("total_deductions")+build_row.get("total_loan",0))
+		build_row.update(get_total_leaves(e.employee, filters))
 		rows.append(build_row)
 
 	return rows
@@ -275,4 +289,27 @@ def get_loan_details(slip_name):
 		total_loan += d.total_payment
 
 	build_row["total_loan"] = total_loan
+	return build_row
+
+def get_total_leaves(employee, filters):
+	build_row = {}
+	total_loan = 0
+	details = frappe.db.sql("""
+					select
+					  sum(leave_availed) as total_leaves
+					from
+					  `tabSalary Slip` slip,
+					  `tabFiscal Year` yr
+					where
+					  slip.start_date >= yr.year_start_date
+					  and slip.end_date <= yr.year_end_date
+					  and slip.docstatus = 1
+					  and slip.employee = %s
+					  and %s between yr.year_start_date and yr.year_end_date
+					  and slip.end_date <= %s
+				""", (employee, filters.get("from_date"), filters.get("to_date")), as_dict=1)
+
+	for d in details:
+		build_row["total_leaves"] = d.total_leaves
+
 	return build_row

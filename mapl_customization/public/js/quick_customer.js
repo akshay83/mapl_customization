@@ -8,7 +8,7 @@ custom.customer_quick_entry = function (doc) {
 				{fieldtype: "Select", fieldname: "customer_type", label: __("Customer Type"), reqd: 1, options: "Company\nIndividual", default: "Individual"},
 				{fieldtype: "Link", fieldname: "salutation", label: __("Salutation"), reqd:0, options: "Salutation"},
 				{fieldtype: "Data", fieldname: "customer_name", label: __("Customer Name"), reqd: 1},
-				{fieldtype: "Select", fieldname: "relation_to", label: __("Relation To"), reqd: 0, options: "\nS/o\nD/o\nW/o", default: ""},
+				{fieldtype: "Select", fieldname: "relation_to", label: __("Relation To"), reqd: 0, options: "\nS/o\nD/o\nW/o\nDIR.", default: ""},
 				{fieldtype: "Data", fieldname: "relation_name", label: __("Relation Name"), reqd: 0, hidden: 1},
 				{fieldtype: "Data", fieldname: "company_name", label: __("Company Name"), reqd: 0},
 				{fieldtype: "Data", fieldname: "tax_id", label: __("Tax ID"), reqd: 0},

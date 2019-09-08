@@ -262,6 +262,15 @@ def validate_customer_before_save(doc, method):
 		if c.count_records > 0:
 			frappe.throw("""Customer Exists""")
 
+def before_insert_lead(doc, method):
+	if ("," in doc.mobile_no or len(doc.mobile_no.strip()) != 10):
+		frappe.throw("Please Check Mobile No. Ensure that it is only one Number and of 10 Digits")
+
+def on_save_lead(doc, method):
+	from frappe.core.doctype.sms_settings.sms_settings import send_sms
+	message = """Thankyou for Visiting CORAL.Hope you had a pleasent Experience.We would be highly Glad in Helping you should you have any further queries.Please call 07314267777"""
+	send_sms(doc.mobile_no, message)
+
 
 @frappe.whitelist()
 def get_money_in_words(number):

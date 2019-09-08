@@ -1,0 +1,833 @@
+<style>
+	.print-format {
+		min-height: 8.27in;
+		max-width: 11.69in;
+		padding: 0.3in;
+	}
+
+	.print-format td {
+		padding: 3px !important;
+	}
+
+	.summary-amt-column {
+		border-right:1px solid gray;
+		border-bottom:1px solid gray;
+		flex:1;
+		text-align:right;
+		padding-left:1px;
+		padding-right:1px;
+		padding-top:5px;
+		padding-bottom:5px;
+	}
+	.summary-amt-header {
+		border-top:1px solid gray;
+		border-right: 1px solid gray;
+		border-bottom:1px solid gray;
+		flex:1;
+		text-align:center;
+		padding-left:1px;
+		padding-right:1px;
+		padding-top:5px;
+		padding-bottom:5px;
+		font-weight:800;
+	}
+	.summary-name-header {
+		border-left:1px solid gray;
+		border-top:1px solid gray;
+		border-bottom:1px solid gray;
+		border-right:1px solid gray;
+		flex:.6;      
+		min-width:175px;  
+		padding-left:1px;
+		padding-right:1px;
+		padding-top:5px;
+		padding-bottom:5px;
+	}
+	.summary-name-column {
+		border-left:1px solid gray;
+		border-right:1px solid gray;
+		border-bottom:1px solid gray;
+		flex:.6;
+		min-width:175px;
+		padding-left:1px;
+		padding-right:1px;
+		padding-top:5px;
+		padding-bottom:5px;
+	}
+	.summary-name-footer {
+		border-left:1px solid gray;
+		border-right:1px solid gray;
+		border-bottom:1px solid gray;
+		flex:.6;
+		text-align:left;
+		min-width: 175px;
+		padding-left:1px;
+		padding-right:1px;
+		padding-top:5px;
+		padding-bottom:5px;
+		font-weight:800;
+	}
+	.summary-amt-footer {
+		border-right:1px solid gray;
+		border-bottom:1px solid gray;
+		flex:1;
+		text-align:right;
+		padding-left:1px;
+		padding-right:1px;
+		padding-top:5px;
+		padding-bottom:5px;
+		font-weight:800;
+	}
+    
+	.page-break {
+		padding:0px !important;
+	}
+	.summary-main {
+		width:8.27in;
+		height:11.69in;
+		position:relative;
+	}
+	@media print {
+		.print-format {
+			padding: 0mm !important;
+		}
+		@page {
+			size: A4;
+			margin: 0mm 0mm 0mm 0mm;
+		}
+		.salary-slip-main {
+			padding: 10mm 10mm 10mm 10mm;
+		}
+		.summary-main {
+			margin: 5mm 5mm 5mm 5mm;
+		}
+	}
+</style>
+<span id="salary-slip-section" style="font-size:13px;font-family:calibri;">
+	{% const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]; %}
+
+	{% var dt = dateutil.str_to_obj(filters.date_range[0]) %}
+	{% var no_of_days = new Date(dt.getFullYear(),dt.getMonth()+1,0).getDate() %}
+
+	{% for(var i=0, l=data.length; i<l; i++) { %}
+		{% if (data[i].designation!=null && data[i].designation=="Director") { %}
+			{% continue %}
+		{% } %}
+	<div class="salary-slip-main" style="width:100%;">
+
+		{% var hra = 0; %}
+		{% var cdu = 0; %}
+		{% var mal = 0; %}
+		{% var con = 0; %}
+
+		<!-- Letter Head -->
+		<div style="width:100%;">
+			<table style="width: 100%;">
+				<tbody>
+					<tr style="width: 100%; display: flex;">
+						<td style="width: 100%;">
+							<b><span style="color: blue; line-height: 20px; font-size: 22px;text-transform:uppercase;">Mehta Automobiles Pvt. Ltd.</span></b>
+							<b>
+								<span style="font-size: 12px;">
+									<div>22/1 South Tukoganj, Geeta Bhawan Square,</div>
+									<div>A.B. Road, Indore. PH: 0731 - 4032224, 2522630</div>
+								</span>
+							</b>
+						</td>
+						<td style="text-align: right; vertical-align: middle !important;" rowspan="100%">
+							<img src="/files/MM_LOGO.png" style="width: 70px !important; height: auto !important;" width="52px" height="45px"/>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+
+		<hr style="margin-top:2px !important;margin-bottom:2px !important;">
+		<div style="width:100%;background:#eee !important;font-size:24px;font-weight:bolder;padding:3px;display:flex;flex-direction:row;"> 
+			<div style="flex:1;"> SALARY SLIP </div>
+			<div style="flex:1;text-align:right;"> {%= data[i].employee_name %} </div>
+		</div>
+		<hr style="margin-top:2px !important;margin-bottom:2px !important;">
+
+		<div style="display:flex;flex-direction:row;">
+			<div style = "flex:1;display:flex;flex-direction:column;padding:3px;">
+				<div style="background:#eee !important;font-size:large;font-weight:bolder;"> Salary Structure </div>
+				<div style="font-size:14px;display:flex;flex-direction:row;">
+					<div style="flex:1;"> Branch </div>
+					<div style="flex:.5;font-weight:bolder;text-align:right;"> {%= data[i].branch %} </div>
+				</div>
+				<div style="font-size:14px;display:flex;flex-direction:row;">
+					<div style="flex:1;"> Base </div>
+					<div style="flex:.5;font-weight:bolder;text-align:right;"> {%= format_currency(data[i].base) %} </div>
+				</div>
+				<div style="font-size:14px;display:flex;flex-direction:row;">
+					<div style="flex:1;"> House Rent Allowance </div>
+					<div style="flex:.5;font-weight:bolder;text-align:right;"> 
+						{% if (data[i]["House Rent Allowance"]==null || data[i]["House Rent Allowance"]=="") { %}
+							{%= format_currency(0.00) %}
+						{% } else { %}
+							{% hra = Math.round(data[i]["House Rent Allowance"]*no_of_days/data[i].total_present_days) %} 
+							{%= format_currency(hra) %}
+						{% } %}
+					</div>
+				</div>
+				<div style="font-size:14px;display:flex;flex-direction:row;">
+					<div style="flex:1;"> Conveyance Allowance </div>
+					<div style="flex:.5;font-weight:bolder;text-align:right;"> 
+						{% if (data[i]["Conveyance"]==null || data[i]["Conveyance"]=="") { %}
+							{%= format_currency(0.00) %}
+						{% } else { %}
+							{% con = Math.round(data[i]["Conveyance"]*no_of_days/data[i].total_present_days) %} 
+							{%= format_currency(con) %}
+						{% } %}
+					</div>
+				</div>
+				<div style="font-size:14px;display:flex;flex-direction:row;">
+					<div style="flex:1;"> Child Education Allowance </div>
+					<div style="flex:.5;font-weight:bolder;text-align:right;"> 
+						{% if (data[i]["Children Education Allowance"]==null || data[i]["Children Education Allowance"]=="") { %}
+							{%= format_currency(0.00) %}
+						{% } else { %}
+							{% cdu = Math.round(data[i]["Children Education Allowance"]*no_of_days/data[i].total_present_days) %} 
+							{%= format_currency(cdu) %}
+						{% } %}
+					</div>
+				</div>
+				<div style="font-size:14px;display:flex;flex-direction:row;">
+					<div style="flex:1;"> Medical Allowance </div>
+					<div style="flex:.5;font-weight:bolder;text-align:right;"> 
+						{% if (data[i]["Medical Allowance"]==null || data[i]["Medical Allowance"]=="") { %}
+							{%= format_currency(0.00) %}
+						{% } else { %}
+							{% mal = Math.round(data[i]["Medical Allowance"]*no_of_days/data[i].total_present_days) %} 
+							{%= format_currency(mal) %}
+						{% } %}
+					</div>
+				</div>
+				<div> <hr style="margin-top:2px !important;margin-bottom:2px !important;"></div>
+				<div style="font-size:14px;display:flex;flex-direction:row;">
+					<div style="flex:1;"> Sub Total </div>
+					<div style="flex:.5;font-weight:bolder;text-align:right;"> 
+						{% var sub_total = data[i].base + hra + mal + con + cdu %}
+						{%= format_currency(sub_total) %}
+					</div>
+				</div>
+				<div style="font-size:14px;display:flex;flex-direction:row;">
+					<div style="flex:1;"> Company's P.F. Contribution </div>
+					<div style="flex:.5;font-weight:bolder;text-align:right;"> 
+						{% var cpf =  Math.round((data[i].base + mal + con + cdu)*.12) %}
+						{% if(data[i]["P.F. Contr."]==null || data[i]["P.F. Contr."]=="") { %}
+							{% cpf = 0 %}
+						{% } %}
+						{%= format_currency(cpf) %}
+					</div>
+				</div>
+				<div style="font-size:14px;display:flex;flex-direction:row;">
+					<div style="flex:1;"> Cost to Company (Excl. Bonus) </div>
+					<div style="flex:.5;font-weight:bolder;text-align:right;"> 
+						{%= format_currency(cpf + sub_total) %}
+					</div>
+				</div>
+				<div style="font-size:14px;display:flex;flex-direction:row;">
+					<div style="flex:1;"> 
+						<div> Yearly Bonus (Per Month) </div>
+						<!-- <div style="font-size:9px;"> 
+							Varries According to Total Yearly Attendance
+						</div> -->
+					</div>
+					<div style="flex:.5;font-weight:bolder;text-align:right;"> 
+						{%= format_currency(Math.round((data[i].base*12*(8.33/100))/12)) %}
+					</div>
+				</div>
+				<div> <hr style="margin-top:2px !important;margin-bottom:2px !important;"></div>
+				<div style="font-size:14px;display:flex;flex-direction:row;">
+					<div style="flex:1;"> Total Cost To Company (Per Month) </div>
+					<div style="flex:.5;font-weight:bolder;text-align:right;"> 
+						{%= format_currency(Math.round(data[i].base/12) + cpf + sub_total) %}
+					</div>
+				</div>				
+			</div>
+			<div style = "flex:1;display:flex;flex-direction:column;padding:3px;">
+				<div style="background:#eee !important;font-size:large;font-weight:bolder;"> Attendance </div>
+				<div style="font-size:16px;display:flex;flex-direction:row;">
+					<div style="flex:1;"> Salary for the Month </div> 
+					<div style="flex:.25;font-weight:bolder;text-align:right;"> {%= monthNames[dt.getMonth()] %}, {%= dt.getFullYear() %} </div>
+				</div>
+				<div style="font-size:14px;display:flex;flex-direction:row;">
+					<div style="flex:1;"> No of Working Days </div> 
+					<div style="flex:.25;font-weight:bolder;text-align:right;"> {%= no_of_days %} </div>
+				</div>
+				<div style="font-size:14px;display:flex;flex-direction:row;">
+					<div style="flex:1;"> Present Days </div>
+					<div style="flex:.25;font-weight:bolder;text-align:right;"> {%= data[i].total_present_days %} </div>
+				</div>
+				<div style="font-size:14px;display:flex;flex-direction:row;">
+					<div style="flex:1;"> Leave Availed </div> 
+					<div style="flex:.25;font-weight:bolder;text-align:right;"> {%= data[i].leave_availed %} </div>
+				</div>
+				<div style="font-size:14px;display:flex;flex-direction:row;">
+					<div style="flex:1;"> Absent </div>
+					<div style="flex:.25;font-weight:bolder;text-align:right;"> {%= no_of_days - data[i].total_present_days %} </div>
+				</div>
+				<div style="font-size:14px;display:flex;flex-direction:row;">
+					<div style="flex:1;"> Payment Days </div>
+					<div style="flex:.25;font-weight:bolder;text-align:right;"> {%= data[i].total_payment_days %} </div>
+				</div>
+				<div> <hr style="margin-top:2px !important;margin-bottom:2px !important;"> </div>
+				<div style="font-size:14px;display:flex;flex-direction:row;">
+					<div style="flex:1;"> Total Leaves Availed in this Year, Till Date </div>
+					<div style="flex:.25;font-weight:bolder;text-align:right;"> {%= data[i].total_leaves %} </div>
+				</div>
+			</div>
+		</div>
+		<hr style="margin-top:2px !important;margin-bottom:2px !important;">
+		<div style="width:100%;display:flex;flex-direction:row;">
+			<div style="flex:1;display:flex;flex-direction:column;padding:3px;">
+				<div style="width:100%;background:#eee !important;;font-size:large;text-align:center;text-transform:uppercase;padding:3px;font-weight:bolder;"> Earnings </div>
+				<div style="display:flex;flex-direction:row;width:100%;">
+					<div style="flex:1;display:flex;flex-direction:column;">
+						<div style="display:flex;flex:1;flex-direction:row;">
+							<div style="flex:1;background:#eee !important;padding:3px;text-align:left;font-weight:800;">
+								Component
+							</div>
+							<div style="flex:.25;background:#eee !important;padding:3px;text-align:center;font-weight:800;">
+								Amount
+							</div>
+						</div>
+						<div style="display:flex;flex:1;flex-direction:row;">
+							<div style="flex:1;padding:3px;">
+								Basic
+							</div>
+							<div style="flex:.25;padding:3px;text-align:right;">
+								{% if(data[i].Basic==null || data[i].Basic=="") { %}
+									{%= format_currency(0.00) %}
+								{% } else { %} 
+									{%= format_currency(data[i].Basic) %}
+								{% } %}
+							</div>
+						</div>
+						<div style="display:flex;flex:1;flex-direction:row;">
+							<div style="flex:1;padding:3px;">
+								House Rent Allowance
+							</div>
+							<div style="flex:.25;padding:3px;text-align:right;">
+								{% if(data[i]["House Rent Allowance"]==null || data[i]["House Rent Allowance"]=="") { %}
+									{%= format_currency(0.00) %}
+								{% } else { %}
+									{%= format_currency(data[i]["House Rent Allowance"]) %}
+								{% } %}
+							</div>
+						</div>
+						<div style="display:flex;flex:1;flex-direction:row;">
+							<div style="flex:1;padding:3px;">
+								Children Education Allowance
+							</div>
+							<div style="flex:.25;padding:3px;text-align:right;">
+								{% if(data[i]["Children Education Allowance"]==null || data[i]["Children Education Allowance"]=="") { %}
+									{%= format_currency(0.00) %}
+								{% } else { %}
+									{%= format_currency(data[i]["Children Education Allowance"]) %}
+								{% } %}
+							</div>
+						</div>
+						<div style="display:flex;flex:1;flex-direction:row;">
+							<div style="flex:1;padding:3px;">
+								Conveyance Allowance
+							</div>
+							<div style="flex:.25;padding:3px;text-align:right;">
+								{% if(data[i]["Conveyance"]==null || data[i]["Conveyance"]=="") { %}
+									{%= format_currency(0.00) %}
+								{% } else { %}
+									{%= format_currency(data[i]["Conveyance"]) %}
+								{% } %}
+							</div>
+						</div>
+						<div style="display:flex;flex:1;flex-direction:row;">
+							<div style="flex:1;padding:3px;">
+								Medical Allowance
+							</div>
+							<div style="flex:.25;padding:3px;text-align:right;">
+								{% if(data[i]["Medical Allowance"]==null || data[i]["Medical Allowance"]=="") { %}
+									{%= format_currency(0.00) %}
+								{% } else { %}
+									{%= format_currency(data[i]["Medical Allowance"]) %}
+								{% } %}
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div style="flex:1;display:flex;flex-direction:column;padding:3px;">
+				<div style="width:100%;background:#eee !important;font-size:large;text-align:center;text-transform:uppercase;padding:3px;font-weight:bolder;"> Deductions </div>
+				<div style="display:flex;flex-direction:row;width:100%;">
+					<div style="flex:1;display:flex;flex-direction:column;">
+						<div style="display:flex;flex:1;flex-direction:row;">
+							<div style="flex:1;background:#eee !important;padding:3px;text-align:left;font-weight:800;">
+								Component
+							</div>
+							<div style="flex:.25;background:#eee !important;padding:3px;text-align:center;font-weight:800;">
+								Amount
+							</div>
+						</div>
+						<div style="display:flex;flex:1;flex-direction:row;">
+							<div style="flex:1;padding:3px;">
+								P.F. Contribution
+							</div>
+							<div style="flex:.25;padding:3px;text-align:right;">
+								{% if(data[i]["P.F. Contr."]==null || data[i]["P.F. Contr."]=="") { %}
+									{%= format_currency(0.00) %}
+								{% } else { %}
+									{%= format_currency(data[i]["P.F. Contr."]) %}
+								{% } %}
+							</div>
+						</div>
+						<div style="display:flex;flex:1;flex-direction:row;">
+							<div style="flex:1;padding:3px;">
+								ESI Contribution
+							</div>
+							<div style="flex:.25;padding:3px;text-align:right;">
+								{% if(data[i]["ESI Contr."]==null || data[i]["ESI Contr."]=="") { %}
+									{%= format_currency(0.00) %}
+								{% } else { %}
+									{%= format_currency(data[i]["ESI Contr."]) %}
+								{% } %}
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div style="width:100%;display:flex;flex-direction:row;">
+			<div style="flex:1;display:flex;flex-direction:row;padding:3px;">
+				<div style="width:100%;background:#eee !important;flex:1;padding:3px;">
+					Total
+				</div>
+				<div style="width:100%;padding:3px;flex:.25;text-align:right;background:#eee !important;">
+					{% if(data[i].total_earnings==null || data[i].total_earnings=="") { %}
+						{%= format_currency(0.00) %}
+					{% } else { %}
+						{%= format_currency(data[i].total_earnings) %}
+					{% } %}
+				</div>
+			</div>
+			<div style="flex:1;display:flex;flex-directin:row;padding:3px;">
+				<div style="width:100%;background:#eee !important;flex:1;padding:3px;">
+					Total
+				</div>
+				<div style="width:100%;padding:3px;flex:.25;text-align:right;background:#eee !important;">
+					{% if(data[i].total_deductions==null || data[i].total_deductions=="") { %}
+						{%= format_currency(0.00) %}					
+					{% } else { %}
+						{%= format_currency(data[i].total_deductions) %}
+					{% } %}
+				</div>
+			</div>
+		</div>
+		<div style="display:flex;flex-direction:row;width:100%;">
+			<div style="display:flex;flex-direction:column;margin-top:15px;flex:1;">
+				<div style="background:#eee !important;text-align:center;text-transform:uppercase;padding:3px;font-size:large;font-weight:bolder;"> Advances </div>
+				<div style="display:flex;flex-direction:row;flex:1;">
+					<div style="flex:1;display:flex;flex-direction:column;">
+						<div style="flex:1;display:flex;flex-direction:row;">
+							<div style="flex:1;background:#eee !important;padding:3px;text-align:left;font-weight:800;">
+								Component
+							</div>
+							<div style="flex:.25;background:#eee !important;padding:3px;text-align:center;font-weight:800;">
+								Amount
+							</div>
+						</div>
+						<div style="flex:1;display:flex;flex-direction:row;">
+							<div style="flex:1;padding:3px;">
+								Salary Advance
+							</div>
+							<div style="flex:.25;padding:3px;flex:.25;text-align:right;">	
+								{% if(data[i]["Salary Advance"]==null || data[i]["Salary Advance"]=="") { %}
+									{%= format_currency(0.00) %}
+								{% } else { %}
+									{%= format_currency(data[i]["Salary Advance"]) %}
+								{% } %}
+							</div>
+						</div>
+						<div style="flex:1;display:flex;flex-direction:row;">
+							<div style="flex:1;padding:3px;">
+								Loan
+							</div>
+							<div style="flex:.25;padding:3px;flex:.25;text-align:right;">
+								{% if(data[i].Loan==null || data[i].Loan=="") { %}
+									{%= format_currency(0.00) %}
+								{% } else { %}
+									{%= format_currency(data[i].Loan) %}
+								{% } %}
+							</div>
+						</div>
+					</div>
+				</div>
+				<div style="display:flex;flex-direction:row;">
+					<div style="width:100%;background:#eee !important;flex:1;padding:3px;">
+						Total
+					</div>
+					<div style="width:100%;padding:3px;flex:.25;text-align:right;background:#eee !important;">
+						{% if(data[i].total_loan==null || data[i].total_loan=="") { %}
+							{%= format_currency(0.00) %}
+						{% } else { %}
+							{%= format_currency(data[i].total_loan) %}
+						{% } %}
+					</div>
+				</div>
+			</div>
+			<div style="flex:1;display:flex;flex-direction:column;margin-top:15px;font-size:15px;font-weight:bolder;margin-left:20px;text-align:right;text-transform:uppercase;align-items:flex-end;">
+				<div style="flex:1;">
+					<div> Total Earnings : {%= format_currency(data[i].total_earnings) %} </div>
+					<div> Total Deductions : {%= format_currency(data[i].total_deductions) %} </div>
+					<div> <hr style="margin-top:2px !important;margin-bottom:2px !important;"> </div>
+					<div> Salary Payable : {%= format_currency(data[i].total_earnings - data[i].total_deductions) %} </div>
+					<div> Less Advances : 
+						{% if(data[i].total_loan==null || data[i].total_loan=="") { %}
+							{%= format_currency(0.00) %}
+						{% } else { %}
+							{%= format_currency(data[i].total_loan) %}
+						{% } %}					
+					</div>
+					<div> <hr style="margin-top:2px !important;margin-bottom:2px !important;"> </div>
+					<div style="font-size:18px;"> Net Payable : {%= format_currency(data[i].net_pay) %} </div> 				
+				</div>
+			</div>        
+		</div>
+		<div style="display:flex;flex-direction:row;width:100%;">
+			<div style="margin:50px;flex:1;margin-top:60px;">
+				<div style="border-bottom:1px solid black;">
+					&nbsp
+				</div>
+				<div style="text-align:center;">
+					Cheque No
+				</div>
+			</div>
+			<div style="margin:50px;flex:1;margin-top:60px;">
+				<div style="border-bottom:1px solid black;">
+					&nbsp
+				</div>
+				<div style="text-align:center;">
+					Prepared By
+				</div>
+			</div>
+			<div style="margin:50px;flex:1;margin-top:60px;">
+				<div style="border-bottom:1px solid black;">
+					&nbsp
+				</div>
+				<div style="text-align:center;">
+					Employee's Signature
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- Page Break -->
+	<div class="page-break"></div>
+	<!-- Seems to be working in Chrome Ver: 38.0.2125.111 & Chrome 43 -->
+	{% } %}    
+</span>
+
+<span id="branch-summary-section" style="font-size:13px;font-family:calibri;">
+<div class="summary-main">
+<div style="width:11.69in;height:8.27in;transform:rotate(-90deg);position:absolute;left:0;bottom:0;transform-origin:bottom left;margin-left:100%;">
+	<div class="summary-table" style="width:100%;display:flex;flex-direction:column;">
+		<div style="background:#eee !important;height:60px;font-size:24px;font-weight:bolder;padding:5px;display:flex;flex-direction:row;align-items:center;">
+			<div style="flex:1;text-align:left;padding-left:20px;">
+				{%= data[0].branch %} {%= monthNames[dt.getMonth()] %}, {%= dt.getFullYear() %}
+			</div>
+			<div style="font-size:12px;padding-right:20px;text-align:right;">
+				Page: 1
+			</div>
+		</div>
+		<div style="background:#eee !important;display:flex;flex-direction:row;">
+			<div class="summary-name-header"> Name </div>
+			<div class="summary-amt-header"> Basic </div>
+			<div class="summary-amt-header"> HRA </div>
+			<div class="summary-amt-header"> CON </div>
+			<div class="summary-amt-header"> MED </div>
+			<div class="summary-amt-header"> CED </div>
+			<div class="summary-amt-header"> Total Earnings </div>
+			<div class="summary-amt-header"> P.F. </div>
+			<div class="summary-amt-header"> ESI </div>
+			<div class="summary-amt-header"> Total Deductions </div>
+			<div class="summary-amt-header"> ADV </div>
+			<div class="summary-amt-header"> LOAN </div>
+			<div class="summary-amt-header"> Total Advances </div>
+			<div class="summary-amt-header"> Net </div>
+		</div>
+			{% var old_branch = null %}
+			{% var total_basic = 0 %}
+			{% var total_hra = 0 %}
+			{% var total_con = 0 %}
+			{% var total_mal = 0 %}
+			{% var total_cdu = 0 %}
+			{% var total_total_earnings = 0 %}
+			{% var total_pf = 0 %}
+			{% var total_esi = 0 %}
+			{% var total_total_deductions = 0 %}
+			{% var total_adv = 0 %}
+			{% var total_loan = 0 %}
+			{% var total_total_loan = 0 %}
+			{% var total_net = 0 %}
+			{% var pg_no = 1 %}
+			{% for (var i=0;i<data.length;i++) { %}
+				{% if (data[i].designation!=null && data[i].designation=="Director") { %}
+					{% continue %}
+				{% } %}
+
+				{% if (old_branch == null) { %}
+					{% old_branch = data[i].branch %}
+				{% } %}
+
+				{% if ((i%25 == 0 || old_branch != data[i].branch) && i>0) { %}
+					{% pg_no += 1 %}
+					{% if (old_branch != data[i].branch) { %}
+						<div style="display:flex;flex-direction:row;background:#eee !important;">
+							<div class="summary-name-footer"> Total </div>
+							<div class="summary-amt-footer"> {%= format_number(total_basic,null,2) %} </div>
+							<div class="summary-amt-footer"> {%= format_number(total_hra,null,2) %} </div>
+							<div class="summary-amt-footer"> {%= format_number(total_con,null,2) %} </div>
+							<div class="summary-amt-footer"> {%= format_number(total_mal,null,2) %} </div>
+							<div class="summary-amt-footer"> {%= format_number(total_cdu,null,2) %} </div>
+							<div class="summary-amt-footer"> {%= format_number(total_total_earnings,null,2) %} </div>					
+							<div class="summary-amt-footer"> {%= format_number(total_pf,null,2) %} </div>
+							<div class="summary-amt-footer"> {%= format_number(total_esi,null,2) %} </div>
+							<div class="summary-amt-footer"> {%= format_number(total_total_deductions,null,2) %} </div>
+							<div class="summary-amt-footer"> {%= format_number(total_adv,null,2) %} </div>
+							<div class="summary-amt-footer"> {%= format_number(total_loan,null,2) %} </div>
+							<div class="summary-amt-footer"> {%= format_number(total_total_loan,null,2) %} </div>
+							<div class="summary-amt-footer"> {%= format_number(total_net,null,2) %} </div>
+						</div>
+						{% total_basic = 0 %}
+						{% total_hra = 0 %}
+						{% total_con = 0 %}
+						{% total_mal = 0 %}
+						{% total_cdu = 0 %}
+						{% total_total_earnings = 0 %}
+						{% total_pf = 0 %}
+						{% total_esi = 0 %}
+						{% total_total_deductions = 0 %}
+						{% total_adv = 0 %}
+						{% total_loan = 0 %}
+						{% total_total_loan = 0 %}
+						{% total_net = 0 %}
+						{% old_branch = data[i].branch %}
+						{% pg_no = 1 %}
+					{% } %}
+
+					</div>
+					</div>
+					</div>
+					<div class="page-break" style="padding:0px !important;"></div>
+					<div class="summary-main">
+					<div style="width:11.69in;height:8.27in;transform:rotate(-90deg);position:absolute;left:0;bottom:0;transform-origin:bottom left;margin-left:100%;">
+						<div style="width:100%;display:flex;flex-direction:column;" class="summary-table">
+							<div style="background:#eee !important;height:60px;font-size:24px;font-weight:bolder;padding:5px;display:flex;flex-direction:row;align-items:center;">
+								<div style="flex:1;text-align:left;padding-left:20px;">
+									{%= data[i].branch %} {%= monthNames[dt.getMonth()] %}, {%= dt.getFullYear() %}
+								</div>
+								<div style="font-size:12px;text-align:right;padding-right:20px;">
+									Page: {%= pg_no %}
+								</div>
+							</div>
+							<div style="background:#eee !important;display:flex;flex-direction:row;">
+								<div class="summary-name-header"> Name </div>
+								<div class="summary-amt-header"> Basic </div>
+								<div class="summary-amt-header"> HRA </div>
+								<div class="summary-amt-header"> CON </div>
+								<div class="summary-amt-header"> MED </div>
+								<div class="summary-amt-header"> CED </div>
+								<div class="summary-amt-header"> Total Earnings </div>
+								<div class="summary-amt-header"> P.F. </div>
+								<div class="summary-amt-header"> ESI </div>
+								<div class="summary-amt-header"> Total Deductions </div>
+								<div class="summary-amt-header"> ADV </div>
+								<div class="summary-amt-header"> LOAN </div>
+								<div class="summary-amt-header"> Total Advances </div>
+								<div class="summary-amt-header"> Net </div>
+							</div>
+				{% } %}
+				<div style="display:flex;flex-direction:row;">
+					<div class="summary-name-column"> {%= data[i].employee_name %} </div>
+					<div class="summary-amt-column"> {%= format_number(data[i].Basic,null,2) %} </div>
+					<div class="summary-amt-column"> {%= format_number(data[i]["House Rent Allowance"],null,2) %} </div>
+					<div class="summary-amt-column"> {%= format_number(data[i]["Conveyance"],null,2) %} </div>
+					<div class="summary-amt-column"> {%= format_number(data[i]["Medical Allowance"],null,2) %} </div>
+					<div class="summary-amt-column"> {%= format_number(data[i]["Children Education Allowance"],null,2) %} </div>
+					<div class="summary-amt-column"> {%= format_number(data[i].total_earnings,null,2) %} </div>					
+					<div class="summary-amt-column"> {%= format_number(data[i]["P.F. Contr."],null,2) %} </div>
+					<div class="summary-amt-column"> {%= format_number(data[i]["ESI Contr."],null,2) %} </div>
+					<div class="summary-amt-column"> {%= format_number(data[i].total_deductions,null,2) %} </div>
+					<div class="summary-amt-column"> {%= format_number(data[i]["Salary Advance"],null,2) %} </div>
+					<div class="summary-amt-column"> {%= format_number(data[i].Loan,null,2) %} </div>
+					<div class="summary-amt-column"> {%= format_number(data[i].total_loan,null,2) %} </div>
+					<div class="summary-amt-column"> {%= format_number(data[i].net_pay,null,2) %} </div>
+				</div>
+				{% total_basic += data[i].Basic==null?0:data[i].Basic %}
+				{% total_hra += data[i]["House Rent Allowance"]==null?0:data[i]["House Rent Allowance"] %}
+				{% total_con += data[i]["Conveyance"]==null?0:data[i]["Conveyance"]  %}
+				{% total_mal += data[i]["Medical Allowance"]==null?0:data[i]["Medical Allowance"] %}
+				{% total_cdu += data[i]["Children Education Allowance"]==null?0:data[i]["Children Education Allowance"] %}
+				{% total_total_earnings += data[i].total_earnings==null?0:data[i].total_earnings %}
+				{% total_pf += data[i]["P.F. Contr."]==null?0:data[i]["P.F. Contr."] %}
+				{% total_esi += data[i]["ESI Contr."]==null?0:data[i]["ESI Contr."] %}
+				{% total_total_deductions += data[i].total_deductions==null?0:data[i].total_deductions %}
+				{% total_adv += data[i]["Salary Advance"]==null?0:data[i]["Salary Advance"] %}
+				{% total_loan += data[i].Loan==null?0:data[i].Loan %}
+				{% total_total_loan += data[i].total_loan==null?0:data[i].total_loan %}
+				{% total_net += data[i].net_pay==null?0:data[i].net_pay %}
+			{% } %}
+			<div style="display:flex;flex-direction:row;background:#eee !important;">
+				<div class="summary-name-footer"> Total </div>
+				<div class="summary-amt-footer"> {%= format_number(total_basic,null,2) %} </div>
+				<div class="summary-amt-footer"> {%= format_number(total_hra,null,2) %} </div>
+				<div class="summary-amt-footer"> {%= format_number(total_con,null,2) %} </div>
+				<div class="summary-amt-footer"> {%= format_number(total_mal,null,2) %} </div>
+				<div class="summary-amt-footer"> {%= format_number(total_cdu,null,2) %} </div>
+				<div class="summary-amt-footer"> {%= format_number(total_total_earnings,null,2) %} </div>					
+				<div class="summary-amt-footer"> {%= format_number(total_pf,null,2) %} </div>
+				<div class="summary-amt-footer"> {%= format_number(total_esi,null,2) %} </div>
+				<div class="summary-amt-footer"> {%= format_number(total_total_deductions,null,2) %} </div>
+				<div class="summary-amt-footer"> {%= format_number(total_adv,null,2) %} </div>
+				<div class="summary-amt-footer"> {%= format_number(total_loan,null,2) %} </div>
+				<div class="summary-amt-footer"> {%= format_number(total_total_loan,null,2) %} </div>
+				<div class="summary-amt-footer"> {%= format_number(total_net,null,2) %} </div>
+			</div>
+	</div>
+</div>
+</div>
+<!-- Page Break -->
+<div class="page-break"></div>
+</span>
+
+<span id="directory-summary-section" style="font-size:13px;font-family:calibri;">
+<div class="summary-main">
+<div style="width:11.69in;height:8.27in;transform:rotate(-90deg);position:absolute;left:0;bottom:0;transform-origin:bottom left;margin-left:100%;">
+	<div class="summary-table" style="width:100%;display:flex;flex-direction:column;">
+		<div style="background:#eee !important;height:60px;font-size:24px;font-weight:bolder;padding:5px;display:flex;flex-direction:row;align-items:center;">
+			<div style="flex:1;text-align:left;padding-left:20px;">
+				Director's Summary {%= monthNames[dt.getMonth()] %}, {%= dt.getFullYear() %}
+			</div>
+			<div style="font-size:12px;padding-right:20px;text-align:right;">
+				Page: 1
+			</div>
+		</div>
+		<div style="background:#eee !important;display:flex;flex-direction:row;">
+			<div class="summary-name-header"> Name </div>
+			<div class="summary-amt-header"> Basic </div>
+			<div class="summary-amt-header"> HRA </div>
+			<div class="summary-amt-header"> CON </div>
+			<div class="summary-amt-header"> MED </div>
+			<div class="summary-amt-header"> CED </div>
+			<div class="summary-amt-header"> Total Earnings </div>
+			<div class="summary-amt-header"> P.F. </div>
+			<div class="summary-amt-header"> ESI </div>
+			<div class="summary-amt-header"> Total Deductions </div>
+			<div class="summary-amt-header"> ADV </div>
+			<div class="summary-amt-header"> LOAN </div>
+			<div class="summary-amt-header"> Total Advances </div>
+			<div class="summary-amt-header"> Net </div>
+		</div>
+			{% var old_branch = null %}
+			{% var total_basic = 0 %}
+			{% var total_hra = 0 %}
+			{% var total_con = 0 %}
+			{% var total_mal = 0 %}
+			{% var total_cdu = 0 %}
+			{% var total_total_earnings = 0 %}
+			{% var total_pf = 0 %}
+			{% var total_esi = 0 %}
+			{% var total_total_deductions = 0 %}
+			{% var total_adv = 0 %}
+			{% var total_loan = 0 %}
+			{% var total_total_loan = 0 %}
+			{% var total_net = 0 %}
+			{% var pg_no = 1 %}
+			{% for (var i=0;i<data.length;i++) { %}
+				{% if (data[i].designation==null || data[i].designation!="Director") { %}
+					{% continue %}
+				{% } %}
+
+				{% if (i%25 == 0  && i>0) { %}
+					{% pg_no += 1 %}
+					</div>
+					</div>
+					</div>
+					<div class="page-break" style="padding:0px !important;"></div>
+					<div class="summary-main">
+					<div style="width:11.69in;height:8.27in;transform:rotate(-90deg);position:absolute;left:0;bottom:0;transform-origin:bottom left;margin-left:100%;">
+						<div style="width:100%;display:flex;flex-direction:column;" class="summary-table">
+							<div style="background:#eee !important;height:60px;font-size:24px;font-weight:bolder;padding:5px;display:flex;flex-direction:row;align-items:center;">
+								<div style="flex:1;text-align:left;padding-left:20px;">
+									{%= data[i].branch %} {%= monthNames[dt.getMonth()] %}, {%= dt.getFullYear() %}
+								</div>
+								<div style="font-size:12px;text-align:right;padding-right:20px;">
+									Page: {%= pg_no %}
+								</div>
+							</div>
+							<div style="background:#eee !important;display:flex;flex-direction:row;">
+								<div class="summary-name-header"> Name </div>
+								<div class="summary-amt-header"> Basic </div>
+								<div class="summary-amt-header"> HRA </div>
+								<div class="summary-amt-header"> CON </div>
+								<div class="summary-amt-header"> MED </div>
+								<div class="summary-amt-header"> CED </div>
+								<div class="summary-amt-header"> Total Earnings </div>
+								<div class="summary-amt-header"> P.F. </div>
+								<div class="summary-amt-header"> ESI </div>
+								<div class="summary-amt-header"> Total Deductions </div>
+								<div class="summary-amt-header"> ADV </div>
+								<div class="summary-amt-header"> LOAN </div>
+								<div class="summary-amt-header"> Total Advances </div>
+								<div class="summary-amt-header"> Net </div>
+							</div>
+				{% } %}
+				<div style="display:flex;flex-direction:row;">
+					<div class="summary-name-column"> {%= data[i].employee_name %} </div>
+					<div class="summary-amt-column"> {%= format_number(data[i].Basic,null,2) %} </div>
+					<div class="summary-amt-column"> {%= format_number(data[i]["House Rent Allowance"],null,2) %} </div>
+					<div class="summary-amt-column"> {%= format_number(data[i]["Conveyance"],null,2) %} </div>
+					<div class="summary-amt-column"> {%= format_number(data[i]["Medical Allowance"],null,2) %} </div>
+					<div class="summary-amt-column"> {%= format_number(data[i]["Children Education Allowance"],null,2) %} </div>
+					<div class="summary-amt-column"> {%= format_number(data[i].total_earnings,null,2) %} </div>					
+					<div class="summary-amt-column"> {%= format_number(data[i]["P.F. Contr."],null,2) %} </div>
+					<div class="summary-amt-column"> {%= format_number(data[i]["ESI Contr."],null,2) %} </div>
+					<div class="summary-amt-column"> {%= format_number(data[i].total_deductions,null,2) %} </div>
+					<div class="summary-amt-column"> {%= format_number(data[i]["Salary Advance"],null,2) %} </div>
+					<div class="summary-amt-column"> {%= format_number(data[i].Loan,null,2) %} </div>
+					<div class="summary-amt-column"> {%= format_number(data[i].total_loan,null,2) %} </div>
+					<div class="summary-amt-column"> {%= format_number(data[i].net_pay,null,2) %} </div>
+				</div>
+				{% total_basic += data[i].Basic==null?0:data[i].Basic %}
+				{% total_hra += data[i]["House Rent Allowance"]==null?0:data[i]["House Rent Allowance"] %}
+				{% total_con += data[i]["Conveyance"]==null?0:data[i]["Conveyance"]  %}
+				{% total_mal += data[i]["Medical Allowance"]==null?0:data[i]["Medical Allowance"] %}
+				{% total_cdu += data[i]["Children Education Allowance"]==null?0:data[i]["Children Education Allowance"] %}
+				{% total_total_earnings += data[i].total_earnings==null?0:data[i].total_earnings %}
+				{% total_pf += data[i]["P.F. Contr."]==null?0:data[i]["P.F. Contr."] %}
+				{% total_esi += data[i]["ESI Contr."]==null?0:data[i]["ESI Contr."] %}
+				{% total_total_deductions += data[i].total_deductions==null?0:data[i].total_deductions %}
+				{% total_adv += data[i]["Salary Advance"]==null?0:data[i]["Salary Advance"] %}
+				{% total_loan += data[i].Loan==null?0:data[i].Loan %}
+				{% total_total_loan += data[i].total_loan==null?0:data[i].total_loan %}
+				{% total_net += data[i].net_pay==null?0:data[i].net_pay %}
+			{% } %}
+			<div style="display:flex;flex-direction:row;background:#eee !important;">
+				<div class="summary-name-footer"> Total </div>
+				<div class="summary-amt-footer"> {%= format_number(total_basic,null,2) %} </div>
+				<div class="summary-amt-footer"> {%= format_number(total_hra,null,2) %} </div>
+				<div class="summary-amt-footer"> {%= format_number(total_con,null,2) %} </div>
+				<div class="summary-amt-footer"> {%= format_number(total_mal,null,2) %} </div>
+				<div class="summary-amt-footer"> {%= format_number(total_cdu,null,2) %} </div>
+				<div class="summary-amt-footer"> {%= format_number(total_total_earnings,null,2) %} </div>					
+				<div class="summary-amt-footer"> {%= format_number(total_pf,null,2) %} </div>
+				<div class="summary-amt-footer"> {%= format_number(total_esi,null,2) %} </div>
+				<div class="summary-amt-footer"> {%= format_number(total_total_deductions,null,2) %} </div>
+				<div class="summary-amt-footer"> {%= format_number(total_adv,null,2) %} </div>
+				<div class="summary-amt-footer"> {%= format_number(total_loan,null,2) %} </div>
+				<div class="summary-amt-footer"> {%= format_number(total_total_loan,null,2) %} </div>
+				<div class="summary-amt-footer"> {%= format_number(total_net,null,2) %} </div>
+			</div>
+	</div>
+</div>
+</div>
+</span>
