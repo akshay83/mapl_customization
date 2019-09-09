@@ -267,9 +267,11 @@ def before_insert_lead(doc, method):
 		frappe.throw("Please Check Mobile No. Ensure that it is only one Number and of 10 Digits")
 
 def on_save_lead(doc, method):
-	from frappe.core.doctype.sms_settings.sms_settings import send_sms
-	message = """Thankyou for Visiting CORAL.Hope you had a pleasent Experience.We would be highly Glad in Helping you should you have any further queries.Please call 07314267777"""
-	send_sms(doc.mobile_no, message)
+	from erpnext.setup.doctype.sms_settings.sms_settings import send_sms
+	message = """Thankyou for Visiting CORAL ELECTRONICS.Hope you had a pleasant Experience.Should you have any further queries.Please call 08305181711"""
+	receiver_list = []
+	receiver_list.append(str(doc.mobile_no))
+	send_sms(receiver_list, message)
 
 
 @frappe.whitelist()
