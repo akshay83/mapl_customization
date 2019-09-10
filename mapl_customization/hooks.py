@@ -60,7 +60,7 @@ doc_events = {
 		"before_insert": "mapl_customization.customizations_for_mapl.utils.validate_customer_before_save"
 	},
 	"Lead" : {
-		"on_update": "mapl_customization.customizations_for_mapl.utils.on_save_lead",
+		"after_insert": "mapl_customization.customizations_for_mapl.utils.on_save_lead",
 		"before_insert": "mapl_customization.customizations_for_mapl.utils.before_insert_lead"
 	}
 }
