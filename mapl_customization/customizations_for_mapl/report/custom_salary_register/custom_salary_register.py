@@ -3,7 +3,19 @@
 
 from __future__ import unicode_literals
 import frappe
+import json
+import datetime
 from frappe.utils import flt
+
+class DateTimeEncoder(json.JSONEncoder):
+
+    def default(self, obj):
+        if isinstance(obj, (datetime.datetime, datetime.date, datetime.time)):
+            return obj.isoformat()
+        elif isinstance(obj, datetime.timedelta):
+            return (datetime.datetime.min + obj).time().isoformat()
+
+        return super(DateTimeEncoder, self).default(obj)
 
 def execute(filters=None):
 	columns, data = [], []
@@ -47,6 +59,16 @@ def execute(filters=None):
 		"fieldtype": "Int",
 		"width": 80
 	})
+
+	#Check if Biometric Attendance in Available
+	if(frappe.db.table_exists("Biometric Users")):
+		columns.append({
+			"fieldname": "biometric_attendance",
+			"label": "Biometric Attendance",
+			"fieldtype": "Text",
+			"width": 100
+		})
+
 	data = get_employee_details(filters)
 	return columns, data
 
@@ -233,7 +255,7 @@ def get_employee_details(filters):
 		build_row["department"] = e.department
 		build_row["designation"] = e.designation
 		build_row["total_payment_days"] = e.payment_days
-		build_row["leave_without_pay"] = e.leave_without_pay
+		build_row["leave_without_pay"] = (e.leave_without_pay + e.leave_availed)
 		build_row["leave_availed"] = e.leave_availed
 		build_row["total_present_days"] = (e.payment_days - e.leave_availed)
 		build_row["base"] = e.base
@@ -245,6 +267,12 @@ def get_employee_details(filters):
 			build_row["total_loan"] = e.total_loan_repayment
 		build_row["net_pay"] = build_row.get("total_earnings",0)-(build_row.get("total_deductions")+build_row.get("total_loan",0))
 		build_row.update(get_total_leaves(e.employee, filters))
+
+		#If Biometric Attendance is Available
+		if frappe.db.table_exists("Biometric Users"):
+			build_row["biometric_attendance"] = get_biometric_attendance(e.employee, filters)
+			print build_row["biometric_attendance"]
+
 		rows.append(build_row)
 
 	return rows
@@ -313,3 +341,41 @@ def get_total_leaves(employee, filters):
 		build_row["total_leaves"] = d.total_leaves
 
 	return build_row
+
+def get_biometric_attendance(employee, filters):
+	query = """
+		select 
+			  users.name as `User Code`,
+			  users.employee as `Employee Code`,
+			  users.user_name as `User Name`, 
+			  machine.branch as `Branch`,
+			  branch.opening_time as `Branch Opening Time`,
+			  branch.closing_time as `Branch Closing Time`, 
+			  cast(att.timestamp as date) as `Punch Date`, 
+			  count(*) as `Punch Count`, 
+			  cast(min(att.timestamp) as Time) as `Earliest Punch`, 
+			  cast(max(att.timestamp) as Time) as `Last Punch`
+		from 
+			  `tabBiometric Users` users, 
+			  `tabBiometric Attendance` att,
+			  `tabBranch Settings` branch,
+			  `tabEnrolled Users` enrolled,
+			  `tabBiometric Machine` machine
+		where 
+			  att.user_id = cast(substring(users.name,3) as Integer) 
+			  and cast(att.timestamp as date) >= %s
+			  and cast(att.timestamp as date) <= %s
+			  and machine.branch = branch.branch
+			  and enrolled.parent = machine.name
+			  and enrolled.user = users.name 
+			  and users.employee = %s
+		group by 
+			  cast(att.timestamp as date), 
+			  users.name
+		order by
+			  cast(att.timestamp as date),
+			  users.user_name
+		"""
+
+	ba = frappe.db.sql(query, (filters.get("from_date"), filters.get("to_date"), employee), as_dict=1)
+	return DateTimeEncoder().encode(ba)

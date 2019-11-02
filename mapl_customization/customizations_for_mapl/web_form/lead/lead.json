@@ -18,7 +18,7 @@
  "is_standard": 1, 
  "login_required": 0, 
  "max_attachment_size": 0, 
- "modified": "2019-09-08 16:20:12.308524", 
+ "modified": "2019-10-07 18:25:26.154886", 
  "modified_by": "Administrator", 
  "module": "Customizations for MAPL", 
  "name": "lead", 
@@ -72,6 +72,37 @@
    "options": "Item Group", 
    "read_only": 0, 
    "reqd": 0
+  }, 
+  {
+   "fieldname": "lead_type", 
+   "fieldtype": "Select", 
+   "hidden": 0, 
+   "label": "Lead Type", 
+   "max_length": 0, 
+   "max_value": 0, 
+   "options": "\nVery Hot\nHot\nWarm\nCold", 
+   "read_only": 0, 
+   "reqd": 0
+  }, 
+  {
+   "fieldname": "sales_man", 
+   "fieldtype": "Data", 
+   "hidden": 0, 
+   "label": "Sales Man", 
+   "max_length": 0, 
+   "max_value": 0, 
+   "read_only": 0, 
+   "reqd": 1
+  }, 
+  {
+   "fieldname": "model", 
+   "fieldtype": "Data", 
+   "hidden": 0, 
+   "label": "Model", 
+   "max_length": 0, 
+   "max_value": 0, 
+   "read_only": 0, 
+   "reqd": 1
   }, 
   {
    "fieldname": "notes", 

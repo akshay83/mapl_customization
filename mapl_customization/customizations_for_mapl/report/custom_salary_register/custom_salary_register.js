@@ -10,6 +10,12 @@ frappe.query_reports["Custom Salary Register"] = {
 			"fieldtype": "DateRange",
 			"default": [frappe.datetime.add_months(frappe.datetime.get_today(),-1), frappe.datetime.get_today()],
 			"reqd": 1
+		},
+		{
+			"fieldname":"print_attendance",
+			"label": __("Print Biometric Attendance"),
+			"fieldtype": "Check",
+			"default": 0
 		}
 	],
 	onload: function(report) {

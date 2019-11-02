@@ -87,6 +87,74 @@
 		height:11.69in;
 		position:relative;
 	}
+	.summary-child {
+		width:11.69in;
+		height:8.27in;
+		transform:rotate(-90deg);
+		position:absolute;
+		left:0;
+		bottom:0;
+		transform-origin:bottom left;
+		margin-left:100%;
+	}
+	.summary-section-header {
+		background:#eee !important;
+		height:60px;
+		font-size:24px;
+		font-weight:bolder;
+		padding:5px;
+		display:flex;
+		flex-direction:row;
+		align-items:center;
+	}
+
+	.summary-table {
+		width:100%;
+		display:flex;
+		flex-direction:column;
+	}
+
+	.summary-table-header {
+		background:#eee !important;
+		display:flex;
+		flex-direction:row;
+	}
+
+	.summary-table-footer {
+		display:flex;
+		flex-direction:row;
+		background:#eee !important;
+	}
+
+	.summary-table-row {
+		display:flex;
+		flex-direction:row;
+	}
+
+	.attendance-header {
+		background:#eee;
+		padding:2px;
+		font-weight:bold;
+		text-align:center;
+		flex:.4;
+		border-bottom:0.1em dotted black;
+	}
+
+	.attendance-column {
+		padding:2px;
+		text-align:center;
+		flex:.4;
+		border-right:0.1em dotted black;
+		border-bottom:0.1em dotted black;
+	}
+
+	.main-attendance {
+		width:100%;
+		display:flex;
+		flex-direction:row;
+		padding:10px;
+	}
+
 	@media print {
 		.print-format {
 			padding: 0mm !important;
@@ -96,14 +164,23 @@
 			margin: 0mm 0mm 0mm 0mm;
 		}
 		.salary-slip-main {
-			padding: 10mm 10mm 10mm 10mm;
+			padding-top: 10mm;
+			padding-right: 10mm;
+			padding-left: 10mm;
+			padding-bottom: 10px;
 		}
 		.summary-main {
 			margin: 5mm 5mm 5mm 5mm;
 		}
+		.main-attendance {
+			padding-top: 0px;
+			padding-bottom: 10mm;
+			padding-right: 10mm;
+			padding-left: 10mm;
+		}
 	}
 </style>
-<span id="salary-slip-section" style="font-size:13px;font-family:calibri;">
+<section id="salary-slip-section" style="font-size:13px;font-family:calibri;">
 	{% const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]; %}
 
 	{% var dt = dateutil.str_to_obj(filters.date_range[0]) %}
@@ -251,7 +328,7 @@
 				<div style="background:#eee !important;font-size:large;font-weight:bolder;"> Attendance </div>
 				<div style="font-size:16px;display:flex;flex-direction:row;">
 					<div style="flex:1;"> Salary for the Month </div> 
-					<div style="flex:.25;font-weight:bolder;text-align:right;"> {%= monthNames[dt.getMonth()] %}, {%= dt.getFullYear() %} </div>
+					<div style="flex:.4;font-weight:bolder;text-align:right;"> {%= monthNames[dt.getMonth()] %}, {%= dt.getFullYear() %} </div>
 				</div>
 				<div style="font-size:14px;display:flex;flex-direction:row;">
 					<div style="flex:1;"> No of Working Days </div> 
@@ -494,7 +571,7 @@
 			</div>        
 		</div>
 		<div style="display:flex;flex-direction:row;width:100%;">
-			<div style="margin:50px;flex:1;margin-top:60px;">
+			<div style="margin-bottom:15px;flex:1;margin-top:40px;margin-left:50px;margin-right:50px;">
 				<div style="border-bottom:1px solid black;">
 					&nbsp
 				</div>
@@ -502,7 +579,7 @@
 					Cheque No
 				</div>
 			</div>
-			<div style="margin:50px;flex:1;margin-top:60px;">
+			<div style="margin-bottom:15px;flex:1;margin-top:40px;margin-left:50px;margin-right:50px;">
 				<div style="border-bottom:1px solid black;">
 					&nbsp
 				</div>
@@ -510,7 +587,7 @@
 					Prepared By
 				</div>
 			</div>
-			<div style="margin:50px;flex:1;margin-top:60px;">
+			<div style="margin-bottom:15px;flex:1;margin-top:40px;margin-left:50px;margin-right:50px;">
 				<div style="border-bottom:1px solid black;">
 					&nbsp
 				</div>
@@ -520,17 +597,62 @@
 			</div>
 		</div>
 	</div>
+	{% if (filters.print_attendance) { %}
+	<section id="attendance" style="font-size:10px;overflow:hidden;">
+		<div class="main-attendance">
+		{% if (data[i].biometric_attendance!="[]") { %}
+			{% var ba = JSON.parse(data[i].biometric_attendance) %}
+			{% var ai = 0 %}
+			<div style="display:flex;flex:1;flex-direction:column;">
+				<div style="flex:1;flex-direction:row;display:flex">
+					<div class="attendance-header" style="flex:1"> Date </div>
+					<div class="attendance-header"> In Time </div>
+					<div class="attendance-header"> Out Time </div>
+				</div>
+				{% for(var a=0;a<33;a++) { %}
+					{% if (ai%11==0 && ai>0) { %}
+						</div>
+						<div style="display:flex;flex:1;flex-direction:column;">
+							<div style="flex-direction:row;display:flex;">
+								<div class="attendance-header" style="flex:1;"> Date </div>
+								<div class="attendance-header"> In Time </div>
+								<div class="attendance-header"> Out Time </div>
+							</div>
+					{% } %}
+					<div style="flex:1;flex-direction:row;display:flex">
+					{% if(ai<11) { %}
+						<div class="attendance-column" style="flex:1;border-left:0.1em dotted black;"> 
+					{% } else { %}
+						<div class="attendance-column" style="flex:1;"> 
+					{% } %}
+							{% if(ba[a]) { %} 
+								{% var adt = ba[a]["Punch Date"] %} 
+								{% adt = adt.split("-") %}
+								{% adtstr = "".concat(adt[2],"-",monthNames[adt[1]-1],"-",adt[0]) %}
+								{%= adtstr %}
+							{% } %} 
+						</div>
+						<div class="attendance-column"> {% if(ba[a]) { %} {%= ba[a]["Earliest Punch"] %} {% } %} </div>
+						<div class="attendance-column"> {% if(ba[a]) { %} {%= ba[a]["Last Punch"] %} {% } %} </div>
+					</div>
+					{% ai = ai + 1 %}
+				{% } %}
+			</div>
+		{% } %}
+		</div>
+	</section>
+	{% } %}
 	<!-- Page Break -->
 	<div class="page-break"></div>
 	<!-- Seems to be working in Chrome Ver: 38.0.2125.111 & Chrome 43 -->
 	{% } %}    
-</span>
+</section>
 
-<span id="branch-summary-section" style="font-size:13px;font-family:calibri;">
+<section id="branch-summary-section" style="font-size:13px;font-family:calibri;">
 <div class="summary-main">
-<div style="width:11.69in;height:8.27in;transform:rotate(-90deg);position:absolute;left:0;bottom:0;transform-origin:bottom left;margin-left:100%;">
-	<div class="summary-table" style="width:100%;display:flex;flex-direction:column;">
-		<div style="background:#eee !important;height:60px;font-size:24px;font-weight:bolder;padding:5px;display:flex;flex-direction:row;align-items:center;">
+<div class="summary-child">
+	<div class="summary-table">
+		<div class="summary-section-header">
 			<div style="flex:1;text-align:left;padding-left:20px;">
 				{%= data[0].branch %} {%= monthNames[dt.getMonth()] %}, {%= dt.getFullYear() %}
 			</div>
@@ -538,7 +660,7 @@
 				Page: 1
 			</div>
 		</div>
-		<div style="background:#eee !important;display:flex;flex-direction:row;">
+		<div class="summary-table-header">
 			<div class="summary-name-header"> Name </div>
 			<div class="summary-amt-header"> Basic </div>
 			<div class="summary-amt-header"> HRA </div>
@@ -569,19 +691,19 @@
 			{% var total_total_loan = 0 %}
 			{% var total_net = 0 %}
 			{% var pg_no = 1 %}
-			{% for (var i=0;i<data.length;i++) { %}
+			{% for (var i=0,c=-1;i<data.length;i++) { %}
 				{% if (data[i].designation!=null && data[i].designation=="Director") { %}
 					{% continue %}
 				{% } %}
-
+				{% c = c + 1 %}
 				{% if (old_branch == null) { %}
 					{% old_branch = data[i].branch %}
 				{% } %}
 
-				{% if ((i%25 == 0 || old_branch != data[i].branch) && i>0) { %}
+				{% if ((c%8 == 0 || old_branch != data[i].branch) && i>0) { %}
 					{% pg_no += 1 %}
 					{% if (old_branch != data[i].branch) { %}
-						<div style="display:flex;flex-direction:row;background:#eee !important;">
+						<div class="summary-table-footer">
 							<div class="summary-name-footer"> Total </div>
 							<div class="summary-amt-footer"> {%= format_number(total_basic,null,2) %} </div>
 							<div class="summary-amt-footer"> {%= format_number(total_hra,null,2) %} </div>
@@ -612,6 +734,7 @@
 						{% total_net = 0 %}
 						{% old_branch = data[i].branch %}
 						{% pg_no = 1 %}
+						{% c = 0 %}
 					{% } %}
 
 					</div>
@@ -619,9 +742,9 @@
 					</div>
 					<div class="page-break" style="padding:0px !important;"></div>
 					<div class="summary-main">
-					<div style="width:11.69in;height:8.27in;transform:rotate(-90deg);position:absolute;left:0;bottom:0;transform-origin:bottom left;margin-left:100%;">
-						<div style="width:100%;display:flex;flex-direction:column;" class="summary-table">
-							<div style="background:#eee !important;height:60px;font-size:24px;font-weight:bolder;padding:5px;display:flex;flex-direction:row;align-items:center;">
+					<div class="summary-child">
+						<div class="summary-table">
+							<div class="summary-section-header">
 								<div style="flex:1;text-align:left;padding-left:20px;">
 									{%= data[i].branch %} {%= monthNames[dt.getMonth()] %}, {%= dt.getFullYear() %}
 								</div>
@@ -629,7 +752,7 @@
 									Page: {%= pg_no %}
 								</div>
 							</div>
-							<div style="background:#eee !important;display:flex;flex-direction:row;">
+							<div class="summary-table-header">
 								<div class="summary-name-header"> Name </div>
 								<div class="summary-amt-header"> Basic </div>
 								<div class="summary-amt-header"> HRA </div>
@@ -646,8 +769,15 @@
 								<div class="summary-amt-header"> Net </div>
 							</div>
 				{% } %}
-				<div style="display:flex;flex-direction:row;">
-					<div class="summary-name-column"> {%= data[i].employee_name %} </div>
+				<div class="summary-table-row">
+					<div class="summary-name-column"> 
+						{%= data[i].employee_name %} 
+						<div style="font-size:10px;">
+							<div> Present Days: {%= data[i].total_present_days %} </div>
+							<div> Leaves Availed: {%= data[i].leave_availed %} </div>
+							<div> Payment Days: {%= data[i].total_payment_days %} </div>
+						</div>
+					</div>
 					<div class="summary-amt-column"> {%= format_number(data[i].Basic,null,2) %} </div>
 					<div class="summary-amt-column"> {%= format_number(data[i]["House Rent Allowance"],null,2) %} </div>
 					<div class="summary-amt-column"> {%= format_number(data[i]["Conveyance"],null,2) %} </div>
@@ -676,7 +806,7 @@
 				{% total_total_loan += data[i].total_loan==null?0:data[i].total_loan %}
 				{% total_net += data[i].net_pay==null?0:data[i].net_pay %}
 			{% } %}
-			<div style="display:flex;flex-direction:row;background:#eee !important;">
+			<div class="summary-table-footer">
 				<div class="summary-name-footer"> Total </div>
 				<div class="summary-amt-footer"> {%= format_number(total_basic,null,2) %} </div>
 				<div class="summary-amt-footer"> {%= format_number(total_hra,null,2) %} </div>
@@ -697,13 +827,13 @@
 </div>
 <!-- Page Break -->
 <div class="page-break"></div>
-</span>
+</section>
 
-<span id="directory-summary-section" style="font-size:13px;font-family:calibri;">
+<section id="directory-summary-section" style="font-size:13px;font-family:calibri;">
 <div class="summary-main">
-<div style="width:11.69in;height:8.27in;transform:rotate(-90deg);position:absolute;left:0;bottom:0;transform-origin:bottom left;margin-left:100%;">
+<div class="summary-child">
 	<div class="summary-table" style="width:100%;display:flex;flex-direction:column;">
-		<div style="background:#eee !important;height:60px;font-size:24px;font-weight:bolder;padding:5px;display:flex;flex-direction:row;align-items:center;">
+		<div class="summary-section-header">
 			<div style="flex:1;text-align:left;padding-left:20px;">
 				Director's Summary {%= monthNames[dt.getMonth()] %}, {%= dt.getFullYear() %}
 			</div>
@@ -711,7 +841,7 @@
 				Page: 1
 			</div>
 		</div>
-		<div style="background:#eee !important;display:flex;flex-direction:row;">
+		<div class="summary-table-header">
 			<div class="summary-name-header"> Name </div>
 			<div class="summary-amt-header"> Basic </div>
 			<div class="summary-amt-header"> HRA </div>
@@ -754,9 +884,9 @@
 					</div>
 					<div class="page-break" style="padding:0px !important;"></div>
 					<div class="summary-main">
-					<div style="width:11.69in;height:8.27in;transform:rotate(-90deg);position:absolute;left:0;bottom:0;transform-origin:bottom left;margin-left:100%;">
+					<div class="summary-child">
 						<div style="width:100%;display:flex;flex-direction:column;" class="summary-table">
-							<div style="background:#eee !important;height:60px;font-size:24px;font-weight:bolder;padding:5px;display:flex;flex-direction:row;align-items:center;">
+							<div class="summary-section-header">
 								<div style="flex:1;text-align:left;padding-left:20px;">
 									{%= data[i].branch %} {%= monthNames[dt.getMonth()] %}, {%= dt.getFullYear() %}
 								</div>
@@ -764,7 +894,7 @@
 									Page: {%= pg_no %}
 								</div>
 							</div>
-							<div style="background:#eee !important;display:flex;flex-direction:row;">
+							<div class="summary-table-header">
 								<div class="summary-name-header"> Name </div>
 								<div class="summary-amt-header"> Basic </div>
 								<div class="summary-amt-header"> HRA </div>
@@ -781,7 +911,7 @@
 								<div class="summary-amt-header"> Net </div>
 							</div>
 				{% } %}
-				<div style="display:flex;flex-direction:row;">
+				<div class="summary-table-row">
 					<div class="summary-name-column"> {%= data[i].employee_name %} </div>
 					<div class="summary-amt-column"> {%= format_number(data[i].Basic,null,2) %} </div>
 					<div class="summary-amt-column"> {%= format_number(data[i]["House Rent Allowance"],null,2) %} </div>
@@ -811,7 +941,7 @@
 				{% total_total_loan += data[i].total_loan==null?0:data[i].total_loan %}
 				{% total_net += data[i].net_pay==null?0:data[i].net_pay %}
 			{% } %}
-			<div style="display:flex;flex-direction:row;background:#eee !important;">
+			<div class="summary-table-footer">
 				<div class="summary-name-footer"> Total </div>
 				<div class="summary-amt-footer"> {%= format_number(total_basic,null,2) %} </div>
 				<div class="summary-amt-footer"> {%= format_number(total_hra,null,2) %} </div>
@@ -830,4 +960,4 @@
 	</div>
 </div>
 </div>
-</span>
+</section>
