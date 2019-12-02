@@ -151,29 +151,31 @@ def fetch_address_details_payments_receipts(party_address):
 
 
 @frappe.whitelist()
-def validate_input_serial(args,rows,is_vehicle=1):
+def validate_input_serial(args,rows,is_vehicle=1, is_electric_vehicle=0):
 	if isinstance(args, basestring):
 		args = json.loads(args)
 
 	serial_keys = args.keys()
 
-	int_rows = int(float(rows))
+	int_rows = cint(rows)
 	rows = str(int_rows)
-	is_vehicle = int(float(is_vehicle))
+	is_vehicle = cint(is_vehicle)
+	is_electric_vehicle = cint(is_electric_vehicle)
 
 	for i in range(1, int_rows):
 		if is_vehicle==1:
 			if "chassis_no_"+rows not in serial_keys:
 				frappe.throw("Check Chassis No At Row "+rows)
 
-			if "engine_no_"+rows not in serial_keys:
-				frappe.throw("Check Engine No At Row "+rows)
-
-			if "key_no_"+rows not in serial_keys:
-				frappe.throw("Check Key No At Row "+rows)
-
 			if "color_"+rows not in serial_keys:
 				frappe.throw("Check Color At Row "+rows)
+
+			if is_electric_vehicle == 0:
+				if "engine_no_"+rows not in serial_keys:
+					frappe.throw("Check Engine No At Row "+rows)
+
+				if "key_no_"+rows not in serial_keys:
+					frappe.throw("Check Key No At Row "+rows)
 
 		if is_vehicle==0:
 			if "chassis_no_"+rows not in serial_keys:
@@ -186,17 +188,18 @@ def purchase_receipt_on_submit(doc,method):
 	for i in doc.items:
 		if cint(i.is_vehicle):
 			chassis_nos = i.serial_no.split("\n")
-			engine_nos = i.engine_nos.split("\n")
-			key_nos = i.key_nos.split("\n")
+			engine_nos = i.engine_nos.split("\n") if i.engine_nos else []
+			key_nos = i.key_nos.split("\n") if i.key_nos else []
 			color = i.color.split("\n")
 
 			index = 0
 			for serials in chassis_nos:
 				serial_doc = frappe.get_doc("Serial No",serials)
 				serial_doc.is_vehicle = 1
+				serial_doc.is_electric_vehicle = i.is_electric_vehicle
 				serial_doc.chassis_no = serials
-				serial_doc.engine_no = engine_nos[index]
-				serial_doc.key_no = key_nos[index]
+				serial_doc.engine_no = engine_nos[index] if len(engine_nos) > index else None
+				serial_doc.key_no = key_nos[index] if len(key_nos) > index else None
 				serial_doc.color = color[index]
 				serial_doc.year_of_manufacture = i.year_of_manufacture
 				serial_doc.save()

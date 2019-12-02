@@ -3,13 +3,13 @@ from frappe.utils import cint
 
 def sales_invoice_validate(doc, method):
 	negative_stock_validation(doc, method)
-	taxes_and_charges_validation(doc, method)
 	validate_stock_entry_serial_no(doc, method)
 	#validate_grand_total(doc, method)
 
 def sales_on_submit_validation(doc, method):
 	vehicle_validation(doc, method)
 	validate_hsn_code(doc, method)
+	taxes_and_charges_validation(doc, method)
 	finance_validate(doc, method)
 	validate_grand_total(doc, method)
 
@@ -39,12 +39,13 @@ def negative_stock_validation(doc, method):
 			frappe.msgprint("Negative Stock for {0}, Please verify before Submitting".format(i.item_code))
 
 def taxes_and_charges_validation(doc, method):
-	if doc.total_taxes_and_charges == 0:
-		frappe.msgprint("No Taxes and Charges Applied, Please ensure if this is Ok!!")
-	else:
-		for i in doc.items:
-			if i.net_rate == i.rate:
-				frappe.msgprint("""Taxes Does not seems to be Applied on Item {0}, Please ensure if this is Ok!!""".format(i.item_code))
+	if not (frappe.session.user == "Administrator" or "System Manager" in frappe.get_roles()):
+		if doc.total_taxes_and_charges == 0:
+			frappe.throw("No Taxes and Charges Applied, Please ensure if this is Ok!!")
+		else:
+			for i in doc.items:
+				if i.net_rate == i.rate:
+					frappe.throw("""Taxes Does not seems to be Applied on Item {0}, Please ensure if this is Ok!!""".format(i.item_code))
 
 def validate_hsn_code(doc, method):
 	for i in doc.items:

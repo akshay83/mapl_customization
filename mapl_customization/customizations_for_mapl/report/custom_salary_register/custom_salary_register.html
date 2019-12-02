@@ -180,6 +180,12 @@
 		}
 	}
 </style>
+<!-- JS Function for Time in Seconds -->
+{% function toSeconds(t) {
+    var bits = t.split(':');
+    return bits[0]*3600 + bits[1]*60 + bits[2]*1;
+} %}
+<!-- ****************************** -->
 <section id="salary-slip-section" style="font-size:13px;font-family:calibri;">
 	{% const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]; %}
 
@@ -243,7 +249,7 @@
 						{% if (data[i]["House Rent Allowance"]==null || data[i]["House Rent Allowance"]=="") { %}
 							{%= format_currency(0.00) %}
 						{% } else { %}
-							{% hra = Math.round(data[i]["House Rent Allowance"]*no_of_days/data[i].total_present_days) %} 
+							{% hra = Math.round(data[i]["House Rent Allowance"]*no_of_days/data[i].total_payment_days) %} 
 							{%= format_currency(hra) %}
 						{% } %}
 					</div>
@@ -254,7 +260,7 @@
 						{% if (data[i]["Conveyance"]==null || data[i]["Conveyance"]=="") { %}
 							{%= format_currency(0.00) %}
 						{% } else { %}
-							{% con = Math.round(data[i]["Conveyance"]*no_of_days/data[i].total_present_days) %} 
+							{% con = Math.round(data[i]["Conveyance"]*no_of_days/data[i].total_payment_days) %} 
 							{%= format_currency(con) %}
 						{% } %}
 					</div>
@@ -265,7 +271,7 @@
 						{% if (data[i]["Children Education Allowance"]==null || data[i]["Children Education Allowance"]=="") { %}
 							{%= format_currency(0.00) %}
 						{% } else { %}
-							{% cdu = Math.round(data[i]["Children Education Allowance"]*no_of_days/data[i].total_present_days) %} 
+							{% cdu = Math.round(data[i]["Children Education Allowance"]*no_of_days/data[i].total_payment_days) %} 
 							{%= format_currency(cdu) %}
 						{% } %}
 					</div>
@@ -276,7 +282,7 @@
 						{% if (data[i]["Medical Allowance"]==null || data[i]["Medical Allowance"]=="") { %}
 							{%= format_currency(0.00) %}
 						{% } else { %}
-							{% mal = Math.round(data[i]["Medical Allowance"]*no_of_days/data[i].total_present_days) %} 
+							{% mal = Math.round(data[i]["Medical Allowance"]*no_of_days/data[i].total_payment_days) %} 
 							{%= format_currency(mal) %}
 						{% } %}
 					</div>
@@ -631,9 +637,17 @@
 								{% adtstr = "".concat(adt[2],"-",monthNames[adt[1]-1],"-",adt[0]) %}
 								{%= adtstr %}
 							{% } %} 
+							{% var openRed = "",closeRed = "" %}
+							{% if(ba[a]) { %}
+								{% var opendiff = toSeconds(ba[a]["Earliest Punch"]) - toSeconds(ba[a]["Branch Opening Time"]) %}
+								{% var closediff = toSeconds(ba[a]["Last Punch"]) - toSeconds(ba[a]["Branch Closing Time"]) %}
+								{% if(Math.abs(opendiff/60)>60) { openRed = "style=\"background:lightcyan !important;\""; } %}
+								{% if(Math.abs(closediff/60)>60) { closeRed = "style=\"background:lightcyan !important;\""; } %}
+							{% } %}
+
 						</div>
-						<div class="attendance-column"> {% if(ba[a]) { %} {%= ba[a]["Earliest Punch"] %} {% } %} </div>
-						<div class="attendance-column"> {% if(ba[a]) { %} {%= ba[a]["Last Punch"] %} {% } %} </div>
+						<div class="attendance-column" {%= openRed %}> {% if(ba[a]) { %} {%= ba[a]["Earliest Punch"] %} {% } %} </div>
+						<div class="attendance-column" {%= closeRed %}> {% if(ba[a]) { %} {%= ba[a]["Last Punch"] %} {% } %} </div>
 					</div>
 					{% ai = ai + 1 %}
 				{% } %}

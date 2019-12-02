@@ -237,9 +237,9 @@
   "description": null, 
   "docstatus": 0, 
   "doctype": "Custom SQL Queries", 
-  "modified": "2018-10-02 16:28:48.471859", 
+  "modified": "2019-11-27 14:11:30.171390", 
   "name": "Quantitative Details for Balance Sheet", 
-  "query": "select\n  item.brand,\n  item.item_group,\n  sum(if(stock.posting_date &lt;= '2017-06-30', actual_qty, 0)) as `Opening`,\n  sum(if(stock.posting_date &lt;= '2017-06-30', stock_value_difference, 0)) as `Opening Value`,  \n  abs(sum(if((stock.posting_date&gt;='2017-07-01' and stock.voucher_type = 'Purchase Invoice'), actual_qty, 0))) as `Purchase Qty`,\n  abs(sum(if((stock.posting_date&gt;='2017-07-01' and stock.voucher_type = 'Purchase Invoice'), stock_value_difference, 0))) as `Purchase Value`,\n  abs(sum(if((stock.posting_date&gt;='2017-07-01' and stock.voucher_type = 'Sales Invoice'), actual_qty, 0))) as `Sales Qty`,\n  abs(sum(if((stock.posting_date&gt;='2017-07-01' and stock.voucher_type = 'Sales Invoice'), stock_value_difference, 0))) as `Sales Value`,  \n  sum(actual_qty) as `Balance Qty`,\n  sum(stock_value_difference) as `Balance Value`\nfrom \n    (`tabStock Ledger Entry` stock left join `tabStock Entry` entry on (entry.name = stock.voucher_no)),\n    `tabItem` item\nwhere\n    (entry.purpose = 'Material Receipt' or entry.purpose is null)   \n    and stock.voucher_type != 'Delivery Note'\n    and stock.posting_date &gt;= '2017-04-01'\n    and stock.posting_date &lt;= '2018-03-31'\n    and stock.item_code = item.item_code\ngroup by\n  item.brand, item.item_group\norder by\n  item.brand, item.item_group", 
+  "query": "select\n  item.brand,\n  item.item_group,\n  sum(if(stock.posting_date &lt; '2018-04-01', stock.actual_qty, 0)) as `Opening`,\n  sum(if(stock.posting_date &lt; '2018-04-01', stock.stock_value_difference, 0)) as `Opening Value`,  \n  abs(sum(if((stock.posting_date&gt;='2018-04-01' and stock.voucher_type = 'Purchase Invoice'), stock.actual_qty, 0))) as `Purchase Qty`,\n  abs(sum(if((stock.posting_date&gt;='2018-04-01' and stock.voucher_type = 'Purchase Invoice'), stock.stock_value_difference, 0))) as `Purchase Value`,\n  abs(sum(if((stock.posting_date&gt;='2018-04-01' and stock.voucher_type = 'Sales Invoice'), stock.actual_qty, 0))) as `Sales Qty`,\n  abs(sum(if((stock.posting_date&gt;='2018-04-01' and stock.voucher_type = 'Sales Invoice'), si_item.net_amount, 0))) as `Sales Value`,  \n  sum(stock.actual_qty) as `Balance Qty`,\n  sum(stock.stock_value_difference) as `Balance Value`\nfrom \n    (`tabStock Ledger Entry` stock \n    left join `tabStock Entry` entry on (entry.name = stock.voucher_no)\n    left join `tabSales Invoice Item` si_item on \n           (si_item.parent = stock.voucher_no and si_item.item_code = stock.item_code and si_item.docstatus = 1)),\n    `tabItem` item\nwhere\n    (entry.purpose = 'Material Receipt' or entry.purpose is null)   \n    and stock.voucher_type != 'Delivery Note'\n    and stock.posting_date &gt;= '2017-04-01'\n    and stock.posting_date &lt;= '2019-03-31'\n    and stock.item_code = item.item_code\ngroup by\n  item.brand, item.item_group\norder by\n  item.brand, item.item_group", 
   "query_name": "Quantitative Details for Balance Sheet"
  }, 
  {
@@ -304,5 +304,14 @@
   "name": "Discrepancy in AR Summary Vs Trial Balance Debtors", 
   "query": "eg. query\n\nselect\n  party,sum(debit-credit)\nfrom \n  `tabGL Entry`\nwhere\nposting_date &lt;= '2019-03-31' and\nparty in ('CUST-00047','CUST-00108','CUST-00142','CUST-00210','CUST-00219','CUST-00222','CUST-00318','CUST-00324','CUST-00553','CUST-00660','CUST-00686','CUST-00734','CUST-00762','CUST-00768','CUST-00798','CUST-01094','CUST-01174','CUST-01342')\ngroup by party\n\nVlookup results of above query with results of AR Report (Non Zero Accounts only)\n\nJournal Entries Done in order to set off Loan Against Sales Invoice for Employees the System is Not Calculating the correct figures in AR Summary Report. \n", 
   "query_name": "Discrepancy in AR Summary Vs Trial Balance Debtors"
+ }, 
+ {
+  "description": null, 
+  "docstatus": 0, 
+  "doctype": "Custom SQL Queries", 
+  "modified": "2019-11-02 16:44:23.127062", 
+  "name": "Finance Name Check", 
+  "query": "select \n  idx, \n  finance_customer_name, \n  internal_customer_name \nfrom \n  `tabFinance Payment Details` \nwhere \n  (soundex(internal_customer_name)&lt;&gt;soundex(finance_customer_name) \n    or internal_customer is null) \n  and parent = 'BAFL RF Oct 19' \norder by idx", 
+  "query_name": "Finance Name Check"
  }
 ]
