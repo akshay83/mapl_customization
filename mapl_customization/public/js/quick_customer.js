@@ -6,25 +6,33 @@ custom.customer_quick_entry = function (doc) {
 			title: __("Quick Customer Entry"),
 			fields: [
 				{fieldtype: "Select", fieldname: "customer_type", label: __("Customer Type"), reqd: 1, options: "Company\nIndividual", default: "Individual"},
+				{fieldtype: "Column Break", fieldname: "column_break_6"},
+				{fieldtype: "Link", fieldname: "customer_group", label: __("Customer Group"), reqd: 1, options: "Customer Group"},
+				{fieldtype: "Column Break", fieldname: "column_break_5"},
+				{fieldtype: "Link", fieldname: "territory", label: __("Territory"), reqd: 1, options: "Territory"},
+
+				{fieldtype: "Section Break", fieldname: "section_break_2"},
 				{fieldtype: "Link", fieldname: "salutation", label: __("Salutation"), reqd:0, options: "Salutation"},
-				{fieldtype: "Data", fieldname: "customer_name", label: __("Customer Name"), reqd: 1},
 				{fieldtype: "Select", fieldname: "relation_to", label: __("Relation To"), reqd: 0, options: "\nS/o\nD/o\nW/o\nDIR.", default: ""},
+				{fieldtype: "Data", fieldname: "pan_no", label: __("PAN No"), reqd: 0},
+				{fieldtype: "Column Break", fieldname: "column_break_5"},
+				{fieldtype: "Data", fieldname: "customer_name", label: __("Customer Name"), reqd: 1},
 				{fieldtype: "Data", fieldname: "relation_name", label: __("Relation Name"), reqd: 0, hidden: 1},
 				{fieldtype: "Data", fieldname: "company_name", label: __("Company Name"), reqd: 0},
-				{fieldtype: "Data", fieldname: "tax_id", label: __("Tax ID"), reqd: 0},
-				{fieldtype: "Column Break", fieldname: "column_break_2"},
-				{fieldtype: "Link", fieldname: "customer_group", label: __("Customer Group"), reqd: 1, options: "Customer Group"},
-				{fieldtype: "Link", fieldname: "territory", label: __("Territory"), reqd: 1, options: "Territory"},
-				{fieldtype: "Data", fieldname: "pan_no", label: __("PAN No"), reqd: 0},
+				{fieldtype: "Column Break", fieldname: "column_break_5"},
 				{fieldtype: "Data", fieldname: "primary_contact_no", label: __("Primary Contact No"), reqd: 1},
 				{fieldtype: "Data", fieldname: "secondary_contact_no", label: __("Secondary Contact No"), reqd: 0},
+				{fieldtype: "Data", fieldname: "tax_id", label: __("Tax ID"), reqd: 0},
 				{fieldtype: "Data", fieldname: "vehicle_no", label: __("Vehicle No"), reqd: 0},
+
 				{fieldtype: "Section Break", fieldname: "section_break_1"},
 				{fieldtype: "Data", fieldname: "billing_address_1", label: __("Billing Address 1"), reqd: 1},
 				{fieldtype: "Data", fieldname: "billing_address_2", label: __("Billing Address 2"), reqd: 0},
 				{fieldtype: "Data", fieldname: "billing_city", label: __("Billing City"), reqd: 1},
-				{fieldtype: "Data", fieldname: "billing_state", label: __("Billing State"), reqd: 0, default: "Madhya Pradesh"},
+				{fieldtype: "Select", fieldname: "billing_state", label: __("Billing State"), reqd: 0, default: "Madhya Pradesh", options: " \nAndhra Pradesh\nArunachal Pradesh\nAssam\nBihar\nChandigarh\nChattisgarh\nDadra and Nagar Haveli\nDaman and Diu\nDelhi\nGoa\nGujarat\nHaryana\nHimachal Pradesh\nJammu and Kashmir\nJharkhand\nKarnataka\nKerala\nLakshadweep Islands\nMadhya Pradesh\nMaharashtra\nManipur\nMeghalaya\nMizoram\nNagaland\nOdisha\nPondicherry\nPunjab\nRajasthan\nSikkim\nTamil Nadu\nTelangana\nTripura\nUttar Pradesh\nUttarakhand\nWest Bengal", default: "Madhya Pradesh"},
 				{fieldtype: "Link", fieldname: "billing_country", label: __("Billing Country"), reqd: 0, options:"Country"},
+				{fieldtype: "Data", fieldname: "billing_pin", label: __("Billing Pincode"), reqd: 1 },
+				{fieldtype: "Column Break", fieldname: "column_break_3"},
 				{fieldtype: "Data", fieldname: "billing_phone", label: __("Billing Phone"), reqd: 0},
 				{fieldtype: "Data", fieldname: "billing_fax", label: __("Billing Fax"), reqd: 0},
 				{fieldtype: "Data", fieldname: "billing_email_id", label: __("Billing Email ID"), reqd: 0},
@@ -34,13 +42,15 @@ custom.customer_quick_entry = function (doc) {
 				{fieldtype: "Data", fieldname: "shipping_address_1", label: __("Shipping Address 1"), reqd: 0},
 				{fieldtype: "Data", fieldname: "shipping_address_2", label: __("Shipping Address 2"), reqd: 0},
 				{fieldtype: "Data", fieldname: "shipping_city", label: __("Shipping City"), reqd: 0},
-				{fieldtype: "Data", fieldname: "shipping_state", label: __("Shipping State"), reqd: 0},
+				{fieldtype: "Select", fieldname: "shipping_state", label: __("Shipping State"), reqd: 0, default: "Madhya Pradesh", options: " \nAndhra Pradesh\nArunachal Pradesh\nAssam\nBihar\nChandigarh\nChattisgarh\nDadra and Nagar Haveli\nDaman and Diu\nDelhi\nGoa\nGujarat\nHaryana\nHimachal Pradesh\nJammu and Kashmir\nJharkhand\nKarnataka\nKerala\nLakshadweep Islands\nMadhya Pradesh\nMaharashtra\nManipur\nMeghalaya\nMizoram\nNagaland\nOdisha\nPondicherry\nPunjab\nRajasthan\nSikkim\nTamil Nadu\nTelangana\nTripura\nUttar Pradesh\nUttarakhand\nWest Bengal", default: "Madhya Pradesh"},
 				{fieldtype: "Link", fieldname: "shipping_country", label: __("Shipping Country"), reqd: 0, options:"Country"},
+				{fieldtype: "Data", fieldname: "shipping_pin", label: __("Shipping Pincode"), reqd: 0},
+				{fieldtype: "Column Break", fieldname: "column_break_4"},
 				{fieldtype: "Data", fieldname: "shipping_phone", label: __("Shipping Phone"), reqd: 0},
 				{fieldtype: "Data", fieldname: "shipping_fax", label: __("Shipping Fax"), reqd: 0},
 				{fieldtype: "Data", fieldname: "shipping_email_id", label: __("Shipping Email ID"), reqd: 0},
-				{fieldtype: "Data", fieldname: "shiping_gst_id", label: __("GST ID"), reqd: 0},
-				{fieldtype: "Select", fieldname: "shipping_gst_state", label: __("GST State"), reqd: 0, options: " \nAndhra Pradesh\nArunachal Pradesh\nAssam\nBihar\nChandigarh\nChattisgarh\nDadra and Nagar Haveli\nDaman and Diu\nDelhi\nGoa\nGujarat\nHaryana\nHimachal Pradesh\nJammu and Kashmir\nJharkhand\nKarnataka\nKerala\nLakshadweep Islands\nMadhya Pradesh\nMaharashtra\nManipur\nMeghalaya\nMizoram\nNagaland\nOdisha\nPondicherry\nPunjab\nRajasthan\nSikkim\nTamil Nadu\nTelangana\nTripura\nUttar Pradesh\nUttarakhand\nWest Bengal"},
+				{fieldtype: "Data", fieldname: "shiping_gst_id", label: __("Shipping GST ID"), reqd: 0},
+				{fieldtype: "Select", fieldname: "shipping_gst_state", label: __("Shipping GST State"), reqd: 0, options: " \nAndhra Pradesh\nArunachal Pradesh\nAssam\nBihar\nChandigarh\nChattisgarh\nDadra and Nagar Haveli\nDaman and Diu\nDelhi\nGoa\nGujarat\nHaryana\nHimachal Pradesh\nJammu and Kashmir\nJharkhand\nKarnataka\nKerala\nLakshadweep Islands\nMadhya Pradesh\nMaharashtra\nManipur\nMeghalaya\nMizoram\nNagaland\nOdisha\nPondicherry\nPunjab\nRajasthan\nSikkim\nTamil Nadu\nTelangana\nTripura\nUttar Pradesh\nUttarakhand\nWest Bengal"},
 				{fieldtype: "Check", fieldname: "shipping_preferred", label: __("Is Preferred Shipping Address") }
 			]
 		});
@@ -86,6 +96,7 @@ custom.customer_quick_entry = function (doc) {
 
 	custom.customer_quick_entry.set_default_values(dialog, dialog.fields);
 	dialog.show();
+	dialog.$wrapper.find('.modal-dialog').css("width","1050px");
         //$("div").find(".modal-dialog").css({"line-height":".5"});
         //$("div[class*='modal-dialog']").find(".control-label").css({"font-size":"12px","font-weight":"500","margin-bottom":"1px"});
         //$("div").find(".modal-dialog").attr("style","font-size: 8px !important");

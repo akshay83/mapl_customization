@@ -16,7 +16,8 @@ fixtures = ["Custom Field", "Property Setter", "Stock Settings", "Selling Settin
 
 doc_events = {
 	"*" : {
-		"autoname" : "mapl_customization.customizations_for_mapl.naming.set_auto_name"
+		"autoname" : "mapl_customization.customizations_for_mapl.naming.set_auto_name",
+		"validate" : "mapl_customization.customizations_for_mapl.naming.check_series"
 	},
 	"Item" : {
 		"validate" : "mapl_customization.customizations_for_mapl.item_hooks.item_validate"
@@ -62,6 +63,9 @@ doc_events = {
 	"Lead" : {
 		"after_insert": "mapl_customization.customizations_for_mapl.utils.on_save_lead",
 		"before_insert": "mapl_customization.customizations_for_mapl.utils.before_insert_lead"
+	},
+	"Address": {
+		"validate": "mapl_customization.customizations_for_mapl.quick_customer.validate_pin_with_state"
 	}
 }
 app_include_css = "/assets/mapl_customization/css/custom_css.css"

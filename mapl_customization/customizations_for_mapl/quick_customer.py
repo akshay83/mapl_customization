@@ -1,5 +1,6 @@
 import frappe
 import json
+import requests
 from erpnext.regional.india.utils import validate_gstin_for_india
 
 @frappe.whitelist()
@@ -100,6 +101,7 @@ def enter_billing_address(args, customer):
 	address_doc.email_id = args["billing_email_id"] if "billing_email_id" in address_keys else None
 	address_doc.gstin = args["billing_gst_id"] if "billing_gst_id" in address_keys else None
 	address_doc.gst_state = args["billing_gst_state"] if "billing_gst_state" in address_keys else None
+	address_doc.pincode = args["billing_pin"] if "billing_pin" in address_keys else None
 	address_doc.append('links', dict(link_doctype='Customer', link_name=customer.name))
 	address_doc.autoname()
 	address_doc.save()
@@ -122,6 +124,51 @@ def enter_shipping_address(args, customer):
 	address_doc.email_id = args["shipping_email_id"] if "shipping_email_id" in address_keys else None
 	address_doc.gstin = args["shipping_gst_id"] if "shipping_gst_id" in address_keys else None
 	address_doc.gst_state = args["shipping_gst_state"] if "shipping_gst_state" in address_keys else None
+	address_doc.pincode = args["shipping_pin"] if "shipping_pin" in address_keys else None
 	address_doc.append('links', dict(link_doctype='Customer', link_name=customer.name))
 	address_doc.autoname()
 	address_doc.save()
+
+def validate_pin_with_state(doc, method):
+	if not doc.gst_state:
+		frappe.throw("""Please Select GST State""")
+
+	if not doc.state:
+		frappe.throw("""Please Select State""")
+
+	if not doc.pincode:
+		frappe.throw("""Please Select Pin Code""")
+
+	try:
+		req = requests.get(url = 'https://api.postalpincode.in/pincode/'+doc.pincode, timeout = 5)
+		#DEBUG print '-----------------------VALIDATE STATE-----------------------'
+		data = req.json()
+		#DEBUG print data
+		#DEBUG print '=========================STRATE=================='
+		#DEBUG print data[0]["PostOffice"][0]
+		if data[0]["Status"] != "Success":
+			frappe.throw("""Could Not Find Pin Code""")
+
+		if data[0]["PostOffice"][0]["State"].lower() != doc.state.lower():
+			frappe.throw("""Please Select Correct Pincode along with Correct State""")
+
+		if data[0]["PostOffice"][0]["State"].lower() != doc.gst_state.lower():
+			frappe.throw("""Please Select Correct Pincode along with Correct GST State""")
+
+	except requests.ConnectionError:
+		frappe.msgprint("""Unable to Verify Pincode with GST State. Continuing for Now""")
+
+def strDistance(s1, s2):
+    if len(s1) > len(s2):
+        s1, s2 = s2, s1
+
+    distances = range(len(s1) + 1)
+    for i2, c2 in enumerate(s2):
+        distances_ = [i2+1]
+        for i1, c1 in enumerate(s1):
+            if c1 == c2:
+                distances_.append(distances[i1])
+            else:
+                distances_.append(1 + min((distances[i1], distances[i1 + 1], distances_[-1])))
+        distances = distances_
+    return distances[-1]

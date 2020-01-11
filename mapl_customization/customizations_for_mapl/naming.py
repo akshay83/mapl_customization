@@ -71,15 +71,17 @@ def set_auto_name(doc, method):
 				doc.reporting_name = ("R" if "-RET" in nm else "")+location+"/"+short_fiscal_year+"/"+nm[-6:]
 
 		#print "DEBUG:"+nm
-		if doc.doctype in ("Payment Entry", "Sales Invoice"):
-			fy = get_fiscal_year(date=docdt)
-			check_series(docdt, fy[1], fy[2], location, doc.doctype)
 
 		doc.name = nm
 
 	#print "DEBUG:-------------------------------------------------------------"
 
-def check_series(doc_date, fiscal_start_date, fiscal_end_date, location, doctype):
+def check_series(doc, method):
+	if doc.doctype not in ("Payment Entry", "Sales Invoice"):
+		return
+
+	fy = get_fiscal_year(date=doc.posting_date if doc.posting_date else today())
+
 	query = """
 		select
 		  posting_date, 
@@ -89,21 +91,21 @@ def check_series(doc_date, fiscal_start_date, fiscal_end_date, location, doctype
 		where
 		  docstatus < 2
 		  and posting_date between %(start_date)s and %(end_date)s
-		  and name like %(letter)s
+		  and letter_head = %(letter)s
 		order by
 		  name desc
 		limit 1
-		""".format(doctype)
+		""".format(doc.doctype)
 
-	last_series = frappe.db.sql(query, {'start_date':fiscal_start_date, 'end_date': fiscal_end_date, 'letter': "%%%s%%" % location}, as_dict=1)
+	last_series = frappe.db.sql(query, {'start_date':fy[1], 'end_date': fy[2], 'letter': doc.letter_head}, as_dict=1)
 
 	#print "DEBUG:"+doc_date, last_series[0].posting_date
 	#fy = get_fiscal_year(date=doc_date)
 	#print "DEBUG:"+fy[1], fy[2]
 
 
-	if (getdate(doc_date) < getdate(last_series[0].posting_date)):
- 		msg = """{0} No {1} Already Made on {2}, Hence A New One Cannot Be Made for {3}""".format(doctype, last_series[0].name, last_series[0].posting_date, doc_date)
+	if (getdate(doc.posting_date) < getdate(last_series[0].posting_date)):
+ 		msg = """{0} No {1} Already Made on {2}, Hence A New One Cannot Be Made for {3}""".format(doc.doctype, last_series[0].name, last_series[0].posting_date, doc.posting_date)
 		#print "DEBUG:"+msg
 		frappe.throw(msg)
 	#else:

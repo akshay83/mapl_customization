@@ -186,11 +186,29 @@
     return bits[0]*3600 + bits[1]*60 + bits[2]*1;
 } %}
 <!-- ****************************** -->
+<!-- JS Function for Date Range -->
+{% Date.prototype.addDays = function(days) {
+    var date = new Date(this.valueOf());
+    date.setDate(date.getDate() + days);
+    return date;
+} %}
+
+{% function getDates(startDate, stopDate) {
+    var dateArray = new Array();
+    var currentDate = startDate;
+    while (currentDate <= stopDate) {
+        dateArray.push(new Date (currentDate));
+        currentDate = currentDate.addDays(1);
+    }
+    return dateArray;
+} %}
+<!-- ****************************** -->
 <section id="salary-slip-section" style="font-size:13px;font-family:calibri;">
 	{% const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]; %}
 
-	{% var dt = dateutil.str_to_obj(filters.date_range[0]) %}
+	{% var dt = frappe.datetime.str_to_obj(filters.date_range[0]) %}
 	{% var no_of_days = new Date(dt.getFullYear(),dt.getMonth()+1,0).getDate() %}
+	{% var days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']; %}
 
 	{% for(var i=0, l=data.length; i<l; i++) { %}
 		{% if (data[i].designation!=null && data[i].designation=="Director") { %}
@@ -608,13 +626,14 @@
 		<div class="main-attendance">
 		{% if (data[i].biometric_attendance!="[]") { %}
 			{% var ba = JSON.parse(data[i].biometric_attendance) %}
-			{% var ai = 0 %}
+			{% var ai = 0, pd = 0 %}
 			<div style="display:flex;flex:1;flex-direction:column;">
 				<div style="flex:1;flex-direction:row;display:flex">
 					<div class="attendance-header" style="flex:1"> Date </div>
 					<div class="attendance-header"> In Time </div>
 					<div class="attendance-header"> Out Time </div>
 				</div>
+				{% var all_dates = getDates(frappe.datetime.str_to_obj(filters.date_range[0]), frappe.datetime.str_to_obj(filters.date_range[1])) %}
 				{% for(var a=0;a<33;a++) { %}
 					{% if (ai%11==0 && ai>0) { %}
 						</div>
@@ -631,23 +650,35 @@
 					{% } else { %}
 						<div class="attendance-column" style="flex:1;"> 
 					{% } %}
-							{% if(ba[a]) { %} 
-								{% var adt = ba[a]["Punch Date"] %} 
-								{% adt = adt.split("-") %}
-								{% adtstr = "".concat(adt[2],"-",monthNames[adt[1]-1],"-",adt[0]) %}
-								{%= adtstr %}
-							{% } %} 
+					{% if (a < all_dates.length) { %}
+							<!-- Print Date from Date Range -->
+							{% var adt = all_dates[a] %} 
+							{% var adtstr = "".concat(days[adt.getDay()],",",adt.getDate(),"-",monthNames[adt.getMonth()],"-",adt.getFullYear()) %}
+							{%= adtstr %}
+							<!-- ************************** -->
+							<!-- Formulate Colors for Punch Time -->
 							{% var openRed = "",closeRed = "" %}
-							{% if(ba[a]) { %}
-								{% var opendiff = toSeconds(ba[a]["Earliest Punch"]) - toSeconds(ba[a]["Branch Opening Time"]) %}
-								{% var closediff = toSeconds(ba[a]["Last Punch"]) - toSeconds(ba[a]["Branch Closing Time"]) %}
+							{% if(ba[pd]) { %}
+								{% var opendiff = toSeconds(ba[pd]["Earliest Punch"]) - toSeconds(ba[pd]["Branch Opening Time"]) %}
+								{% var closediff = toSeconds(ba[pd]["Last Punch"]) - toSeconds(ba[pd]["Branch Closing Time"]) %}
 								{% if(Math.abs(opendiff/60)>60) { openRed = "style=\"background:lightcyan !important;\""; } %}
 								{% if(Math.abs(closediff/60)>60) { closeRed = "style=\"background:lightcyan !important;\""; } %}
 							{% } %}
-
+							<!-- ************************* -->
 						</div>
-						<div class="attendance-column" {%= openRed %}> {% if(ba[a]) { %} {%= ba[a]["Earliest Punch"] %} {% } %} </div>
-						<div class="attendance-column" {%= closeRed %}> {% if(ba[a]) { %} {%= ba[a]["Last Punch"] %} {% } %} </div>
+						{% if (ba[pd] && frappe.datetime.str_to_obj(ba[pd]["Punch Date"]).getTime() === all_dates[a].getTime()) { %}
+							<div class="attendance-column" {%= openRed %}> {% if(ba[pd]) { %} {%= ba[pd]["Earliest Punch"] %} {% } %} </div>
+							<div class="attendance-column" {%= closeRed %}> {% if(ba[pd]) { %} {%= ba[pd]["Last Punch"] %} {% } %} </div>
+							{% pd = pd + 1; %}
+						{% } else { %}
+							<div class="attendance-column" style="background:lightpink;font-weight:700;"> Absent </div>
+							<div class="attendance-column" style="background:lightpink;font-weight:700;"> Absent </div>
+						{% } %}
+					{% } else { %}
+						</div>
+						<div class="attendance-column"> </div>
+						<div class="attendance-column"> </div>
+					{% } %}
 					</div>
 					{% ai = ai + 1 %}
 				{% } %}

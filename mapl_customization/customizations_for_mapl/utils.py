@@ -1,6 +1,7 @@
 import frappe
 import json
 import datetime
+import HTMLParser
 from frappe.utils import cint
 
 
@@ -209,20 +210,39 @@ def purchase_receipt_validate(doc, method):
 	for i in doc.items:
 		if cint(i.is_vehicle):
 			chassis_nos = i.serial_no.split("\n")
-			engine_nos = i.engine_nos.split("\n")
-			key_nos = i.key_nos.split("\n")
 			color = i.color.split("\n")
+			engine_nos = i.engine_nos.split("\n") if i.engine_nos else []
+			key_nos = i.key_nos.split("\n") if i.key_nos else []
 
 			throw_error = False
-			if len(chassis_nos) != len(engine_nos):
+			if len(chassis_nos) != len(engine_nos) and not cint(i.is_electric_vehicle):
 				throw_error = True
-			if not throw_error and len(engine_nos) != len(key_nos):
+			if not throw_error and len(engine_nos) != len(key_nos) and not cint(i.is_electric_vehicle):
 				throw_error = True
-			if not throw_error and len(key_nos) != len(color):
+			if not throw_error and len(key_nos) != len(color) and not cint(i.is_electric_vehicle):
+				throw_error = True
+			if not throw_error and cint(i.is_electric_vehicle) and len(color) != len(chassis_nos):
 				throw_error = True
 
 			if throw_error:
 				frappe.throw("Check Entered Serial Nos Values")
+
+def purchase_invoice_gst_check(doc, method):
+	state = frappe.db.get_value("Address", doc.supplier_address, "gst_state")
+	if not state:
+		frappe.throw("""Please update Correct GST State in Supplier Address and then Try Again""")
+
+	from frappe.contacts.doctype.address.address import get_address_display
+	parser = HTMLParser.HTMLParser()
+	da = get_address_display(doc.supplier_address)
+	if da != parser.unescape(doc.address_display):
+		frappe.throw("""Please use 'Update Address' under Address to update the correct Address in the Document""")
+
+	if doc.taxes_and_charges == 'Out of State GST' and state == 'Madhya Pradesh':
+		frappe.throw("""Please Check Correct Address/GSTIN""")
+
+	if doc.taxes_and_charges == 'In State GST' and state != 'Madhya Pradesh':
+		frappe.throw("""Please Check Correct Address/GSTIN""")
 
 
 def purchase_item_rate_validate_before_submit(doc, method):
@@ -233,6 +253,7 @@ def purchase_item_rate_validate_before_submit(doc, method):
 def purchase_receipt_before_submit(doc, method):
 	purchase_receipt_serial_no_validate_before_submit(doc, method)
 	purchase_item_rate_validate_before_submit(doc, method)
+	purchase_invoice_gst_check(doc, method)
 
 def purchase_receipt_serial_no_validate_before_submit(doc, method):
 	if doc.is_return:
@@ -249,7 +270,6 @@ def purchase_receipt_serial_no_validate_before_submit(doc, method):
 
 		for r in rows:
 			frappe.throw("""Atleast One of The Serial No(s) for Item {0} Already Exists. Please Verify""".format(i.item_code))
-
 
 
 def validate_hsn_code(doc, method):
