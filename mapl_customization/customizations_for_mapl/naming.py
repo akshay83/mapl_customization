@@ -77,36 +77,53 @@ def set_auto_name(doc, method):
 	#print "DEBUG:-------------------------------------------------------------"
 
 def check_series(doc, method):
+	if doc.doctype not in ("Sales Invoice", "Purchase Invoice", "Payment Entry", "Delivery Note", \
+			"Stock Entry", "Journal Entry", "Sales Order", "Purchase Receipt", "Quotation"):
+		return
+
+	existing = None
+	if not doc.is_new():
+		existing = frappe.get_doc(doc.doctype, doc.name)
+
+	fy = get_fiscal_year(date=doc.posting_date if doc.posting_date else today())
+	if existing:
+		old_fiscal_year = get_fiscal_year(date=existing.posting_date)
+		if old_fiscal_year[1] != fy[1]:
+			frappe.throw("""Financial Year Change Not Allowed""")
+
 	if doc.doctype not in ("Payment Entry", "Sales Invoice"):
 		return
 
-	fy = get_fiscal_year(date=doc.posting_date if doc.posting_date else today())
+	if not existing:
+		query = """
+			select
+			  posting_date,
+			  name
+			from
+			  `tab{0}`
+			where
+			  docstatus < 2
+			  and posting_date between %(start_date)s and %(end_date)s
+			  and letter_head = %(letter)s
+			order by
+			  name desc
+			limit 1
+			""".format(doc.doctype)
 
-	query = """
-		select
-		  posting_date, 
-		  name
-		from
-		  `tab{0}`
-		where
-		  docstatus < 2
-		  and posting_date between %(start_date)s and %(end_date)s
-		  and letter_head = %(letter)s
-		order by
-		  name desc
-		limit 1
-		""".format(doc.doctype)
+		last_series = frappe.db.sql(query, {'start_date':fy[1], 'end_date': fy[2], 'letter': doc.letter_head}, as_dict=1)
 
-	last_series = frappe.db.sql(query, {'start_date':fy[1], 'end_date': fy[2], 'letter': doc.letter_head}, as_dict=1)
-
-	#print "DEBUG:"+doc_date, last_series[0].posting_date
-	#fy = get_fiscal_year(date=doc_date)
-	#print "DEBUG:"+fy[1], fy[2]
+		#DEBUG#print "DEBUG:"+doc_date, last_series[0].posting_date
+		#DEBUG#fy = get_fiscal_year(date=doc_date)
+		#DEBUG#print "DEBUG:"+fy[1], fy[2]
 
 
-	if (getdate(doc.posting_date) < getdate(last_series[0].posting_date)):
- 		msg = """{0} No {1} Already Made on {2}, Hence A New One Cannot Be Made for {3}""".format(doc.doctype, last_series[0].name, last_series[0].posting_date, doc.posting_date)
-		#print "DEBUG:"+msg
-		frappe.throw(msg)
-	#else:
-		#print "DEBUG:OK"
+		if (getdate(doc.posting_date) < getdate(last_series[0].posting_date)):
+	 		msg = """{0} No {1} Already Made on {2}, Hence A New One Cannot Be Made for {3}""".format(doc.doctype, last_series[0].name, last_series[0].posting_date, doc.posting_date)
+			#print "DEBUG:"+msg
+			frappe.throw(msg)
+		#else:
+			#print "DEBUG:OK"
+
+	elif not (frappe.session.user == "Administrator" or "System Manager" in frappe.get_roles()):
+		if getdate(doc.posting_date) != getdate(existing.posting_date):
+			frappe.throw("""Date Change not Allowed""")

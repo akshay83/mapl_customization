@@ -37,7 +37,7 @@ def mapl_address_query (doctype, txt, searchfield, start, page_len, filters):
 			{condition} {mcond}
 			order by
 			if(locate(%(_txt)s, addr.name), locate(%(_txt)s, addr.name), 99999),
-			addr.name 
+			addr.name
 			limit %(start)s, %(page_len)s""".format(**{
 				"fields": fields,
 				"key": searchfield,
@@ -56,37 +56,56 @@ def mapl_address_query (doctype, txt, searchfield, start, page_len, filters):
 
 # searches for customer
 def mapl_customer_query(doctype, txt, searchfield, start, page_len, filters):
-	return frappe.db.sql("""select * from 
-          (
-            (select cust.name, cust.customer_name, cust.primary_contact_no,
-              cust.secondary_contact_no,addr.address_line1,addr.address_line2 
-              from `tabCustomer` cust, `tabAddress` addr, `tabDynamic Link` dyn
-              where cust.name=dyn.link_name and dyn.parent=addr.name and
-              ({key} like %(txt)s
-                or cust.customer_name like %(txt)s
-                or cust.primary_contact_no like %(txt)s
-                or cust.secondary_contact_no like %(txt)s
-                or addr.address_line1 like %(txt)s
-                or addr.address_line2 like %(txt)s) and cust.disabled=0
-              group by cust.name)
-            union all
-            (select cust.name, cust.customer_name, cust.primary_contact_no,
-              cust.secondary_contact_no,null,null 
-              from `tabCustomer` cust where 
-              ({key} like %(txt)s
-                or cust.customer_name like %(txt)s
-                or cust.primary_contact_no like %(txt)s
-		or cust.vehIcle_no like %(txt)s
-                or cust.secondary_contact_no like %(txt)s) and cust.disabled=0)
-            ) 
-            as temp_tb group by name order by customer_name, name limit %(start)s, %(page_len)s""".format(**{
+	old_query = """
+		select * from
+		          (
+		            (select cust.name, cust.customer_name, cust.primary_contact_no,
+		              cust.secondary_contact_no,addr.address_line1,addr.address_line2
+		              from `tabCustomer` cust, `tabAddress` addr, `tabDynamic Link` dyn
+		              where cust.name=dyn.link_name and dyn.parent=addr.name and
+		              ({key} like %(txt)s
+		                or cust.customer_name like %(txt)s
+		                or cust.primary_contact_no like %(txt)s
+		                or cust.secondary_contact_no like %(txt)s
+		                or addr.address_line1 like %(txt)s
+		                or addr.address_line2 like %(txt)s) and cust.disabled=0
+		              group by cust.name)
+		            union all
+		            (select cust.name, cust.customer_name, cust.primary_contact_no,
+		              cust.secondary_contact_no,null,null
+		              from `tabCustomer` cust where
+		              ({key} like %(txt)s
+		                or cust.customer_name like %(txt)s
+		                or cust.primary_contact_no like %(txt)s
+				or cust.vehIcle_no like %(txt)s
+		                or cust.secondary_contact_no like %(txt)s) and cust.disabled=0)
+		            )
+		            as temp_tb group by name order by customer_name, name limit %(start)s, %(page_len)s
+		""".format(**{
 			"key": "cust.name",
-		}), {
+		})
+
+
+	#Index To Be Created in DB on Column `tabAddress`.address_title - New Query
+	new_query = """
+			select cust.name, cust.customer_name, cust.primary_contact_no, cust.secondary_contact_no,
+			addr.address_line1, addr.address_line2
+			from `tabCustomer` cust left join `tabAddress` addr on addr.address_title = cust.name
+			where (cust.customer_name like %(txt)s
+			or cust.primary_contact_no like %(txt)s
+			or cust.secondary_contact_no like %(txt)s
+			or cust.name like %(txt)s) and cust.disabled=0
+			group by cust.name
+			order by customer_name, name limit %(start)s, %(page_len)s
+		"""
+
+	return frappe.db.sql(new_query, {
 			'txt': "%%%s%%" % txt,
-			'_txt': txt.replace("%", ""),
 			'start': start,
 			'page_len': page_len
 		})
+
+
 
 # searches for supplier
 def supplier_query(doctype, txt, searchfield, start, page_len, filters):

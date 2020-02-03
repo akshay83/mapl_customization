@@ -2,6 +2,7 @@ import frappe
 import json
 import datetime
 import HTMLParser
+import re
 from frappe.utils import cint
 
 
@@ -118,7 +119,7 @@ def repost():
 def make_document_editable(doctype, doc_name):
 	doc = frappe.get_doc(doctype, doc_name)
 	if doc.docstatus != 2:
-		frappe.throw("Document Not yet Cancelled or Still in Draft Mode, Cannot make in Editable")
+		frappe.throw("Document Not yet Cancelled or Still in Draft Mode, Cannot make it Editable")
 		return
 
 	doc.docstatus = 0
@@ -227,6 +228,9 @@ def purchase_receipt_validate(doc, method):
 			if throw_error:
 				frappe.throw("Check Entered Serial Nos Values")
 
+			if not i.year_of_manufacture:
+				frappe.throw("Check Year of Manufacture")
+
 def purchase_invoice_gst_check(doc, method):
 	state = frappe.db.get_value("Address", doc.supplier_address, "gst_state")
 	if not state:
@@ -277,13 +281,98 @@ def validate_hsn_code(doc, method):
 		if not i.gst_hsn_code:
 			frappe.throw("HSN Code not found for {0}".format(i.item_code))
 
-def validate_customer_before_save(doc, method):
-	count = frappe.db.sql("""select ifnull(count(*),0) as `count_records` from `tabCustomer` where customer_name = %(name)s and primary_contact_no like %(contact)s""",
-				{ 'name': doc.customer_name, 'contact': doc.primary_contact_no }, as_dict=1)
+def strip_contact_nos(primary_contact_no, secondary_contact_no):
+	pcn = primary_contact_no.replace(" ", "")
+	if pcn[-1:] in ("/", ","):
+		pcn = pcn[:-1]
+	pcn = pcn.replace("/", ",")
+	pcn = pcn.replace("-", "")
+	pcn = pcn.replace(",", "|")
 
-	for c in count:
-		if c.count_records > 0:
-			frappe.throw("""Customer Exists""")
+	scn = None
+	if secondary_contact_no:
+		scn = secondary_contact_no.replace(" ", "")
+		if scn[:1] in (",", "/"):
+			scn = scn[1:]
+		scn = scn.replace("/", ",")
+		scn = scn.replace("-", "")
+		scn = scn.replace(",", "|")
+
+	return pcn, scn
+
+def validate_customer(doc, method):
+	doc.customer_name = doc.customer_name.strip()
+	if len(doc.customer_name) > 3:
+		if (doc.customer_name.lower()[:3] in ("dr ","mr ","ms ","dr.","mr.","ms.") or \
+			doc.customer_name.lower()[:4] in ("m/s ", "mrs ","m/s.","mrs.") or \
+			doc.customer_name.lower()[:5] in ("miss ","miss.")):
+			frappe.throw("Please Use Salutation instead of Prefixing Name with Mr, Mrs, Dr etc.")
+
+		if any(item in doc.customer_name.lower() for item in ["s/o","d/o","w/o","s\o","d\o","w\o"]):
+			frappe.throw("Please Use Relation To and Relation Name Fields instead of S/o, D/o etc")
+
+		if any(item in doc.customer_name.lower() for item in ["c/o","c\o"]):
+			frappe.throw("Please Use Company Name instead of C/o")
+
+	if re.findall('[^0-9,/-]', doc.primary_contact_no.replace(" ", "")):
+		frappe.throw("""Check Primary Contact No""")
+
+	if doc.secondary_contact_no and re.findall('[^0-9,/-]', doc.secondary_contact_no.replace(" ", "")):
+		frappe.throw("""Check Secondary Contact No""")
+
+	#validate_duplicate_customer(doc, method)
+
+
+def validate_duplicate_customer(doc, method):
+	query = """
+		select
+		  cust1.customer_name,
+		  cust1.name,
+		  cust1.creation,
+		  cust1.owner
+		from
+		  `tabCustomer`
+		where
+		  customer_name = %(customer_name)s
+		  and primary_contact_no = %(primary_contact_no)s
+		  %(secondary_contact_no)s
+		"""
+
+	count = frappe.db.sql(query, {'primary_contact_no': doc.primary_contact_no,
+				'secondary_contact_no':"""and secondary_contact_no = '"""+doc.secondary_contact_no+"""'""" \
+					 if doc.secondary_contact_no else "",
+				'customer_name':doc.customer_name},as_dict=1)
+	if count and len(count)>0:
+		frappe.throw("""Customer Exists""")
+
+
+def validate_customer_before_save(doc, method):
+	doc.customer_name = doc.customer_name.strip()
+	pcn, scn = strip_contact_nos(doc.primary_contact_no, doc.secondary_contact_no)
+
+	query = """
+			select name, customer_name, primary_contact_no, secondary_contact_no
+			from `tabCustomer`
+			where soundex(customer_name) = soundex('{0}')
+			and ( replace(primary_contact_no,"-","") {1} )
+			""".format(doc.customer_name,
+			"""regexp ('"""+pcn+"|"+scn+"""') or replace(secondary_contact_no,"-","") regexp('"""+pcn+"|"+scn+"""')""" \
+					if scn else """regexp ('"""+pcn+"""') or replace(secondary_contact_no,"-","") regexp ('"""+pcn+"""')""")
+
+	count = frappe.db.sql(query, as_dict=1)
+
+	if count and len(count) > 0:
+		name_list = """<div style="display:flex;flex-direction:column;">
+				<div style="display:flex;flex-direction:row;padding-bottom:3px;padding-top:3px;">"""
+		for c in count:
+			record = """<div style="flex:1;padding-right:3px;">{0}</div>
+				<div style="flex:1;padding-right:3px;">{1}</div>
+				<div style="flex:1;padding-right:3px;">{2}</div>
+				<div style="flex:1;">{3}</div>""".format(c.name,c.customer_name,c.primary_contact_no,c.secondary_contact_no)
+			name_list = name_list+record
+			name_list = name_list+"""</div><div style="display:flex;flex-direction:row;padding-bottom:3px;padding-top:3px;">"""
+		name_list = name_list+"</div></div>"
+		frappe.throw("""<div>Customer Exists, Please use a different Address if Required</div>"""+name_list)
 
 def before_insert_lead(doc, method):
 	if ("," in doc.mobile_no or len(doc.mobile_no.strip()) != 10):

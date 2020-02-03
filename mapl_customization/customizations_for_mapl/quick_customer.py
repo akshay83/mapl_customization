@@ -61,7 +61,7 @@ def validate_gstid(args):
 				frappe.throw("Select Shipping GST State")
 
 			validate_gstin_for_india({
-					"gstin":args["shipping_gstid"], 
+					"gstin":args["shipping_gstid"],
 					"gst_state":args["shipping_gst_state"]
 				},None)
 
@@ -83,6 +83,7 @@ def make_customer(args):
 	customer_doc.vehicle_no = args["vehicle_no"] if "vehicle_no" in customer_keys else None
 	customer_doc.relation_to = args["relation_to"] if "relation_to" in customer_keys else None
 	customer_doc.relation_name = args["relation_name"] if "relation_name" in customer_keys else None
+	customer_doc.primary_email = args["primary_email"] if "primary_email" in customer_keys else None
 	customer_doc.save()
 	return customer_doc
 
@@ -147,15 +148,24 @@ def validate_pin_with_state(doc, method):
 		#DEBUG print '=========================STRATE=================='
 		#DEBUG print data[0]["PostOffice"][0]
 		if data[0]["Status"] != "Success":
-			frappe.throw("""Could Not Find Pin Code""")
+			if (frappe.session.user == "Administrator" or "System Manager" in frappe.get_roles()):
+				frappe.msgprint("""<div>Could Not Find Pin Code</div><div>Continuing for Now</div>""")
+				return
+			else:
+				frappe.throw("""Could Not Find Pin Code""")
 
-		if data[0]["PostOffice"][0]["State"].lower() != doc.state.lower():
-			frappe.throw("""Please Select Correct Pincode along with Correct State""")
+		pincode_state = data[0]["PostOffice"][0]["State"]
 
-		if data[0]["PostOffice"][0]["State"].lower() != doc.gst_state.lower():
-			frappe.throw("""Please Select Correct Pincode along with Correct GST State""")
+		if pincode_state.lower() != doc.state.lower():
+			frappe.throw("""<div> Please Select Correct Pincode along with Correct State. </br>Current State:<B>'{0}'</B> GST State:<B>'{1}'</B> State By Pincode:<B>'{2}'</B></div>""".format(doc.state, doc.gst_state, pincode_state))
+
+
+		if pincode_state.lower() != doc.gst_state.lower():
+			frappe.throw("""<div> Please Select Correct Pincode along with Correct GST State. </br>Current State:<B>'{0}'</B> GST State:<B>'{1}'</B> State By Pincode:<B>'{2}'</B></div>""".format(doc.state, doc.gst_state, pincode_state))
 
 	except requests.ConnectionError:
+		frappe.msgprint("""Unable to Verify Pincode with GST State. Continuing for Now""")
+	except requests.Timeout:
 		frappe.msgprint("""Unable to Verify Pincode with GST State. Continuing for Now""")
 
 def strDistance(s1, s2):

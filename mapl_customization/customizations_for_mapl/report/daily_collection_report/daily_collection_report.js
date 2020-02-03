@@ -25,6 +25,13 @@ frappe.query_reports['Daily Collection Report'] = {
 			"fieldtype": "Link",
 			"options": "Mode of Payment",
 			"default": "%%"
+		},
+		{
+			"fieldname":"show_draft",
+			"label":__("Show Entries"),
+			"fieldtype": "Select",
+			"options": "Submitted\nDraft",
+			"default": "Submitted"
 		}
 	]
 }

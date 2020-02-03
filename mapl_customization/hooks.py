@@ -30,7 +30,7 @@ doc_events = {
 	},
 	"Payment Entry": {
 		"validate": "mapl_customization.customizations_for_mapl.finance_validation.payment_entry_validate",
-		"on_update_after_submit":"mapl_customization.customizations_for_mapl.payment_entry_hooks.payment_entry_on_update_after_submit"		
+		"on_update_after_submit":"mapl_customization.customizations_for_mapl.payment_entry_hooks.payment_entry_on_update_after_submit"
 	},
 	"Purchase Receipt" : {
 		"on_submit" : "mapl_customization.customizations_for_mapl.utils.purchase_receipt_on_submit",
@@ -58,7 +58,8 @@ doc_events = {
 		"before_save": "mapl_customization.customizations_for_mapl.salary_slip_hooks.salary_slip_before_save"
 	},
 	"Customer" : {
-		"before_insert": "mapl_customization.customizations_for_mapl.utils.validate_customer_before_save"
+		"before_insert": "mapl_customization.customizations_for_mapl.utils.validate_customer_before_save",
+		"validate": "mapl_customization.customizations_for_mapl.utils.validate_customer"
 	},
 	"Lead" : {
 		"after_insert": "mapl_customization.customizations_for_mapl.utils.on_save_lead",
@@ -68,6 +69,9 @@ doc_events = {
 		"validate": "mapl_customization.customizations_for_mapl.quick_customer.validate_pin_with_state"
 	}
 }
+
+after_install = "mapl_customization.customizations_for_mapl.install.after_install"
+
 app_include_css = "/assets/mapl_customization/css/custom_css.css"
 app_include_js = ["/assets/mapl_customization/js/side_bar.js",
 				"/assets/mapl_customization/js/form_comments.js",

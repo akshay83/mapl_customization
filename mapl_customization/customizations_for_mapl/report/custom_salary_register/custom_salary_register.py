@@ -144,6 +144,24 @@ def get_default_columns(filters):
 			"label":"Base",
 			"fieldtype":"Float",
 			"width":70
+		},
+		{
+			"fieldname":"bank_name",
+			"label":"Bank Name",
+			"fieldtype":"Data",
+			"width":100
+		},
+		{
+			"fieldname":"ifsc",
+			"label":"IFSC Code",
+			"fieldtype":"Data",
+			"width":75
+		},
+		{
+			"fieldname":"account_no",
+			"label":"Bank Account No",
+			"fieldtype":"Data",
+			"width":100
 		}
 	]
 
@@ -151,12 +169,12 @@ def get_default_columns(filters):
 
 def get_earnings_columns(filters):
 	columns = []
-	earnings = frappe.db.sql("""select 
-					  distinct sc.name 
-					from `tabSalary Component` sc 
-					where 
-					  sc.type = 'Earning' 
-					  and (select sum(amount) from `tabSalary Detail` det,`tabSalary Slip` slip 
+	earnings = frappe.db.sql("""select
+					  distinct sc.name
+					from `tabSalary Component` sc
+					where
+					  sc.type = 'Earning'
+					  and (select sum(amount) from `tabSalary Detail` det,`tabSalary Slip` slip
 						    where det.parenttype='Salary Slip' and det.salary_component=sc.name and slip.name=det.parent
 						    and slip.start_date>=%s and slip.end_date<=%s) > 0""",
 					(filters.get("from_date"), filters.get("to_date")), as_dict=True)
@@ -174,12 +192,12 @@ def get_earnings_columns(filters):
 
 def get_deductions_columns(filters):
 	columns = []
-	deductions = frappe.db.sql("""select 
-					  distinct sc.name 
-					from `tabSalary Component` sc 
-					where 
-					  sc.type = 'Deduction' 
-					  and (select sum(amount) from `tabSalary Detail` det,`tabSalary Slip` slip 
+	deductions = frappe.db.sql("""select
+					  distinct sc.name
+					from `tabSalary Component` sc
+					where
+					  sc.type = 'Deduction'
+					  and (select sum(amount) from `tabSalary Detail` det,`tabSalary Slip` slip
 						    where det.parenttype='Salary Slip' and det.salary_component=sc.name and slip.name=det.parent
 						    and slip.start_date>=%s and slip.end_date<=%s) > 0""",
 					(filters.get("from_date"), filters.get("to_date")), as_dict=True)
@@ -196,12 +214,12 @@ def get_deductions_columns(filters):
 
 def get_loan_columns(filters):
 	columns = []
-	loan_details = frappe.db.sql("""select 
-					  distinct dd.loan_type 
-					from 
+	loan_details = frappe.db.sql("""select
+					  distinct dd.loan_type
+					from
 					  `tabLoan Deduction Detail` dd,
-					  `tabSalary Slip` slip 
-					where 
+					  `tabSalary Slip` slip
+					where
 					  dd.parent=slip.name
 					  and slip.start_date>=%s
 					  and slip.end_date<=%s""",
@@ -220,9 +238,9 @@ def get_loan_columns(filters):
 
 def get_employee_details(filters):
 	rows = []
-	emp_details = frappe.db.sql("""select 
+	emp_details = frappe.db.sql("""select
 					  slip.name,
-					  slip.employee_name, 
+					  slip.employee_name,
 					  slip.employee,
 					  slip.branch,
 					  slip.designation,
@@ -232,16 +250,21 @@ def get_employee_details(filters):
 					  slip.payment_days,
 					  slip.leave_availed,
 					  slip.total_loan_repayment,
+					  employee.bank_name,
+					  employee.ifsc_code,
+					  employee.bank_ac_no,
 					  struct.base
-					from 
+					from
 					  `tabSalary Slip` slip,
-					  `tabSalary Structure Employee` struct
+					  `tabSalary Structure Employee` struct,
+					  `tabEmployee` employee
 					where
 					  struct.parent = slip.salary_structure
+					  and employee.name = slip.employee
 					  and slip.docstatus = 1
 					  and struct.employee = slip.employee
 					  and slip.start_date = %s
-					  and slip.end_date = %s 
+					  and slip.end_date = %s
 					order by
 					  slip.branch, slip.employee_name""",
 					(filters.get("from_date"), filters.get("to_date")), as_dict=True)
@@ -259,6 +282,9 @@ def get_employee_details(filters):
 		build_row["leave_availed"] = e.leave_availed
 		build_row["total_present_days"] = (e.payment_days - e.leave_availed)
 		build_row["base"] = e.base
+		build_row["bank_name"] = e.bank_name
+		build_row["ifsc"] = e.ifsc_code
+		build_row["account_no"] = e.bank_ac_no
 
 		build_row.update(get_earnings_and_deductions(e.name))
 		build_row.update(get_loan_details(e.name))
@@ -271,7 +297,6 @@ def get_employee_details(filters):
 		#If Biometric Attendance is Available
 		if frappe.db.table_exists("Biometric Users"):
 			build_row["biometric_attendance"] = get_biometric_attendance(e.employee, filters)
-			print build_row["biometric_attendance"]
 
 		rows.append(build_row)
 
@@ -281,7 +306,7 @@ def get_earnings_and_deductions(slip_name):
 	build_row = {}
 	earnings = 0
 	deductions = 0
-	details = frappe.db.sql("""select 
+	details = frappe.db.sql("""select
 					  amount,
 					  parentfield,
 					  salary_component
@@ -344,33 +369,33 @@ def get_total_leaves(employee, filters):
 
 def get_biometric_attendance(employee, filters):
 	query = """
-		select 
+		select
 			  users.name as `User Code`,
 			  users.employee as `Employee Code`,
-			  users.user_name as `User Name`, 
+			  users.user_name as `User Name`,
 			  machine.branch as `Branch`,
 			  branch.opening_time as `Branch Opening Time`,
-			  branch.closing_time as `Branch Closing Time`, 
-			  cast(att.timestamp as date) as `Punch Date`, 
-			  count(*) as `Punch Count`, 
-			  cast(min(att.timestamp) as Time) as `Earliest Punch`, 
+			  branch.closing_time as `Branch Closing Time`,
+			  cast(att.timestamp as date) as `Punch Date`,
+			  count(*) as `Punch Count`,
+			  cast(min(att.timestamp) as Time) as `Earliest Punch`,
 			  cast(max(att.timestamp) as Time) as `Last Punch`
-		from 
-			  `tabBiometric Users` users, 
+		from
+			  `tabBiometric Users` users,
 			  `tabBiometric Attendance` att,
 			  `tabBranch Settings` branch,
 			  `tabEnrolled Users` enrolled,
 			  `tabBiometric Machine` machine
-		where 
-			  att.user_id = cast(substring(users.name,3) as Integer) 
+		where
+			  att.user_id = cast(substring(users.name,3) as Integer)
 			  and cast(att.timestamp as date) >= %s
 			  and cast(att.timestamp as date) <= %s
 			  and machine.branch = branch.branch
 			  and enrolled.parent = machine.name
-			  and enrolled.user = users.name 
+			  and enrolled.user = users.name
 			  and users.employee = %s
-		group by 
-			  cast(att.timestamp as date), 
+		group by
+			  cast(att.timestamp as date),
 			  users.name
 		order by
 			  cast(att.timestamp as date),
