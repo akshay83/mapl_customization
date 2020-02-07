@@ -37,6 +37,8 @@ def validate_gst_state(doc, method):
 
 
 	if doc.taxes_and_charges == 'Out of State GST' and ship_state == 'Madhya Pradesh':
+		if doc.special_invoice and doc.special_invoice == 'SEZ Supply':
+			return
 		frappe.throw("""Please Check Correct Shipping Address/Taxes""")
 
 	if doc.taxes_and_charges == 'In State GST' and ship_state != 'Madhya Pradesh':

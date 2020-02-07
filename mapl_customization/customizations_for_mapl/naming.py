@@ -94,8 +94,54 @@ def check_series(doc, method):
 	if doc.doctype not in ("Payment Entry", "Sales Invoice"):
 		return
 
+	if (frappe.session.user == "Administrator" or "System Manager" in frappe.get_roles()):
+			return
+
 	if not existing:
-		query = """
+		check_new_document(doc, method, fy)
+	elif (getdate(existing.posting_date) == getdate(doc.posting_date)):
+		return
+	elif abs((getdate(existing.posting_date)-getdate(doc.posting_date)).days)!=1:
+		frappe.throw("""Date Change Not Allowed""")
+	else:
+		check_existing_document(doc, method, existing)
+
+
+def check_existing_document(doc, method, existing):
+	existing_name_int = int(existing.name[-6:])
+
+	query = """
+			select
+			  min(if(posting_date=%(small_date)s,cast(right(name, 6) as Int),NULL)) as minimum_name_small_date,
+			  max(if(posting_date=%(small_date)s,cast(right(name, 6) as Int),NULL)) as maximum_name_small_date,
+			  min(if(posting_date=%(large_date)s,cast(right(name, 6) as Int),NULL)) as minimum_name_large_date,
+			  max(if(posting_date=%(large_date)s,cast(right(name, 6) as Int),NULL)) as maximum_name_large_date
+			from
+			  `tab{0}`
+			where
+			  docstatus < 2
+			  and letter_head = %(letter)s
+			  and posting_date between %(small_date)s and %(large_date)s 
+			""".format(doc.doctype)
+
+	last_series = None
+	if (getdate(existing.posting_date)>getdate(doc.posting_date)):
+		last_series = frappe.db.sql(query, {'letter': doc.letter_head, 'small_date':doc.posting_date, 'large_date':existing.posting_date}, as_dict=1)
+	elif (getdate(existing.posting_date)<getdate(doc.posting_date)):
+		last_series = frappe.db.sql(query, {'letter': doc.letter_head, 'large_date':doc.posting_date, 'small_date':existing.posting_date}, as_dict=1)
+
+	#Going From 19th to 20th
+	if (getdate(existing.posting_date)<getdate(doc.posting_date)):
+		if (last_series[0].maximum_name_small_date != existing_name_int):
+			frappe.throw("""Date Change Not Allowed""")
+
+	#Going From 20th to 19th
+	if (getdate(existing.posting_date)>getdate(doc.posting_date)):
+		if (last_series[0].minimum_name_large_date != existing_name_int):
+			frappe.throw("""Date Change Not Allowed""")
+
+def check_new_document(doc, method, fy):
+	query = """
 			select
 			  posting_date,
 			  name
@@ -110,20 +156,16 @@ def check_series(doc, method):
 			limit 1
 			""".format(doc.doctype)
 
-		last_series = frappe.db.sql(query, {'start_date':fy[1], 'end_date': fy[2], 'letter': doc.letter_head}, as_dict=1)
+	last_series = frappe.db.sql(query, {'start_date':fy[1], 'end_date': fy[2], 'letter': doc.letter_head}, as_dict=1)
 
-		#DEBUG#print "DEBUG:"+doc_date, last_series[0].posting_date
-		#DEBUG#fy = get_fiscal_year(date=doc_date)
-		#DEBUG#print "DEBUG:"+fy[1], fy[2]
+	#DEBUG#print "DEBUG:"+doc_date, last_series[0].posting_date
+	#DEBUG#fy = get_fiscal_year(date=doc_date)
+	#DEBUG#print "DEBUG:"+fy[1], fy[2]
 
-
+	if last_series and len(last_series)>0:
 		if (getdate(doc.posting_date) < getdate(last_series[0].posting_date)):
-	 		msg = """{0} No {1} Already Made on {2}, Hence A New One Cannot Be Made for {3}""".format(doc.doctype, last_series[0].name, last_series[0].posting_date, doc.posting_date)
+			msg = """{0} No {1} Already Made on {2}, Hence A New One Cannot Be Made for {3}""".format(doc.doctype, last_series[0].name, last_series[0].posting_date, doc.posting_date)
 			#print "DEBUG:"+msg
 			frappe.throw(msg)
 		#else:
 			#print "DEBUG:OK"
-
-	elif not (frappe.session.user == "Administrator" or "System Manager" in frappe.get_roles()):
-		if getdate(doc.posting_date) != getdate(existing.posting_date):
-			frappe.throw("""Date Change not Allowed""")

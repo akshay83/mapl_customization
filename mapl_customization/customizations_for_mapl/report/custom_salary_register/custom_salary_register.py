@@ -250,17 +250,15 @@ def get_employee_details(filters):
 					  slip.payment_days,
 					  slip.leave_availed,
 					  slip.total_loan_repayment,
-					  employee.bank_name,
-					  employee.ifsc_code,
-					  employee.bank_ac_no,
+					  slip.bank_name,
+					  slip.ifsc_code,
+					  slip.bank_account_no,
 					  struct.base
 					from
 					  `tabSalary Slip` slip,
-					  `tabSalary Structure Employee` struct,
-					  `tabEmployee` employee
+					  `tabSalary Structure Employee` struct
 					where
 					  struct.parent = slip.salary_structure
-					  and employee.name = slip.employee
 					  and slip.docstatus = 1
 					  and struct.employee = slip.employee
 					  and slip.start_date = %s
@@ -284,7 +282,7 @@ def get_employee_details(filters):
 		build_row["base"] = e.base
 		build_row["bank_name"] = e.bank_name
 		build_row["ifsc"] = e.ifsc_code
-		build_row["account_no"] = e.bank_ac_no
+		build_row["account_no"] = e.bank_account_no
 
 		build_row.update(get_earnings_and_deductions(e.name))
 		build_row.update(get_loan_details(e.name))

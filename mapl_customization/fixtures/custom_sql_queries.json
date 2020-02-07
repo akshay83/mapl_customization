@@ -313,5 +313,14 @@
   "name": "Finance Name Check", 
   "query": "select \n  idx, \n  finance_customer_name, \n  internal_customer_name \nfrom \n  `tabFinance Payment Details` \nwhere \n  (soundex(internal_customer_name)&lt;&gt;soundex(finance_customer_name) \n    or internal_customer is null) \n  and parent = 'BAFL RF Oct 19' \norder by idx", 
   "query_name": "Finance Name Check"
+ }, 
+ {
+  "description": null, 
+  "docstatus": 0, 
+  "doctype": "Custom SQL Queries", 
+  "modified": "2020-02-07 18:14:06.013326", 
+  "name": "Supplier Wise Stock Balance", 
+  "query": "select\n  inv.supplier_name as `Supplier Name`,\n  item.item_code as `Item`,\n  (select sum(actual_qty) from `tabStock Ledger Entry` where item_code = item.item_code) as `Balance Qty`\nfrom\n  `tabPurchase Invoice` inv,\n  `tabPurchase Invoice Item` item\nwhere\n  item.parent = inv.name\n  and inv.docstatus = 1\n  and inv.supplier_name regexp ('Kakat|Quality')\ngroup by\n  item.item_code\norder by\n  inv.supplier_name,\n  item.item_code", 
+  "query_name": "Supplier Wise Stock Balance"
  }
 ]

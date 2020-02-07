@@ -61,6 +61,13 @@ def get_data():
 					"is_query_report": True,
 					"name": "Cash Book",
 					"description": "Display Daily Cash Register"
+				},
+				{
+					"type": "report",
+					"doctype": "Sales Invoice",
+					"is_query_report": True,
+					"name": "Parking Payment Report",
+					"description": "Parking Payment Report"
 				}
 
 			]

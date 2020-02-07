@@ -244,7 +244,7 @@
 		</div>
 
 		<hr style="margin-top:2px !important;margin-bottom:2px !important;">
-		<div style="width:100%;background:#eee !important;font-size:24px;font-weight:bolder;padding:3px;display:flex;flex-direction:row;"> 
+		<div style="width:100%;background:#eee !important;font-size:20px;font-weight:bolder;padding:3px;display:flex;flex-direction:row;"> 
 			<div style="flex:1;"> SALARY SLIP </div>
 			<div style="flex:1;text-align:right;"> {%= data[i].employee_name %} </div>
 		</div>
@@ -255,7 +255,7 @@
 				<div style="background:#eee !important;font-size:large;font-weight:bolder;"> Salary Structure </div>
 				<div style="font-size:14px;display:flex;flex-direction:row;">
 					<div style="flex:1;"> Branch </div>
-					<div style="flex:.5;font-weight:bolder;text-align:right;"> {%= data[i].branch %} </div>
+					<div style="flex:.6;font-weight:bolder;text-align:right;"> {%= data[i].branch %} </div>
 				</div>
 				<div style="font-size:14px;display:flex;flex-direction:row;">
 					<div style="flex:1;"> Base </div>
@@ -352,7 +352,7 @@
 				<div style="background:#eee !important;font-size:large;font-weight:bolder;"> Attendance </div>
 				<div style="font-size:16px;display:flex;flex-direction:row;">
 					<div style="flex:1;"> Salary for the Month </div> 
-					<div style="flex:.4;font-weight:bolder;text-align:right;"> {%= monthNames[dt.getMonth()] %}, {%= dt.getFullYear() %} </div>
+					<div style="flex:.6;font-weight:bolder;text-align:right;"> {%= monthNames[dt.getMonth()] %}, {%= dt.getFullYear() %} </div>
 				</div>
 				<div style="font-size:14px;display:flex;flex-direction:row;">
 					<div style="flex:1;"> No of Working Days </div> 
@@ -525,7 +525,7 @@
 			</div>
 		</div>
 		<div style="display:flex;flex-direction:row;width:100%;">
-			<div style="display:flex;flex-direction:column;margin-top:15px;flex:1;">
+			<div style="display:flex;flex-direction:column;margin-top:5px;flex:1;">
 				<div style="background:#eee !important;text-align:center;text-transform:uppercase;padding:3px;font-size:large;font-weight:bolder;"> Advances </div>
 				<div style="display:flex;flex-direction:row;flex:1;">
 					<div style="flex:1;display:flex;flex-direction:column;">
@@ -576,7 +576,7 @@
 					</div>
 				</div>
 			</div>
-			<div style="flex:1;display:flex;flex-direction:column;margin-top:15px;font-size:15px;font-weight:bolder;margin-left:20px;text-align:right;text-transform:uppercase;align-items:flex-end;">
+			<div style="flex:1;display:flex;flex-direction:column;margin-top:5px;font-size:15px;font-weight:bolder;margin-left:20px;text-align:right;text-transform:uppercase;align-items:flex-end;">
 				<div style="flex:1;">
 					<div> Total Earnings : {%= format_currency(data[i].total_earnings) %} </div>
 					<div> Total Deductions : {%= format_currency(data[i].total_deductions) %} </div>
@@ -594,8 +594,15 @@
 				</div>
 			</div>        
 		</div>
+		<hr style="width:100%;margin-top:2px;margin-bottom:2px;">
+		<div style="display:flex;flex-direction:row;width:100%;padding-top:5px;">
+			<div style="background:#eee;margin-right:5px;"> Bank Account Details </div>
+			<div style="margin-right:5px;"> Bank Name </div> <div style="flex:1;border:1px black dotted;"> {%= data[i].bank_name %} </div>
+			<div style="margin-right:5px;margin-left:5px;"> IFSC Code </div> <div style="flex:1;border:1px black dotted;"> {%= data[i].ifsc %} </div>
+			<div style="margin-right:5px;margin-left:5px;"> Account No </div> <div style="flex:1;border:1px black dotted;"> {%= data[i].account_no %} </div>
+		</div>
 		<div style="display:flex;flex-direction:row;width:100%;">
-			<div style="margin-bottom:15px;flex:1;margin-top:40px;margin-left:50px;margin-right:50px;">
+			<div style="margin-bottom:5px;flex:1;margin-top:30px;margin-left:50px;margin-right:50px;">
 				<div style="border-bottom:1px solid black;">
 					&nbsp
 				</div>
@@ -603,7 +610,7 @@
 					Cheque No
 				</div>
 			</div>
-			<div style="margin-bottom:15px;flex:1;margin-top:40px;margin-left:50px;margin-right:50px;">
+			<div style="margin-bottom:5px;flex:1;margin-top:30px;margin-left:50px;margin-right:50px;">
 				<div style="border-bottom:1px solid black;">
 					&nbsp
 				</div>
@@ -611,7 +618,7 @@
 					Prepared By
 				</div>
 			</div>
-			<div style="margin-bottom:15px;flex:1;margin-top:40px;margin-left:50px;margin-right:50px;">
+			<div style="margin-bottom:5px;flex:1;margin-top:30px;margin-left:50px;margin-right:50px;">
 				<div style="border-bottom:1px solid black;">
 					&nbsp
 				</div>
