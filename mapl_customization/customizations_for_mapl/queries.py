@@ -21,7 +21,7 @@ def mapl_address_query (doctype, txt, searchfield, start, page_len, filters):
 
 	fields = ", ".join(fields)
 
-	condition = ""	
+	condition = ""
 	if filters.get("customer"):
 		condition += "and dyn.link_name = %(customer)s"
 

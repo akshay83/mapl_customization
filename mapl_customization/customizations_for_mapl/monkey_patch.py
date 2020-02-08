@@ -183,22 +183,6 @@ def monkey_patch_journal_entry_validation_advance():
 	from erpnext.accounts.doctype.journal_entry.journal_entry import JournalEntry
 	JournalEntry.validate_entries_for_advance = validate_entries_for_advance
 
-def monkey_patch_sales_gl_entry():
-	from erpnext.accounts.doctype.sales_invoice.sales_invoice import SalesInvoice
-	from monkey_patch_gl_entry import sales_inv_make_gl_entries as sin
-	SalesInvoice.make_gl_entries = sin
-
-def monkey_patch_purchase_gl_entry():
-	from erpnext.accounts.doctype.purchase_invoice.purchase_invoice import PurchaseInvoice
-
-	from monkey_patch_gl_entry import purchase_inv_make_gl_entries as pin
-	from monkey_patch_gl_entry import purchase_inv_get_gl_entries as pig
-	from monkey_patch_gl_entry import alternative_gl_entries as age
-
-	PurchaseInvoice.make_gl_entries = pin
-	PurchaseInvoice.get_gl_entries = pig
-	PurchaseInvoice.alternative_gl_entries = age
-
 # Do Not Post Depreciation Entries Automatically
 def mp_post_depreciation_entries(date=None):
 	# cint missing in check Automatic Entries
@@ -216,5 +200,3 @@ def do_monkey_patch():
 	monkey_patch_salary_slip_for_rounding()
 	monkey_patch_journal_entry_validation_advance()
 	monkey_patch_depreciation_entries()
-	#monkey_patch_sales_gl_entry()
-	#monkey_patch_purchase_gl_entry()

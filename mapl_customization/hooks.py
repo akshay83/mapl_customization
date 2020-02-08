@@ -23,13 +23,13 @@ doc_events = {
 		"validate" : "mapl_customization.customizations_for_mapl.item_hooks.item_validate"
 	},
 	"Sales Order": {
-		"validate" : "mapl_customization.customizations_for_mapl.finance_validation.sales_order_validate",
+		"validate" : "mapl_customization.customizations_for_mapl.sales_invoice_validation.sales_order_validate",
 		"before_cancel": "mapl_customization.customizations_for_mapl.pe_on_sales_order.before_cancel_sales_order",
 		"on_submit": "mapl_customization.customizations_for_mapl.pe_on_sales_order.make_payment_entry_with_sales_order",
 		"validate": "mapl_customization.customizations_for_mapl.pe_on_sales_order.validate"
 	},
 	"Payment Entry": {
-		"validate": "mapl_customization.customizations_for_mapl.finance_validation.payment_entry_validate",
+		"validate": "mapl_customization.customizations_for_mapl.payment_entry_validation.payment_entry_validate",
 		"on_update_after_submit":"mapl_customization.customizations_for_mapl.payment_entry_hooks.payment_entry_on_update_after_submit"
 	},
 	"Purchase Receipt" : {
@@ -43,8 +43,8 @@ doc_events = {
 		"before_submit": "mapl_customization.customizations_for_mapl.utils.purchase_receipt_before_submit"
 	},
 	"Sales Invoice" : {
-		"validate" : "mapl_customization.customizations_for_mapl.finance_validation.sales_invoice_validate",
-		"before_submit" : "mapl_customization.customizations_for_mapl.finance_validation.sales_on_submit_validation",
+		"validate" : "mapl_customization.customizations_for_mapl.sales_invoice_validation.sales_invoice_validate",
+		"before_submit" : "mapl_customization.customizations_for_mapl.sales_invoice_validation.sales_on_submit_validation",
 		"before_save": "mapl_customization.customizations_for_mapl.workflow_hooks.before_save_salesinvoice",
 		"on_update_after_submit":"mapl_customization.customizations_for_mapl.sales_invoice_hooks.sales_invoice_on_update_after_submit"
 	},
@@ -52,7 +52,7 @@ doc_events = {
 		"on_update": "mapl_customization.customizations_for_mapl.workflow_hooks.on_update_selling_settings"
 	},
         "Stock Entry" : {
-                "validate": "mapl_customization.customizations_for_mapl.finance_validation.validate_stock_entry_serial_no"
+                "validate": "mapl_customization.customizations_for_mapl.sales_invoice_validation.validate_stock_entry_serial_no"
         },
 	"Salary Slip" : {
 		"before_save": "mapl_customization.customizations_for_mapl.salary_slip_hooks.salary_slip_before_save"
