@@ -53,6 +53,9 @@ def finance_validate(doc, method):
 		frappe.throw('Need Finance Details')
 
 def vehicle_validation(doc, method):
+	if cint(doc.b2b_vehicles):
+		return
+
 	for i in doc.items:
 		if cint(i.is_vehicle) and len(doc.items)>1:
 			frappe.throw("A Sales Invoice can have only Single Vehicle and No Other Item")

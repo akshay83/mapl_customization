@@ -24,9 +24,9 @@ doc_events = {
 	},
 	"Sales Order": {
 		"validate" : "mapl_customization.customizations_for_mapl.sales_invoice_validation.sales_order_validate",
-		"before_cancel": "mapl_customization.customizations_for_mapl.pe_on_sales_order.before_cancel_sales_order",
-		"on_submit": "mapl_customization.customizations_for_mapl.pe_on_sales_order.make_payment_entry_with_sales_order",
-		"validate": "mapl_customization.customizations_for_mapl.pe_on_sales_order.validate"
+		"before_cancel": "mapl_customization.customizations_for_mapl.sales_order_payment_entry.before_cancel_sales_order",
+		"on_submit": "mapl_customization.customizations_for_mapl.sales_order_payment_entry.make_payment_entry_with_sales_order",
+		"validate": "mapl_customization.customizations_for_mapl.sales_order_payment_entry.validate"
 	},
 	"Payment Entry": {
 		"validate": "mapl_customization.customizations_for_mapl.payment_entry_validation.payment_entry_validate",
@@ -58,15 +58,15 @@ doc_events = {
 		"before_save": "mapl_customization.customizations_for_mapl.salary_slip_hooks.salary_slip_before_save"
 	},
 	"Customer" : {
-		"before_insert": "mapl_customization.customizations_for_mapl.utils.validate_customer_before_save",
-		"validate": "mapl_customization.customizations_for_mapl.utils.validate_customer"
+		"before_insert": "mapl_customization.customizations_for_mapl.quick_customer.validate_customer_before_save",
+		"validate": "mapl_customization.customizations_for_mapl.quick_customer.validate_customer"
 	},
 	"Lead" : {
 		"after_insert": "mapl_customization.customizations_for_mapl.utils.on_save_lead",
 		"before_insert": "mapl_customization.customizations_for_mapl.utils.before_insert_lead"
 	},
 	"Address": {
-		"validate": "mapl_customization.customizations_for_mapl.quick_customer.validate_pin_with_state"
+		"validate": "mapl_customization.customizations_for_mapl.quick_customer.validate_address"
 	}
 }
 
@@ -85,7 +85,8 @@ doctype_list_js = {"Payment Entry" : "/public/js/payment_entry_list.js",
 			"Sales Invoice" : "/public/js/sales_invoice_list.js"}
 
 jenv_filter = [
-    'json_load:mapl_customization.customizations_for_mapl.jinja.json_load'
+    'json_load:mapl_customization.customizations_for_mapl.jinja.json_load',
+    'date_to_code:mapl_customization.customizations_for_mapl.jinja.date_to_code'
 ]
 
 #Monkey Patch

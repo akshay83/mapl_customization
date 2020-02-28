@@ -1,7 +1,9 @@
 import frappe
 import json
 import requests
+import re
 from erpnext.regional.india.utils import validate_gstin_for_india
+from frappe.utils import cint, getdate, today
 
 @frappe.whitelist()
 def do_quick_entry(args):
@@ -40,8 +42,19 @@ def validate(args):
 	if "billing_city" not in customer_keys:
 		frappe.throw("Need Billing City")
 
+	if "primary_email" in customer_keys:
+		if not is_valid_email(args["primary_email"]):
+			frappe.throw("Invalid Email Address")
+
 	validate_gstid(args)
 
+def is_valid_email(email):
+	invalid_strings = ['nomail@nomail.com', 'no@no.com', 'nomail@no.com', 'no@nomail.com']
+	if len(email) > 10 and email.lower() not in invalid_strings:
+		if email.lower().startswith('nomail@'):
+			return False
+		return bool(re.match("^.+@(\[?)[a-zA-Z0-9-.]+.([a-zA-Z]{2,3}|[0-9]{1,3})(]?)$", email))
+	return False
 
 def validate_gstid(args):
 	customer_keys = args.keys()
@@ -71,14 +84,15 @@ def make_customer(args):
 	customer_keys = args.keys()
 	customer_doc = frappe.new_doc("Customer")
 	customer_doc.salutation = args["salutation"] if "salutation" in customer_keys else None
-	customer_doc.customer_name = args["customer_name"]
+	customer_doc.customer_name = args["customer_name"].strip()
 	customer_doc.customer_group = args["customer_group"]
 	customer_doc.territory = args["territory"]
 	customer_doc.customer_type = args["customer_type"]
 	customer_doc.tax_id = args["tax_id"] if "tax_id" in customer_keys else None
 	customer_doc.pan_no = args["pan_no"] if "pan_no" in customer_keys else None
-	customer_doc.primary_contact_no = args["primary_contact_no"]
-	customer_doc.secondary_contact_no = args["secondary_contact_no"] if "secondary_contact_no" in customer_keys else None
+	customer_doc.primary_contact_no = args["primary_contact_no"].replace("-","").replace("/",",").replace(" ","").strip(",/\\ ")
+	customer_doc.secondary_contact_no = args["secondary_contact_no"].replace("-","").replace("/",",").replace(" ","").strip(",/\\ ") \
+							 if "secondary_contact_no" in customer_keys else None
 	customer_doc.company_name = args["company_name"] if "company_name" in customer_keys else None
 	customer_doc.vehicle_no = args["vehicle_no"] if "vehicle_no" in customer_keys else None
 	customer_doc.relation_to = args["relation_to"] if "relation_to" in customer_keys else None
@@ -130,6 +144,10 @@ def enter_shipping_address(args, customer):
 	address_doc.autoname()
 	address_doc.save()
 
+def validate_address(doc, method):
+	validate_pin_with_state(doc, method)
+	validate_address_creation(doc, method)
+
 def validate_pin_with_state(doc, method):
 	if not doc.gst_state:
 		frappe.throw("""Please Select GST State""")
@@ -168,6 +186,40 @@ def validate_pin_with_state(doc, method):
 	except requests.Timeout:
 		frappe.msgprint("""Unable to Verify Pincode with GST State. Continuing for Now""")
 
+def validate_address_creation(doc, method):
+	if doc.is_new():
+		return
+
+	if (frappe.session.user == "Administrator" or "System Manager" in frappe.get_roles() or "Accounts Manager" in frappe.get_roles()):
+		return
+
+	existing = frappe.get_doc("Address", doc.name)
+
+	if existing.address_line1.lower() == doc.address_line1.lower() \
+		and existing.city.lower() == doc.city.lower():
+		if (not existing.address_line2 and not doc.address_line2) \
+			and (not existing.gstin and not doc.gstin):
+				return
+
+		if  (existing.address_line2 and doc.address_line2):
+			if (existing.gstin and doc.gstin):
+				if existing.address_line2.lower() == doc.address_line2.lower() \
+					and existing.gstin.lower() == doc.gstin.lower():
+					return
+			else:
+				if existing.address_line2.lower() == doc.address_line2.lower():
+					return
+
+		if (existing.gstin and doc.gstin):
+			if existing.gstin.lower() == doc.gstin.lower():
+				return
+
+	check_creation_date(existing, "Address")
+
+def check_creation_date(existing, doc):
+	if abs((getdate(today())-getdate(existing.creation)).days) >= 15:
+		frappe.throw("""Change of {0} not Allowed""".format(doc))
+
 def strDistance(s1, s2):
     if len(s1) > len(s2):
         s1, s2 = s2, s1
@@ -182,3 +234,110 @@ def strDistance(s1, s2):
                 distances_.append(1 + min((distances[i1], distances[i1 + 1], distances_[-1])))
         distances = distances_
     return distances[-1]
+
+def strip_contact_nos(primary_contact_no, secondary_contact_no):
+	pcn = primary_contact_no.replace(" ", "")
+	if pcn[-1:] in ("/", ","):
+		pcn = pcn[:-1]
+	pcn = pcn.replace("/", ",")
+	pcn = pcn.replace("-", "")
+	pcn = pcn.replace(",", "|")
+
+	scn = None
+	if secondary_contact_no:
+		scn = secondary_contact_no.replace(" ", "")
+		if scn[:1] in (",", "/"):
+			scn = scn[1:]
+		scn = scn.replace("/", ",")
+		scn = scn.replace("-", "")
+		scn = scn.replace(",", "|")
+
+	return pcn, scn
+
+def validate_customer(doc, method):
+	doc.customer_name = doc.customer_name.strip()
+	if len(doc.customer_name) > 3:
+		if (doc.customer_name.lower()[:3] in ("dr ","mr ","ms ","dr.","mr.","ms.") or \
+			doc.customer_name.lower()[:4] in ("m/s ", "mrs ","m/s.","mrs.") or \
+			doc.customer_name.lower()[:5] in ("miss ","miss.")):
+			frappe.throw("Please Use Salutation instead of Prefixing Name with Mr, Mrs, Dr etc.")
+
+		if any(item in doc.customer_name.lower() for item in ["s/o","d/o","w/o","s\o","d\o","w\o"]):
+			frappe.throw("Please Use Relation To and Relation Name Fields instead of S/o, D/o etc")
+
+		if any(item in doc.customer_name.lower() for item in ["c/o","c\o"]):
+			frappe.throw("Please Use Company Name instead of C/o")
+
+	if re.findall('[^0-9,/-]', doc.primary_contact_no.replace(" ", "")):
+		frappe.throw("""Check Primary Contact No""")
+
+	if doc.secondary_contact_no and re.findall('[^0-9,/-]', doc.secondary_contact_no.replace(" ", "")):
+		frappe.throw("""Check Secondary Contact No""")
+
+	#validate_duplicate_customer(doc, method)
+	validate_customer_creation(doc, method)
+
+
+def validate_duplicate_customer(doc, method):
+	query = """
+		select
+		  cust1.customer_name,
+		  cust1.name,
+		  cust1.creation,
+		  cust1.owner
+		from
+		  `tabCustomer`
+		where
+		  customer_name = %(customer_name)s
+		  and primary_contact_no = %(primary_contact_no)s
+		  %(secondary_contact_no)s
+		"""
+
+	count = frappe.db.sql(query, {'primary_contact_no': doc.primary_contact_no,
+				'secondary_contact_no':"""and secondary_contact_no = '"""+doc.secondary_contact_no+"""'""" \
+					 if doc.secondary_contact_no else "",
+				'customer_name':doc.customer_name},as_dict=1)
+	if count and len(count)>0:
+		frappe.throw("""Customer Exists""")
+
+def validate_customer_creation(doc, method):
+	if doc.is_new():
+		return
+
+	if (frappe.session.user == "Administrator" or "System Manager" in frappe.get_roles() or "Accounts Manager" in frappe.get_roles()):
+		return
+
+	existing = frappe.get_doc("Customer", doc.name)
+
+	if existing.customer_name.lower() == doc.customer_name.lower():
+		return
+
+	check_creation_date(existing, "Name")
+
+def validate_customer_before_save(doc, method):
+	doc.customer_name = doc.customer_name.strip()
+	pcn, scn = strip_contact_nos(doc.primary_contact_no, doc.secondary_contact_no)
+
+	query = """
+			select name, customer_name, primary_contact_no, secondary_contact_no
+			from `tabCustomer`
+			where soundex(customer_name) = soundex('{0}')
+			and ( replace(primary_contact_no,"-","") {1} )
+			""".format(doc.customer_name,
+			"""regexp ('"""+pcn+"|"+scn+"""') or replace(secondary_contact_no,"-","") regexp('"""+pcn+"|"+scn+"""')""" \
+					if scn else """regexp ('"""+pcn+"""') or replace(secondary_contact_no,"-","") regexp ('"""+pcn+"""')""")
+
+	count = frappe.db.sql(query, as_dict=1)
+
+	if count and len(count) > 0:
+		name_list = """<div style="display:flex;flex-direction:column;">
+				<div style="display:flex;flex-direction:row;padding-bottom:3px;padding-top:3px;">"""
+		for c in count:
+			record = """<div style="flex:1;padding-right:3px;">{0}</div>
+				<div style="flex:1;padding-right:3px;">{1}</div>
+				<div style="flex:1;padding-right:3px;">{2}</div>
+				<div style="flex:1;">{3}</div>""".format(c.name,c.customer_name,c.primary_contact_no,c.secondary_contact_no)
+			name_list = name_list+record
+			name_list = name_list+"""</div><div style="display:flex;flex-direction:row;padding-bottom:3px;padding-top:3px;">"""
+		name_list = name_list+"</div></div>"
+		frappe.throw("""<div>Customer Exists, Please use a different Address if Required</div>"""+name_list)

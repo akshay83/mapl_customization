@@ -32,8 +32,14 @@ frappe.query_reports['Simple Sales Report'] = {
                         "fieldtype": "Link",
                         "options": "Item Group",
                         "default": "%%"
+                },
+                {
+                        "fieldname":"show_draft",
+                        "label":__("Show Entries"),
+                        "fieldtype": "Select",
+                        "options": "Submitted\nInclude Draft",
+                        "default": "Submitted"
                 }
-
         ]
 }
 

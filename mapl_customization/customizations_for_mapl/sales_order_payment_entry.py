@@ -23,15 +23,15 @@ def make_payment_entry_with_sales_order(doc, method):
 		doc.payments = None
 		doc.is_payment_received = 0
 		doc.db_update()
-		frappe.msgprint("""Did not Create any Payment Entry as the Sales Order was Amended from a Cancelled Sales Order""")	
+		frappe.msgprint("""Did not Create any Payment Entry as the Sales Order was Amended from a Cancelled Sales Order""")
 		return
 
 	if not cint(doc.is_payment_received):
-		return 
+		return
 
 	if not doc.payments:
 		frappe.throw("""Please verify Payments""")
-		
+
 
 	for p in doc.payments:
 		payment_entry = frappe.new_doc('Payment Entry')
@@ -59,12 +59,13 @@ def make_payment_entry_with_sales_order(doc, method):
 		ref.outstanding_amount = doc.grand_total
 		ref.allocated_amount = p.amount_paid
 
-		if 'VN' in doc.naming_series:
-			payment_entry.naming_series = """MAPL/VN/REC/.YYYY./.######"""
-		elif 'GB' in doc.naming_series:
-			payment_entry.naming_serial = """MAPL/GB/REC/.YYYY./.######"""
-		elif 'RH' in doc.naming_series:
-			payment_entry.naming_serial = """MAPL/RH/REC/.YYYY./.######"""
+		#Commenting as New Autoname hook in Place
+		#if 'VN' in doc.naming_series:
+		#	payment_entry.naming_series = """MAPL/VN/REC/.YYYY./.######"""
+		#elif 'GB' in doc.naming_series:
+		#	payment_entry.naming_serial = """MAPL/GB/REC/.YYYY./.######"""
+		#elif 'RH' in doc.naming_series:
+		#	payment_entry.naming_serial = """MAPL/RH/REC/.YYYY./.######"""
 
 		payment_entry.save()
 		payment_entry.submit()

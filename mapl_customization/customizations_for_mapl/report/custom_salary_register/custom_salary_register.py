@@ -7,16 +7,6 @@ import json
 import datetime
 from frappe.utils import flt
 
-class DateTimeEncoder(json.JSONEncoder):
-
-    def default(self, obj):
-        if isinstance(obj, (datetime.datetime, datetime.date, datetime.time)):
-            return obj.isoformat()
-        elif isinstance(obj, datetime.timedelta):
-            return (datetime.datetime.min + obj).time().isoformat()
-
-        return super(DateTimeEncoder, self).default(obj)
-
 def execute(filters=None):
 	columns, data = [], []
 
@@ -66,7 +56,7 @@ def execute(filters=None):
 			"fieldname": "biometric_attendance",
 			"label": "Biometric Attendance",
 			"fieldtype": "Text",
-			"width": 100
+			"width": 0
 		})
 
 	data = get_employee_details(filters)
@@ -116,14 +106,14 @@ def get_default_columns(filters):
 			"width":80
 		},
 		{
-			"fieldname":"leave_without_pay",
-			"label":"Absence",
+			"fieldname":"total_present_days",
+			"label":"Present Days",
 			"fieldtype":"Int",
 			"width":50
 		},
 		{
-			"fieldname":"total_payment_days",
-			"label":"Payment Days",
+			"fieldname":"leave_without_pay",
+			"label":"Absence",
 			"fieldtype":"Int",
 			"width":50
 		},
@@ -134,8 +124,8 @@ def get_default_columns(filters):
 			"width":50
 		},
 		{
-			"fieldname":"total_present_days",
-			"label":"Present Days",
+			"fieldname":"total_payment_days",
+			"label":"Payment Days",
 			"fieldtype":"Int",
 			"width":50
 		},
@@ -255,12 +245,11 @@ def get_employee_details(filters):
 					  slip.bank_account_no,
 					  struct.base
 					from
-					  `tabSalary Slip` slip,
+					  `tabSalary Slip` slip left join
 					  `tabSalary Structure Employee` struct
+						on (struct.parent = slip.salary_structure and struct.employee = slip.employee)
 					where
-					  struct.parent = slip.salary_structure
-					  and slip.docstatus = 1
-					  and struct.employee = slip.employee
+					  slip.docstatus = 1
 					  and slip.start_date = %s
 					  and slip.end_date = %s
 					order by
@@ -294,7 +283,8 @@ def get_employee_details(filters):
 
 		#If Biometric Attendance is Available
 		if frappe.db.table_exists("Biometric Users"):
-			build_row["biometric_attendance"] = get_biometric_attendance(e.employee, filters)
+			from biometric_attendance.biometric_attendance.report.monthly_attendance.monthly_attendance import get_biometric_attendance
+			build_row["biometric_attendance"] = get_biometric_attendance(employee=e.employee, filters=filters)
 
 		rows.append(build_row)
 
@@ -364,41 +354,3 @@ def get_total_leaves(employee, filters):
 		build_row["total_leaves"] = d.total_leaves
 
 	return build_row
-
-def get_biometric_attendance(employee, filters):
-	query = """
-		select
-			  users.name as `User Code`,
-			  users.employee as `Employee Code`,
-			  users.user_name as `User Name`,
-			  machine.branch as `Branch`,
-			  branch.opening_time as `Branch Opening Time`,
-			  branch.closing_time as `Branch Closing Time`,
-			  cast(att.timestamp as date) as `Punch Date`,
-			  count(*) as `Punch Count`,
-			  cast(min(att.timestamp) as Time) as `Earliest Punch`,
-			  cast(max(att.timestamp) as Time) as `Last Punch`
-		from
-			  `tabBiometric Users` users,
-			  `tabBiometric Attendance` att,
-			  `tabBranch Settings` branch,
-			  `tabEnrolled Users` enrolled,
-			  `tabBiometric Machine` machine
-		where
-			  att.user_id = cast(substring(users.name,3) as Integer)
-			  and cast(att.timestamp as date) >= %s
-			  and cast(att.timestamp as date) <= %s
-			  and machine.branch = branch.branch
-			  and enrolled.parent = machine.name
-			  and enrolled.user = users.name
-			  and users.employee = %s
-		group by
-			  cast(att.timestamp as date),
-			  users.name
-		order by
-			  cast(att.timestamp as date),
-			  users.user_name
-		"""
-
-	ba = frappe.db.sql(query, (filters.get("from_date"), filters.get("to_date"), employee), as_dict=1)
-	return DateTimeEncoder().encode(ba)

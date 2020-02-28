@@ -30,7 +30,7 @@ frappe.query_reports['Daily Collection Report'] = {
 			"fieldname":"show_draft",
 			"label":__("Show Entries"),
 			"fieldtype": "Select",
-			"options": "Submitted\nDraft",
+			"options": "Submitted\nInclude Draft",
 			"default": "Submitted"
 		}
 	]
