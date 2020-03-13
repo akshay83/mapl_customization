@@ -7,8 +7,13 @@ from frappe.utils import cstr, cint
 from erpnext.stock.stock_ledger import update_entries_after
 from erpnext.controllers.stock_controller import update_gl_entries_after
 
+def check_role(doc, method):
+	if not (frappe.session.user == "Administrator" or "System Manager" in frappe.get_roles()):
+		frappe.throw("""Update to Sales Invoice Not Allowed""")
 
 def sales_invoice_on_update_after_submit(doc, method):
+	check_role(doc.doctype)
+
 	for i in doc.items:
 		if i.delivered_qty > 0:
 			frappe.throw("Items Delivered on Delivery Note Against this Invoice, Please Cancel the Delivery Note(s) before Updating")

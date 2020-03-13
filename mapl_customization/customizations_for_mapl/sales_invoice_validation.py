@@ -41,7 +41,7 @@ def validate_gst_state(doc, method):
 			return
 		frappe.throw("""Please Check Correct Shipping Address/Taxes""")
 
-	if doc.taxes_and_charges == 'In State GST' and ship_state != 'Madhya Pradesh':
+	if (doc.taxes_and_charges == 'In State GST' or not doc.taxes_and_charges or doc.taxes_and_charges == "") and ship_state != 'Madhya Pradesh':
 		frappe.throw("""Please Check Correct Shipping Address/Taxes""")
 
 
