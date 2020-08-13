@@ -63,6 +63,20 @@ frappe.query_reports["Ledger Statement"] = {
 			"label": __("Party Name"),
 			"fieldtype": "Data",
 			"read_only": 1
+		},
+		{
+			"fieldname":"show_running_balance",
+			"label": "Show Running Balance",
+			"fieldtype":"Check",
+			"default": "1"
 		}
-	]
+	],
+        "formatter":function (row, cell, value, columnDef, dataContext, default_formatter) {
+                value = default_formatter(row, cell, value, columnDef, dataContext);
+
+                if (columnDef.id == "Running Balance") {
+                        value = "<div style='text-align:right;'>" + value + "</div>";
+                }
+                return value;
+        }
 }

@@ -135,7 +135,7 @@ def purchase_invoice_gst_check(doc, method):
 	if doc.taxes_and_charges == 'Out of State GST' and state == 'Madhya Pradesh':
 		frappe.throw("""Please Check Correct Address/GSTIN""")
 
-	if doc.taxes_and_charges == 'In State GST' and state != 'Madhya Pradesh':
+	if (doc.taxes_and_charges == 'In State GST' or not doc.taxes_and_charges or doc.taxes_and_charges == "") and state != 'Madhya Pradesh':
 		frappe.throw("""Please Check Correct Address/GSTIN""")
 
 

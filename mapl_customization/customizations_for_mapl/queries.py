@@ -17,7 +17,7 @@ def select_customer_supplier_query(doctype, txt, searchfield, start, page_len, f
 		return employee_query(doctype, txt, searchfield, start, page_len, filters)
 
 def mapl_address_query (doctype, txt, searchfield, start, page_len, filters):
-	fields = ["addr.name","dyn.link_name","addr.address_line1", "addr.address_line2"]
+	fields = ["addr.name","addr.address_name","dyn.link_name","addr.address_line1", "addr.address_line2"]
 
 	fields = ", ".join(fields)
 
@@ -31,6 +31,7 @@ def mapl_address_query (doctype, txt, searchfield, start, page_len, filters):
 	return frappe.db.sql("""select {fields}
 			from `tabAddress` addr, `tabDynamic Link` dyn where dyn.parent=addr.name and 
 			(addr.{key} like %(txt)s
+			or address_name like %(txt)s
 			or address_line1 like %(txt)s
 			or address_line2 like %(txt)s
 			or city like %(txt)s)

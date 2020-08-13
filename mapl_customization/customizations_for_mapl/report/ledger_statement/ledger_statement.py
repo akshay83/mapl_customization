@@ -3,7 +3,7 @@
 
 from __future__ import unicode_literals
 import frappe
-from frappe.utils import flt
+from frappe.utils import flt, cint
 
 def execute(filters=None):
 	columns, data = [], []
@@ -64,6 +64,15 @@ def execute(filters=None):
 				"width": 250
 			}
 	]
+
+	if cint(filters.get("show_running_balance")):
+		rb = {
+			"fieldname": "running_balance",
+			"label": "Running Balance",
+			"fieldtype": "Text",
+			"width": 125
+		}
+		columns.insert(7, rb)
 
 	data = get_individual_statement(filters)
 
@@ -195,6 +204,13 @@ def get_individual_statement(filters):
 		build_row["chq_no"] = d.chq_no
 		total_credit += d.credit
 		total_debit += d.debit
+		if total_debit > total_credit:
+			build_row["running_balance"] = frappe.format((total_debit - total_credit), dict(fieldtype='Currency')) + " Dr"
+		elif total_debit < total_credit:
+			build_row["running_balance"] = frappe.format((total_credit - total_debit), dict(fieldtype='Currency')) + " Cr"
+		else:
+			build_row["running_balance"] = frappe.format(0, dict(fieldtype='Currency'))
+
 		rows.append(build_row)
 
 	rows.append({"voucher_type": "Total", "debit":total_debit, "credit":total_credit})

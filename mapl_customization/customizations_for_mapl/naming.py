@@ -40,9 +40,12 @@ def set_auto_name(doc, method):
 
 		abbr = frappe.db.get_value("Company", doc.company, "abbr")
 
-		docdt = doc.posting_date if doc.posting_date else today()
-		if doc.doctype in ("Sales Order", "Purchase Receipt"):
+		docdt = today()
+		if doc.doctype in ("Sales Order", "Purchase Receipt", "Quotation"):
 			docdt = doc.transaction_date
+		else:
+			docdt = doc.posting_date if doc.posting_date else today()
+
 		fiscal_year =  str(get_fiscal_year(date=docdt)[0])
 		#print "DEBUG:"+fiscal_year
 
@@ -85,7 +88,13 @@ def check_series(doc, method):
 	if not doc.is_new():
 		existing = frappe.get_doc(doc.doctype, doc.name)
 
-	fy = get_fiscal_year(date=doc.posting_date if doc.posting_date else today())
+	docdt = today()
+	if doc.doctype in ("Sales Order", "Purchase Receipt", "Quotation"):
+		docdt = doc.transaction_date
+	else:
+		docdt = doc.posting_date if doc.posting_date else today()
+
+	fy = get_fiscal_year(date=docdt)
 	if existing:
 		old_fiscal_year = get_fiscal_year(date=existing.posting_date)
 		if old_fiscal_year[1] != fy[1]:

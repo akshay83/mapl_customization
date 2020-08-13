@@ -255,6 +255,9 @@ def strip_contact_nos(primary_contact_no, secondary_contact_no):
 	return pcn, scn
 
 def validate_customer(doc, method):
+	if doc.customer_group == 'Web User':
+		return
+
 	doc.customer_name = doc.customer_name.strip()
 	if len(doc.customer_name) > 3:
 		if (doc.customer_name.lower()[:3] in ("dr ","mr ","ms ","dr.","mr.","ms.") or \
@@ -315,6 +318,10 @@ def validate_customer_creation(doc, method):
 	check_creation_date(existing, "Name")
 
 def validate_customer_before_save(doc, method):
+	if doc.customer_group == 'Web User':
+		if not doc.primary_contact_no:
+			return
+
 	doc.customer_name = doc.customer_name.strip()
 	pcn, scn = strip_contact_nos(doc.primary_contact_no, doc.secondary_contact_no)
 
