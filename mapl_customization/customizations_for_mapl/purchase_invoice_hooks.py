@@ -9,6 +9,10 @@ from erpnext.accounts.doctype.gl_entry.gl_entry import update_outstanding_amt
 from erpnext.controllers.stock_controller import update_gl_entries_after
 
 
+def check_role(doc, method):
+	if not (frappe.session.user == "Administrator" or "System Manager" in frappe.get_roles()):
+		frappe.throw("""Update to Purchase Invoice Not Allowed""")
+
 def purchase_invoice_on_update_after_submit(doc, method):
     doc.validate()
     frappe.db.sql("""delete from `tabGL Entry` where voucher_no=%(vname)s""", {

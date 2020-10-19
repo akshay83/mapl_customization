@@ -39,6 +39,7 @@ doc_events = {
 	"Purchase Invoice" : {
 		"on_submit" : "mapl_customization.customizations_for_mapl.utils.purchase_receipt_on_submit",
 		"validate" : "mapl_customization.customizations_for_mapl.utils.purchase_receipt_validate",
+		"before_update_after_submit": "mapl_customization.customizations_for_mapl.puchase_invoice_hooks.check_role",
 		"on_update_after_submit":"mapl_customization.customizations_for_mapl.purchase_invoice_hooks.purchase_invoice_on_update_after_submit",
 		"before_submit": "mapl_customization.customizations_for_mapl.utils.purchase_receipt_before_submit"
 	},

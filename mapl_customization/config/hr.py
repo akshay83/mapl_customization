@@ -11,6 +11,12 @@ def get_data():
 					"name" : "Custom Salary Register",
 					"doctype" : "Salary Slip",
 					"is_query_report" : True
+				},
+				{
+					"type" : "report",
+					"name" : "Salary Structure Details",
+					"doctype" : "Salary Structure",
+					"is_query_report" : True
 				}
 			]
 		}
