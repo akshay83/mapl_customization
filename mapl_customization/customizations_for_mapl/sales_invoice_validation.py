@@ -5,6 +5,7 @@ from frappe.utils import cint
 def sales_invoice_validate(doc, method):
 	negative_stock_validation(doc, method)
 	validate_stock_entry_serial_no(doc, method)
+	validate_serial_no(doc, method)
 	#validate_grand_total(doc, method)
 	validate_gst_state(doc, method)
 
@@ -14,6 +15,29 @@ def sales_on_submit_validation(doc, method):
 	taxes_and_charges_validation(doc, method)
 	finance_validate(doc, method)
 	validate_grand_total(doc, method)
+
+def validate_serial_no(doc, method):
+	""" check if serial number is already used in other sales invoice """
+	for item in doc.items:
+		if not item.serial_no:
+			continue
+
+		for serial_no in item.serial_no.split("\n"):
+			query = """
+				select parent from `tabSales Invoice Item` where serial_no like '%{serial_no}%' and docstatus <> 2 {docname}
+				"""
+
+			query = query.format(**{
+				"serial_no": serial_no,
+				"docname": "and parent <> '{0}'".format(doc.name) if doc.name else ""
+				})
+
+			for c in frappe.db.sql(query, as_dict=1):
+				if c.name:
+					frappe.throw("Serial Number: {0} is already referenced in Sales Invoice: {1} {2}".format(
+						serial_no, c.parent, doc.doctstaus
+					))
+
 
 
 def validate_gst_state(doc, method):
@@ -42,6 +66,8 @@ def validate_gst_state(doc, method):
 		frappe.throw("""Please Check Correct Shipping Address/Taxes""")
 
 	if (doc.taxes_and_charges == 'In State GST' or not doc.taxes_and_charges or doc.taxes_and_charges == "") and ship_state != 'Madhya Pradesh':
+		if doc.special_invoice and doc.special_invoice == 'Insurance Claim':
+			return
 		frappe.throw("""Please Check Correct Shipping Address/Taxes""")
 
 

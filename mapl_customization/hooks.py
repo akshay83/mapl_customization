@@ -48,6 +48,7 @@ doc_events = {
 		"before_submit" : "mapl_customization.customizations_for_mapl.sales_invoice_validation.sales_on_submit_validation",
 		"before_save": "mapl_customization.customizations_for_mapl.workflow_hooks.before_save_salesinvoice",
 		"before_update_after_submit":"mapl_customization.customizations_for_mapl.sales_invoice_hooks.check_role",
+		"before_cancel":"mapl_customization.customizations_for_mapl.sales_invoice_hooks.before_cancel",
 		"on_update_after_submit":"mapl_customization.customizations_for_mapl.sales_invoice_hooks.sales_invoice_on_update_after_submit"
 	},
 	"Selling Settings" : {

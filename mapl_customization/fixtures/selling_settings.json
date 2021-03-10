@@ -13,6 +13,7 @@
   "editable_price_list_rate": 0, 
   "hide_tax_id": 0, 
   "maintain_same_sales_rate": 0, 
+  "manually_approve_vehicle_invoice": 0, 
   "modified": "2016-07-27 20:46:10.683980", 
   "name": "Selling Settings", 
   "selling_price_list": "Standard Selling", 

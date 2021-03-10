@@ -1,15 +1,28 @@
 import frappe
 import json
 import time
-from frappe.utils import today
+from frappe.utils import today, getdate, date_diff
 from erpnext.accounts.utils import get_fiscal_year
 from frappe.utils import cstr, cint
 from erpnext.stock.stock_ledger import update_entries_after
 from erpnext.controllers.stock_controller import update_gl_entries_after
 
+def month_diff(string_ed_date, string_st_date):
+	ed_date = getdate(string_ed_date)
+	st_date = getdate(string_st_date)
+	return ed_date.month - st_date.month
+
 def check_role(doc, method):
 	if not (frappe.session.user == "Administrator" or "System Manager" in frappe.get_roles()):
 		frappe.throw("""Update to Sales Invoice Not Allowed""")
+
+def before_cancel(doc, method):
+	# Check for Taxes
+	docdate = getdate(doc.posting_date)
+	# print abs(date_diff(docdate, getdate()))
+	if getdate().day >= 10 and abs(month_diff(docdate, getdate())) > 0:
+		if not (frappe.session.user == "Administrator" or "System Manager" in frappe.get_roles()):
+			frappe.throw("""Bill Cancellation Not Allowed as Taxes Might Have Been Filed""")
 
 def sales_invoice_on_update_after_submit(doc, method):
 	check_role(doc.doctype)

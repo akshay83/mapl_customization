@@ -185,6 +185,9 @@ def validate_pin_with_state(doc, method):
 		frappe.msgprint("""Unable to Verify Pincode with GST State. Continuing for Now""")
 	except requests.Timeout:
 		frappe.msgprint("""Unable to Verify Pincode with GST State. Continuing for Now""")
+	except ValueError:
+		frappe.msgprint("""Unable to Verify Pincode with GST State. Continuing for Now""")
+
 
 def validate_address_creation(doc, method):
 	if doc.is_new():

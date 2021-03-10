@@ -1,8 +1,25 @@
 import frappe
 import json
+from frappe.utils import cint
 
 
 def before_save_salesinvoice(doc, method):
+	chk_price = frappe.db.get_single_value("Selling Settings", "check_price")
+	approve_vehicle_inv = frappe.db.get_single_value("Selling Settings", "manually_approve_vehicle_invoice")
+
+	if approve_vehicle_inv and cint(approve_vehicle_inv) == 1:
+		vehicle_workflow(doc, method)
+
+	if chk_price:
+		undercut_workflow(doc, method)
+
+def vehicle_workflow(doc, method):
+	if cint(doc.items[0].is_vehicle) == 1:
+		old_workflow_state = frappe.db.get_value("Sales Invoice", doc.name, "workflow_state")
+		if not old_workflow_state:
+			doc.db_set("workflow_state", "Pending")
+
+def undercut_workflow(doc, method):
 	old_values = frappe.db.sql("""select workflow_state,grand_total from `tabSales Invoice` where name=%(name)s""",{'name':doc.name},as_dict=1)
 
 	if old_values:
@@ -20,7 +37,7 @@ def validate_undercut_salesinvoice(doc):
 	validate_price_list_undercut_salesinvoice(doc)
 	validate_avg_undercut_salesinvoice(doc)
 
-def validate_price_list_undercut_salesinvoice(doc):	
+def validate_price_list_undercut_salesinvoice(doc):
 	check_price = frappe.db.get_single_value("Selling Settings", "check_price")
 	if  check_price != 'Both' and check_price != 'Check for Price List Price':
 		return
@@ -48,11 +65,11 @@ def validate_avg_undercut_salesinvoice(doc):
 	total_avg_rate = 0
 	for i in doc.items:
 		total_selling_rate = total_selling_rate+i.net_amount
-		item_rate = frappe.db.sql("""select ifnull(sum(incoming_rate)/sum(actual_qty),0) as avg_rate 
+		item_rate = frappe.db.sql("""select ifnull(sum(incoming_rate)/sum(actual_qty),0) as avg_rate
 				from `tabStock Ledger Entry` where item_code = %(item)s""", {'item':i.item_code}, as_dict=1)
 		total_avg_rate = total_avg_rate+(item_rate[0].avg_rate*i.qty)
 
-	if (total_selling_rate < total_avg_rate):
+	if ((total_selling_rate*.80) < total_avg_rate):
 		doc.db_set("workflow_state", "Pending")
 	else:
 		doc.db_set("workflow_state", "Draft")
@@ -63,4 +80,5 @@ def on_update_selling_settings(doc, method):
 
 	workdoc = frappe.get_doc("Workflow", "Sales Invoice Undercut")
 	workdoc.is_active = True if doc.check_price else False
+	workdoc.is_active = True if cint(doc.manually_approve_vehicle_invoice)==1 else False
 	workdoc.save()

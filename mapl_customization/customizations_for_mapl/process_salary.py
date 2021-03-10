@@ -37,6 +37,8 @@ def process_staff_salaries_jv(payable_account, date, filters, director):
 		elif amount < 0:
 			ac1.credit_in_account_currency = abs(amount)
 		ac1.cost_center = 'Main - MAPL' #erpnext.get_default_cost_center(account[0].company)
+		# DEBUG
+		# print ac1.account, ",", amount, "," "Dr" if amount >0 else "CR"
 
 	jv.save()
 
@@ -47,6 +49,8 @@ def process_staff_jv(jv, record, account, ed):
 	ac1.party_name = record["employee_name"]
 	ac1.account = account
 	ac1.credit_in_account_currency = record["net_pay"]
+	# DEBUG
+	# print ac1.party_name, ",", ac1.account, ",", ac1.credit_in_account_currency
 
 	process_earnings_deductions(jv, record, account, ed)
 
@@ -60,6 +64,8 @@ def process_earnings_deductions(jv, record, account, ed):
 		ac1.party = record["employee_id"]
 		ac1.account = loan_account
 		ac1.credit_in_account_currency = adv.principal_amount
+		# DEBUG
+		# print ac1.party_name, ",", ac1.account, ",", ac1.credit_in_account_currency
 
 	for earn in sal_slip.earnings:
 		ed[earn.salary_component] = ed.get(earn.salary_component,0) + earn.amount
