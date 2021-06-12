@@ -7,7 +7,7 @@ from frappe.desk.reportview import get_match_cond
 from frappe.model.db_query import DatabaseQuery
 from frappe.utils import nowdate
 
-
+@frappe.whitelist()
 def select_customer_supplier_query(doctype, txt, searchfield, start, page_len, filters):
 	if filters.get("party_type")=="Customer":
 		return mapl_customer_query(doctype, txt, searchfield, start, page_len, filters)
@@ -16,6 +16,7 @@ def select_customer_supplier_query(doctype, txt, searchfield, start, page_len, f
 	elif filters.get("party_type")=="Employee":
 		return employee_query(doctype, txt, searchfield, start, page_len, filters)
 
+@frappe.whitelist()
 def mapl_address_query (doctype, txt, searchfield, start, page_len, filters):
 	fields = ["addr.name","addr.address_name","dyn.link_name","addr.address_line1", "addr.address_line2"]
 
@@ -56,46 +57,31 @@ def mapl_address_query (doctype, txt, searchfield, start, page_len, filters):
 
 
 # searches for customer
+@frappe.whitelist()
 def mapl_customer_query(doctype, txt, searchfield, start, page_len, filters):
-	old_query = """
-		select * from
-		          (
-		            (select cust.name, cust.customer_name, cust.primary_contact_no,
-		              cust.secondary_contact_no,addr.address_line1,addr.address_line2
-		              from `tabCustomer` cust, `tabAddress` addr, `tabDynamic Link` dyn
-		              where cust.name=dyn.link_name and dyn.parent=addr.name and
-		              ({key} like %(txt)s
-		                or cust.customer_name like %(txt)s
-		                or cust.primary_contact_no like %(txt)s
-		                or cust.secondary_contact_no like %(txt)s
-		                or addr.address_line1 like %(txt)s
-		                or addr.address_line2 like %(txt)s) and cust.disabled=0
-		              group by cust.name)
-		            union all
-		            (select cust.name, cust.customer_name, cust.primary_contact_no,
-		              cust.secondary_contact_no,null,null
-		              from `tabCustomer` cust where
-		              ({key} like %(txt)s
-		                or cust.customer_name like %(txt)s
-		                or cust.primary_contact_no like %(txt)s
-				or cust.vehIcle_no like %(txt)s
-		                or cust.secondary_contact_no like %(txt)s) and cust.disabled=0)
-		            )
-		            as temp_tb group by name order by customer_name, name limit %(start)s, %(page_len)s
-		""".format(**{
-			"key": "cust.name",
-		})
-
-
+	print ('-'*15,'Customer Query')
 	#Index To Be Created in DB on Column `tabAddress`.address_title - New Query
 	new_query = """
-			select cust.name, cust.customer_name, cust.primary_contact_no, cust.secondary_contact_no,
-			addr.address_line1, addr.address_line2
-			from `tabCustomer` cust left join `tabAddress` addr on addr.address_title = cust.name
+			select
+			  cust.name,
+			  cust.customer_name,
+			  phone_numbers.phone,
+			  addr.address_line1,
+			  addr.address_line2
+			from (`tabCustomer` cust left join `tabAddress` addr on addr.address_title = cust.name) left join
+			  (select
+			    link.link_name,
+			    phone.phone,
+			    phone.is_primary_mobile_no
+			   from `tabContact` contact,
+			     `tabContact Phone` phone,
+			     `tabDynamic Link` link
+			    where phone.parent = contact.name
+			      and link.link_doctype = 'Customer'
+			      and link.parent = contact.name) phone_numbers on phone_numbers.link_name = cust.name
 			where (cust.customer_name like %(txt)s
-			or cust.primary_contact_no like %(txt)s
-			or cust.secondary_contact_no like %(txt)s
-			or cust.name like %(txt)s) and cust.disabled=0
+			  or phone_numbers.phone like %(txt)s
+			  or cust.name like %(txt)s) and cust.disabled=0
 			group by cust.name
 			order by customer_name, name limit %(start)s, %(page_len)s
 		"""

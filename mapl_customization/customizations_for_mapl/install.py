@@ -8,4 +8,4 @@ def create_unique_index_on_customer():
 
 def after_install():
 	create_index_on_address_title()
-	create_unique_index_on_customer()
+	#create_unique_index_on_customer()

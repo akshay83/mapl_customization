@@ -10,7 +10,7 @@ def update_customer_name(customer, customer_name):
 		return
 
 	# Find all Parents
-	parents = frappe.db.sql("""select fieldname, parent from `tabDocField` where (options like '%%party%%' or options = 'Customer') 
+	parents = frappe.db.sql("""select fieldname, parent from `tabDocField` where (options like '%%party%%' or options = 'Customer')
 				and fieldtype like '%%Link%%' order by parent""", as_dict=1)
 
 
@@ -25,7 +25,7 @@ def update_customer_name(customer, customer_name):
 		for l in link_fields:
 
 			# Update Records
-			frappe.db.sql("""update `tab{tab_name}` set {customer_field} = %(value)s 
+			frappe.db.sql("""update `tab{tab_name}` set {customer_field} = %(value)s
 					 where {link_field} = %(link_value)s""".format (**{
 						"tab_name":p.parent,
 						"customer_field": l.fieldname,

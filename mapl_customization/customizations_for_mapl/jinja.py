@@ -1,5 +1,6 @@
 import json
 
+@frappe.whitelist()
 def json_load(str):
 	return json.loads(str)
 
@@ -24,6 +25,7 @@ def int_to_Roman(num):
 		i += 1
 	return roman_num
 
+@frappe.whitelist()
 def date_to_code(dt):
 	if not dt:
 		return

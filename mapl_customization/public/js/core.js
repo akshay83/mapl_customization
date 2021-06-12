@@ -3,8 +3,6 @@ frappe.provide("custom");
 
 var orig_mk_control = frappe.ui.form.make_control;
 
-$.fn.modal.prototype.constructor.Constructor.DEFAULTS.backdrop = 'static';
-
 frappe.ui.form.make_control = function(opts) {
     var control_name = "Control"+opts.df.fieldtype.replace(/ /g,"");
     //console.log(control_name);

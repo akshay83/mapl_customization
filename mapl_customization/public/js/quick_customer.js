@@ -105,6 +105,7 @@ custom.customer_quick_entry = function (doc) {
 	custom.customer_quick_entry.set_default_values(dialog, dialog.fields);
 	dialog.show();
 	dialog.$wrapper.find('.modal-dialog').css("width","1050px");
+	dialog.$wrapper.find('.modal-dialog').css("max-width","initial");
         //$("div").find(".modal-dialog").css({"line-height":".5"});
         //$("div[class*='modal-dialog']").find(".control-label").css({"font-size":"12px","font-weight":"500","margin-bottom":"1px"});
         //$("div").find(".modal-dialog").attr("style","font-size: 8px !important");

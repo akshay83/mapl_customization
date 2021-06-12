@@ -1,6 +1,7 @@
 import frappe
 import json
 import datetime
+import HTMLParser
 from frappe.utils import cint, getdate, today
 
 
@@ -105,7 +106,6 @@ def purchase_receipt_validate(doc, method):
 				frappe.throw("Check Year of Manufacture")
 
 def purchase_invoice_gst_check(doc, method):
-	from html.parser import HTMLParser
 	state = frappe.db.get_value("Address", doc.supplier_address, "gst_state")
 	if not state:
 		frappe.throw("""Please update Correct GST State in Supplier Address and then Try Again""")

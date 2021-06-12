@@ -5,59 +5,34 @@ import math
 
 from frappe.utils import add_days, cint, cstr, flt, getdate, rounded, date_diff, money_in_words
 
-def update_component_row(self, struct_row, amount, key):
-		component_row = None
-		for d in self.get(key):
-			if d.salary_component == struct_row.salary_component:
-				component_row = d
+def get_amount_based_on_payment_days(self, row, joining_date, relieving_date):
+	amount, additional_amount = row.amount, row.additional_amount
+	if (self.salary_structure and
+		cint(row.depends_on_payment_days) and cint(self.total_working_days) and
+		(not self.salary_slip_based_on_timesheet or
+			getdate(self.start_date) < joining_date or
+			(relieving_date and getdate(self.end_date) > relieving_date)
+		)):
+		additional_amount = flt((flt(row.additional_amount) * flt(self.payment_days)
+			/ cint(self.total_working_days)), row.precision("additional_amount"))
+		amount = flt((flt(row.default_amount) * flt(self.payment_days)
+			/ cint(self.total_working_days)), row.precision("amount")) + additional_amount
 
-		#include our Custom Field 'Rounding'
-		if not component_row:
-			self.append(key, {
-				'amount': amount,
-				'default_amount': amount,
-				'depends_on_lwp' : struct_row.depends_on_lwp,
-				'salary_component' : struct_row.salary_component,
-				'rounding' : struct_row.rounding
-			})
+	elif not self.payment_days and not self.salary_slip_based_on_timesheet and cint(row.depends_on_payment_days):
+		amount, additional_amount = 0, 0
+	elif not row.amount:
+		amount = flt(row.default_amount) + flt(row.additional_amount)
+
+	# apply rounding
+	if frappe.get_cached_value("Salary Component", row.salary_component, "round_to_the_nearest_integer"):
+		#Monkey Here
+		rounding_type = frappe.get_cached_value("Salary Component", row.salary_component, "rounding"):
+		if not rounding_type or rounding_type == '':
+			amount, additional_amount = rounded(amount), rounded(additional_amount)
 		else:
-			component_row.amount = amount
+			amount, additional_amount = custom_round(rounding_type, amount), custom_round(rounding_type, additional_amount)
 
-
-def sum_components(self, component_type, total_field):
-		joining_date, relieving_date = frappe.db.get_value("Employee", self.employee,
-			["date_of_joining", "relieving_date"])
-		
-		if not relieving_date:
-			relieving_date = getdate(self.end_date)
-
-		if not joining_date:
-			frappe.throw(_("Please set the Date Of Joining for employee {0}").format(frappe.bold(self.employee_name)))
-
-		for d in self.get(component_type):
-			if (self.salary_structure and
-				cint(d.depends_on_lwp) and
-				(not
-				    self.salary_slip_based_on_timesheet or
-					getdate(self.start_date) < joining_date or
-					getdate(self.end_date) > relieving_date
-				)):
-
-				#Same - Let the System do Rounding According to System Precision
-				d.amount = rounded(
-					(flt(d.default_amount) * flt(self.payment_days)
-					/ cint(self.total_working_days)), self.precision("amount", component_type)
-				)
-
-				#Apply Our rounding Method
-				d.amount = custom_round(d.rounding, d.amount)
-
-			elif not self.payment_days and not self.salary_slip_based_on_timesheet:
-				d.amount = 0
-			elif not d.amount:
-				d.amount = d.default_amount
-			self.set(total_field, self.get(total_field) + flt(d.amount))
-
+	return amount, additional_amount
 
 def custom_round(d, amt):
 	if d and d != '':

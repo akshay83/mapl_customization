@@ -11,17 +11,6 @@
   "name": "Vijay Nagar"
  }, 
  {
-  "content": "<table style=\"width: 100%;\">\n    <tbody>\n        <tr style=\"width: 100%; display: flex;\">\n            <td style=\"width: 100%;\">\n<b><span style=\"color: blue; line-height: 20px; font-size: 22px;\">Mehta Automobiles Pvt. Ltd.\n\t</span>\n</b>\n\n<b>\n\t<span style=\"font-size: 10px;\">\n\t\t<div>\n\t\t\tPlot No 1, PU-4, Scheme No 54, Vijay Nagar Square,\n\t\t</div>\n\t\t<div>\n\t\t\tA.B. Road, Indore\n\t\t</div>\n\t</span>\n</b>\n\n            </td>\n            <td style=\"text-align: right; vertical-align: middle !important;\" rowspan=\"100%\">\n                <img src=\"/files/MM LOGO.png\" style=\"width: auto !important; height: auto !important;\" width=\"52px\" height=\"45px\">\n            </td>\n        </tr>\n    </tbody>\n</table>", 
-  "disabled": 0, 
-  "docstatus": 0, 
-  "doctype": "Letter Head", 
-  "footer": "", 
-  "is_default": 0, 
-  "letter_head_name": "Standard", 
-  "modified": "2016-02-21 13:58:14.060067", 
-  "name": "Standard"
- }, 
- {
   "content": "<table style=\"width: 100%;\">\n    <tbody>\n        <tr style=\"width: 100%; display: flex;\">\n            <td style=\"width: 100%;\"><b><span style=\"color: blue; line-height: 20px; font-size: 22px;\">Mehta Automobiles Pvt. Ltd.  </span></b><b>  <span style=\"font-size: 12px;\">    <div>      22/1 South Tukoganj, Geeta Bhawan Square,    </div>\n    <div>      A.B. Road, Indore. PH: 0731 - 4032224, 2522630</div>\n<div>    </div>\n   </span></b>            </td>\n            <td style=\"text-align: right; vertical-align: middle !important;\" rowspan=\"100%\">                <img src=\"/files/ONLY_CORAL.png\" style=\"width: 150px !important; height: auto !important;\" width=\"52px\" height=\"45px\">            </td>\n        </tr>\n    </tbody>\n</table>", 
   "disabled": 0, 
   "docstatus": 0, 

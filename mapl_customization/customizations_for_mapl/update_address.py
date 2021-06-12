@@ -14,20 +14,20 @@ def update_address(address_name):
 	parents = frappe.db.sql("""
 			select distinct parent from (
 				(
-				  select 
-				  distinct parent 
-				  from `tabDocField` 
+				  select
+				  distinct parent
+				  from `tabDocField`
 				  where
 				   (fieldname = 'shipping_address' or fieldname='address_display')
 				   and fieldtype like '%%Text%%'
 				)
 				union all
 				(
-				  select 
-				  distinct dt 
-				  from `tabCustom Field` 
-				  where 
-				    name like '%%address%%' 
+				  select
+				  distinct dt
+				  from `tabCustom Field`
+				  where
+				    name like '%%address%%'
 				    and fieldtype like '%%Text%%'
 				)
 			) a order by parent
@@ -39,23 +39,23 @@ def update_address(address_name):
 		# Get Link Field Name from Parent
 		link_fields = frappe.db.sql("""
 						(
-						  select 
-						    fieldname 
-						  from `tabDocField` 
+						  select
+						    fieldname
+						  from `tabDocField`
 						  where
-						    fieldname like '%%address%%' 
-						    and fieldtype='Link' 
-						    and parent= %(parent_value)s 
+						    fieldname like '%%address%%'
+						    and fieldtype='Link'
+						    and parent= %(parent_value)s
 						)
 						union all
 						(
-						  select 
-						    fieldname 
-						  from `tabCustom Field` 
+						  select
+						    fieldname
+						  from `tabCustom Field`
 						  where
-						    fieldname like '%%address%%' 
-						    and fieldtype='Link' 
-						    and dt= %(parent_value)s 
+						    fieldname like '%%address%%'
+						    and fieldtype='Link'
+						    and dt= %(parent_value)s
 						) """,{
 							'parent_value' : p.parent
 						},as_dict=1)
@@ -66,7 +66,7 @@ def update_address(address_name):
 
 			try:
 				# Update Records
-				frappe.db.sql("""update `tab{tab_name}` set {address_field} = %(value)s 
+				frappe.db.sql("""update `tab{tab_name}` set {address_field} = %(value)s
 					 where {link_field} = %(link_value)s""".format (**{
 						"tab_name":p.parent,
 						"address_field": add_field,
@@ -80,7 +80,7 @@ def update_address(address_name):
 				for ee in get_custom_address_display_fieldnames(p.parent):
 
 					# Update Records
-					frappe.db.sql("""update `tab{tab_name}` set {address_field} = %(value)s 
+					frappe.db.sql("""update `tab{tab_name}` set {address_field} = %(value)s
 						 where {link_field} = %(link_value)s""".format (**{
 							"tab_name":p.parent,
 							"address_field": ee.fieldname,
@@ -90,6 +90,10 @@ def update_address(address_name):
 							"link_value": address_name
 						})
 
+	customer_docs = frappe.get_all('Customer', filters={'customer_primary_address':address_name})
+
+	for c in customer_docs:
+		c.db_set('primary_address', new_address)
 
 	frappe.db.commit()
 
@@ -97,11 +101,11 @@ def update_address(address_name):
 def get_custom_address_display_fieldnames(table_name):
 
 	return frappe.db.sql("""
-				  select 
+				  select
 				   fieldname
-				  from `tabCustom Field` 
-				  where 
-				    name like '%%address%%' 
+				  from `tabCustom Field`
+				  where
+				    name like '%%address%%'
 				    and fieldtype like '%%Text%%'
 				    and dt = %(table_name)s
 				""",{"table_name":table_name}, as_dict=1)
