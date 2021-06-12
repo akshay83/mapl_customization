@@ -78,8 +78,8 @@ def monkey_patch_payment_entry_validate():
 	payment_entry.PaymentEntry.add_party_gl_entries = add_party_gl_entries
 
 def monkey_patch_salary_slip_for_rounding():
-	from erpnext.hr.doctype.salary_slip.salary_slip import SalarySlip
-	from monkey_patch_salary_slip import get_amount_based_on_payment_days as gabopd
+	from erpnext.payroll.doctype.salary_slip.salary_slip import SalarySlip
+	from mapl_customization.customizations_for_mapl.monkey_patch_salary_slip import get_amount_based_on_payment_days as gabopd
 	SalarySlip.get_amount_based_on_payment_days = gabopd
 
 def monkey_patch_journal_entry_validation_advance():

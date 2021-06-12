@@ -1,4 +1,5 @@
 import json
+import frappe
 
 @frappe.whitelist()
 def json_load(str):

@@ -26,7 +26,7 @@ def get_amount_based_on_payment_days(self, row, joining_date, relieving_date):
 	# apply rounding
 	if frappe.get_cached_value("Salary Component", row.salary_component, "round_to_the_nearest_integer"):
 		#Monkey Here
-		rounding_type = frappe.get_cached_value("Salary Component", row.salary_component, "rounding"):
+		rounding_type = frappe.get_cached_value("Salary Component", row.salary_component, "rounding")
 		if not rounding_type or rounding_type == '':
 			amount, additional_amount = rounded(amount), rounded(additional_amount)
 		else:

@@ -209,6 +209,22 @@ cf_fields = [
 		"Supplier-current_balance"
 ]
 
+print_fs = [
+		"Vehicle Invoice",
+		"Spares Invoice",
+		"Sale Letter",
+		"Custom Salary Slip",
+		"Care of Problem",
+		"Helmet Dummy Invoice",
+		"Vehicle Receipt Format",
+		"Receipt Print Format",
+		"MOP Format",
+		"ICICI Bank",
+		"Credit Note",
+		"Quotation Standard",
+		"Sales Invoice Standard"
+]
+
 fixtures = [	{
 			"dt": "Custom Field",
 			"filters": [["name", "in", cf_fields]]
@@ -220,8 +236,10 @@ fixtures = [	{
 						"Customize Form Field-fieldtype-options",
 						"Custom Field-fieldtype-options"]]]
 		},
-		 "Stock Settings", "Selling Settings","Buying Settings","Custom Script",
-		 "Print Format", "Letter Head", "Custom SQL Queries"
+		{
+			"dt": "Print Format",
+			"filters": [["name", "in", print_fs]]
+		}, "Letter Head", "Custom SQL Queries"
 ]
 
 doc_events = {
@@ -282,6 +300,14 @@ app_include_js = ["/assets/mapl_customization/js/core.js",
 doctype_list_js = {"Payment Entry" : "/public/js/payment_entry_list.js",
 			"Sales Invoice" : "/public/js/sales_invoice_list.js"}
 
+jenv = {
+	"methods" : [],
+	"filters": [
+		"date_to_code:mapl_customization.customizations_for_mapl.jinja.date_to_code",
+		"json_load:mapl_customization.customizations_for_mapl.jinja.json_load"
+		]
+}
+
 jinja = {
 	"methods" : [],
 	"filters": [
@@ -311,8 +337,8 @@ standard_queries = {
 }
 
 #Monkey Patch
-#from mapl_customization.customizations_for_mapl.monkey_patch import do_monkey_patch
-#do_monkey_patch()
+from mapl_customization.customizations_for_mapl.monkey_patch import do_monkey_patch
+do_monkey_patch()
 
 # Includes in <head>
 # ------------------
