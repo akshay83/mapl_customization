@@ -1,5 +1,5 @@
 import frappe
-import HTMLParser
+from html.parser import HTMLParser
 from frappe.utils import cint
 
 def sales_invoice_validate(doc, method):
@@ -41,7 +41,7 @@ def validate_serial_no(doc, method):
 
 
 def validate_gst_state(doc, method):
-	parser = HTMLParser.HTMLParser()
+	parser = HTMLParser()
 	ship_state = frappe.db.get_value("Address", doc.shipping_address_name, "gst_state")
 	if not ship_state:
 		frappe.throw("""Please update Correct GST State in Shipping Address and then Try Again""")

@@ -1,3 +1,9 @@
+function custom_hide_sections(frm) {
+	frm.fields_dict.type_of_payment.wrapper.hide();
+	frm.fields_dict.party_section.wrapper.hide();
+	frm.fields_dict.payment_accounts_section.wrapper.hide();
+	frm.fields_dict.accounting_dimensions_section.wrapper.hide();
+}
 frappe.ui.form.on("Payment Entry", "refresh", function(frm) {
 	$('.btn.btn-default.btn-xs:contains("Receipts")').css('width','200px');
 	$('.btn.btn-default.btn-xs:contains("Payments")').css('width','200px');
@@ -9,9 +15,14 @@ frappe.ui.form.on("Payment Entry", "refresh", function(frm) {
 	$('.btn.btn-default.btn-xs:contains("Receipts")').parent().css('text-align','center');
 	$('.input-with-feedback.form-control.bold[data-fieldname="paid_amount"]').css({'background':'lightblue','border':'none'})
 });
+frappe.ui.form.on("Payment Entry", "mode_of_payment", function(frm) {
+	if (frm.doc.mode_of_payment !== undefined && frm.doc.mode_of_payment != '') {
+		frm.fields_dict.party_section.wrapper.show();
+	}
+});
 frappe.ui.form.on("Payment Entry", "onload_post_render", function(frm) {
 	if (frm.doc.__islocal && !frm.doc.paid_amount) {
-		cur_frm.fields_dict.type_of_payment.wrapper.hide();
+		custom_hide_sections(frm);
 	}
 
 	if ($.find('.btn.btn-sm.btn-default:contains("Add Party")').length <= 0) {

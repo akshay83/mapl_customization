@@ -129,6 +129,7 @@ custom.customer_quick_entry.set_default_values = function(doc, docfields) {
 		} catch (err) {
 		}
 		if(v) {
+			console.log(f+"  "+v);
 			doc.set_value(f.fieldname, v);
 		} else if(f.fieldtype == "Select" && f.options && typeof f.options === 'string'
 					&& !in_list(["[Select]", "Loading..."], f.options)) {

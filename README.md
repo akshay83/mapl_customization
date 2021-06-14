@@ -2,8 +2,8 @@
 
 Currently Customized for & Tested On :
 
-Frappe Ver : 6.24.10
-ERPNext Ver : 6.23.7
+Frappe Ver : 13.3.0 (branch-version 13)
+ERPNext Ver : 13.3.1 (branch-version 13)
 
 #### License
 

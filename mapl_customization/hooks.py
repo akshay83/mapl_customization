@@ -194,7 +194,6 @@ cf_fields = [
 		"Sales Order-reference",
 		"Sales Order-reporting_name",
 		"Sales Order-scheme",
-		"Selling Settings-manually_approve_vehicle_invoice",
 		"Serial No-chassis_no",
 		"Serial No-color",
 		"Serial No-column_101",
@@ -206,7 +205,8 @@ cf_fields = [
 		"Serial No-warehouse_details",
 		"Serial No-year_of_manufacture",
 		"Stock Entry-reporting_name",
-		"Supplier-current_balance"
+		"Supplier-current_balance",
+		"User-user_group"
 ]
 
 print_fs = [
@@ -291,7 +291,7 @@ doc_events = {
 
 after_install = "mapl_customization.customizations_for_mapl.install.after_install"
 
-#app_include_css = "/assets/mapl_customization/css/custom_css.css"
+app_include_css = "/assets/mapl_customization/css/custom_css.css"
 app_include_js = ["/assets/mapl_customization/js/core.js",
 		"/assets/mapl_customization/js/quick_customer.js",
 		"/assets/mapl_customization/js/monkey_patch_list_view.js"

@@ -55,24 +55,6 @@ def add_party_gl_entries(self, gl_entries):
 
 			gl_entries.append(gle)
 
-def validate_entries_for_advance(self):
-	for d in self.get('accounts'):
-		if d.reference_type not in ("Sales Invoice", "Purchase Invoice", "Journal Entry"):
-			if (d.party_type == 'Customer' and flt(d.credit) > 0) or \
-					(d.party_type == 'Supplier' and flt(d.debit) > 0):
-				#Monkey Here
-				#if d.is_advance=="No":
-				#	msgprint(_("Row {0}: Please check 'Is Advance' against Account {1} if this is an advance entry.").format(d.idx, d.account), alert=True)
-				#elif d.reference_type in ("Sales Order", "Purchase Order") and d.is_advance != "Yes":
-				if d.reference_type in ("Sales Order", "Purchase Order") and d.is_advance != "Yes":
-					frappe.throw(_("Row {0}: Payment against Sales/Purchase Order should always be marked as advance").format(d.idx))
-
-			if d.is_advance == "Yes":
-				if d.party_type == 'Customer' and flt(d.debit) > 0:
-					frappe.throw(_("Row {0}: Advance against Customer must be credit").format(d.idx))
-				elif d.party_type == 'Supplier' and flt(d.credit) > 0:
-					frappe.throw(_("Row {0}: Advance against Supplier must be debit").format(d.idx))
-
 def monkey_patch_payment_entry_validate():
 	from erpnext.accounts.doctype.payment_entry import payment_entry
 	payment_entry.PaymentEntry.add_party_gl_entries = add_party_gl_entries
@@ -82,11 +64,10 @@ def monkey_patch_salary_slip_for_rounding():
 	from mapl_customization.customizations_for_mapl.monkey_patch_salary_slip import get_amount_based_on_payment_days as gabopd
 	SalarySlip.get_amount_based_on_payment_days = gabopd
 
-def monkey_patch_journal_entry_validation_advance():
-	from erpnext.accounts.doctype.journal_entry.journal_entry import JournalEntry
-	JournalEntry.validate_entries_for_advance = validate_entries_for_advance
-
 def do_monkey_patch():
+	print ('-'*20,'MONKEY PATCH MAPL-CUSTOMIZATION','-'*10)
 	monkey_patch_payment_entry_validate()
 	monkey_patch_salary_slip_for_rounding()
-	monkey_patch_journal_entry_validation_advance()
+
+	from mapl_customization.customizations_for_mapl.gst_monkey import monkey_patch_gst_validate_document_name
+	monkey_patch_gst_validate_document_name()
