@@ -113,10 +113,8 @@ cf_fields = [
 		"Salary Slip-advance_deduction_details",
 		"Salary Slip-bank_branch",
 		"Salary Slip-calculate_actual_salary",
-		"Salary Slip-calculated_payment_days",
 		"Salary Slip-ifsc_code",
 		"Salary Slip-leave_availed",
-		"Salary Slip-loan_deduction_detail",
 		"Salary Slip-reporting_salary",
 		"Salary Structure Assignment-actual_salary",
 		"Salary Structure Assignment-no_pf_deduction",
@@ -171,7 +169,6 @@ cf_fields = [
 		"Sales Invoice-service_details",
 		"Sales Invoice-service_invoice",
 		"Sales Invoice-special_invoice",
-		"Sales Invoice-special_payment",
 		"Sales Invoice-special_remarks",
 		"Sales Invoice-transportation_details",
 		"Sales Invoice-vehicle_no",
@@ -206,7 +203,8 @@ cf_fields = [
 		"Serial No-year_of_manufacture",
 		"Stock Entry-reporting_name",
 		"Supplier-current_balance",
-		"User-user_group"
+		"User-user_group",
+		"Salary Slip-bank_column_break"
 ]
 
 print_fs = [
@@ -274,7 +272,7 @@ doc_events = {
                 "validate": "mapl_customization.customizations_for_mapl.sales_invoice_validation.validate_stock_entry_serial_no"
         },
 	"Salary Slip" : {
-		"before_save": "mapl_customization.customizations_for_mapl.salary_slip_utils.salary_slip_before_save"
+		"validate": "mapl_customization.customizations_for_mapl.salary_slip_utils.salary_slip_before_save"
 	},
 	"Customer" : {
 		"before_insert": "mapl_customization.customizations_for_mapl.quick_customer.validate_customer_before_save",
@@ -300,6 +298,7 @@ app_include_js = ["/assets/mapl_customization/js/core.js",
 doctype_list_js = {"Payment Entry" : "/public/js/payment_entry_list.js",
 			"Sales Invoice" : "/public/js/sales_invoice_list.js"}
 
+#version-13 branch supports this
 jenv = {
 	"methods" : [],
 	"filters": [
@@ -308,6 +307,7 @@ jenv = {
 		]
 }
 
+#delevop branch supports this
 jinja = {
 	"methods" : [],
 	"filters": [

@@ -11,6 +11,17 @@ frappe.ui.form.on("Customer","refresh", function(frm) {
 				frm.doc.current_balance=result;
 				refresh_field("current_balance");
 	});
+	if (!frm.doc.__islocal) {
+		$.each($('.address-box'),function(key, value) {
+			//$($(value).find('p:not([class])')[0]).append('<span class="btn btn-default btn-xs pull-right upd-button">Update</span>');
+			let button = $(value).append('<span class="btn btn-default btn-xs pull-right upd-button">Update</span>');
+			let name = $($(value).find('a')).attr('href');
+			name = name.substring(name.lastIndexOf('/')+1).replace(/%20/g, " ");
+			$(button).on("click", function() {
+				custom.update_address(name);
+			});
+		});
+	}
 });
 
 frappe.ui.form.on("Customer","refresh", function(frm) {
@@ -64,4 +75,6 @@ frappe.ui.form.on("Customer", "relation_to", function (frm) {
          cur_frm.refresh_field("relation_name");
 });
 
+function custom_update_button(frm) {
 
+};

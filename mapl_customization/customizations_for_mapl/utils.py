@@ -174,15 +174,38 @@ def get_money_in_words(number):
 	return money_in_words(number)
 
 @frappe.whitelist()
-def get_average_purchase_rate_for_item(item):
-	return frappe.db.sql("""select
-				 round(avg(sle.valuation_rate)*(1+(max(it.tax_rate)/100)),2) as avg_rate
+def get_average_purchase_rate_for_item(item,as_value=0):
+	query = """
+				select
+				   round(
+				     avg(sle.valuation_rate)*
+				     (1+((select max(tax_rate) from `tabItem Tax Template Detail` detail where detail.parent = it.item_tax_template))/100)
+				   ,2) as avg_rate
 				from
 				 `tabStock Ledger Entry` sle,
 				 `tabItem Tax` it
 				where
-				  it.parent = sle.item_code
-				  and sle.item_code = %s""", item)
+				 it.parent = sle.item_code
+				 and it.valid_from <= cast(now() as Date)
+				 and sle.item_code = %s
+				order by
+				  it.valid_from desc
+				limit 1
+		"""
+	if not as_value:
+		return frappe.db.sql(query, item)
+	else:
+		ar = frappe.db.sql(query, item, as_dict=1)[0].avg_rate
+		if ar:
+			return ar
+	return 0
+
+def check_average_purchase(doc):
+	for i in doc["items"]:
+		ar = get_average_purchase_rate_for_item(i.item_code, as_value=1)
+		if i.net_rate < ar:
+			return 0
+	return 1
 
 
 @frappe.whitelist()

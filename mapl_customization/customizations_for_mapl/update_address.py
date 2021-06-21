@@ -93,7 +93,7 @@ def update_address(address_name):
 	customer_docs = frappe.get_all('Customer', filters={'customer_primary_address':address_name})
 
 	for c in customer_docs:
-		c.db_set('primary_address', new_address)
+		c.db_set('customer_primary_address', new_address)
 
 	frappe.db.commit()
 

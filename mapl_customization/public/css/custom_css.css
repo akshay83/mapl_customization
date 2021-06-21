@@ -1,3 +1,15 @@
 .print-preview {
-	box-shadow: "2px 1px 4px rgb(25 39 52 / 20%), 0px 5px 6px rgb(25 39 52 / 30%)";
+	box-shadow: 2px 1px 4px rgb(25 39 52 / 20%), 0px 5px 6px rgb(25 39 52 / 30%);
 }
+.print-format-container {
+	border-radius: var(--border-radius);
+}
+.upd-button {
+	position:relative;
+	margin-top: -20px;
+	margin-right: -5px;
+}
+.address-box {
+	display: flow-root;
+}
+

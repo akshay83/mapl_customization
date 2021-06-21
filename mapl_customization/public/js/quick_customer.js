@@ -52,7 +52,7 @@ custom.customer_quick_entry = function (doc) {
 				{fieldtype: "Data", fieldname: "shipping_fax", label: __("Shipping Fax"), reqd: 0},
 				{fieldtype: "Data", fieldname: "shipping_email_id", label: __("Shipping Email ID"), reqd: 0},
 				{fieldtype: "Data", fieldname: "shiping_gst_id", label: __("Shipping GST ID"), reqd: 0},
-				{fieldtype: "Select", fieldname: "shipping_gst_state", label: __("Shipping GST State"), reqd: 0, options: " \nAndhra Pradesh\nArunachal Pradesh\nAssam\nBihar\nChandigarh\nChattisgarh\nDadra and Nagar Haveli\nDaman and Diu\nDelhi\nGoa\nGujarat\nHaryana\nHimachal Pradesh\nJammu and Kashmir\nJharkhand\nKarnataka\nKerala\nLakshadweep Islands\nMadhya Pradesh\nMaharashtra\nManipur\nMeghalaya\nMizoram\nNagaland\nOdisha\nPondicherry\nPunjab\nRajasthan\nSikkim\nTamil Nadu\nTelangana\nTripura\nUttar Pradesh\nUttarakhand\nWest Bengal"},
+				{fieldtype: "Select", fieldname: "shipping_gst_state", label: __("Shipping GST State"), reqd: 0, options: " \nAndhra Pradesh\nArunachal Pradesh\nAssam\nBihar\nChandigarh\nChattisgarh\nDadra and Nagar Haveli\nDaman and Diu\nDelhi\nGoa\nGujarat\nHaryana\nHimachal Pradesh\nJammu and Kashmir\nJharkhand\nKarnataka\nKerala\nLakshadweep Islands\nMadhya Pradesh\nMaharashtra\nManipur\nMeghalaya\nMizoram\nNagaland\nOdisha\nPondicherry\nPunjab\nRajasthan\nSikkim\nTamil Nadu\nTelangana\nTripura\nUttar Pradesh\nUttarakhand\nWest Bengal", default: "Madhya Pradesh"},
 				{fieldtype: "Check", fieldname: "shipping_preferred", label: __("Is Preferred Shipping Address") }
 			]
 		});

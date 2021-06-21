@@ -41,7 +41,7 @@ def set_auto_name(doc, method):
 		abbr = frappe.db.get_value("Company", doc.company, "abbr")
 
 		docdt = today()
-		if doc.doctype in ("Sales Order", "Purchase Receipt", "Quotation"):
+		if doc.doctype in ("Sales Order", "Quotation"):
 			docdt = doc.transaction_date
 		else:
 			docdt = doc.posting_date if doc.posting_date else today()
@@ -89,7 +89,7 @@ def check_series(doc, method):
 		existing = frappe.get_doc(doc.doctype, doc.name)
 
 	docdt = today()
-	if doc.doctype in ("Sales Order", "Purchase Receipt", "Quotation"):
+	if doc.doctype in ("Sales Order", "Quotation"):
 		docdt = doc.transaction_date
 	else:
 		docdt = doc.posting_date if doc.posting_date else today()

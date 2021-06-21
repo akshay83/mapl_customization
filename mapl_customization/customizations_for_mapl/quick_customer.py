@@ -16,11 +16,12 @@ def do_quick_entry(args):
 
 	customer = make_customer(args)
 	make_contact(args, customer)
-	enter_billing_address (args,customer)
+	billing_add_name = enter_billing_address (args,customer)
 	enter_shipping_address (args, customer)
 	customer.db_set('customer_primary_contact', customer.customer_name)
 	customer.db_set('mobile_no', customer.primary_contact_no)
 	customer.db_set('email_id', args.get("primary_email"))
+	customer.db_set('customer_primary_address', billing_add_name)
 	return customer
 
 def validate(args):
@@ -92,7 +93,7 @@ def make_customer(args):
 	customer_doc.territory = args.get("territory")
 	customer_doc.customer_type = args.get("customer_type")
 	customer_doc.tax_id = args.get("tax_id")
-	customer_doc.pan_no = args.get("pan_no")
+	customer_doc.pan = args.get("pan_no")
 	customer_doc.company_name = args.get("company_name")
 	customer_doc.vehicle_no = args.get("vehicle_no")
 	customer_doc.relation_to = args.get("relation_to")
@@ -149,6 +150,7 @@ def enter_billing_address(args, customer):
 	address_doc.append('links', dict(link_doctype='Customer', link_name=customer.name))
 	address_doc.autoname()
 	address_doc.save()
+	return address_doc.name
 
 def enter_shipping_address(args, customer):
 	address_keys = args.keys()

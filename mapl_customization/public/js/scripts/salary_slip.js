@@ -2,12 +2,64 @@ cur_frm.add_fetch('employee', 'bank_branch', 'bank_branch');
 cur_frm.add_fetch('employee', 'ifsc_code', 'ifsc_code');
 
 frappe.ui.form.on("Salary Slip", "calculate_actual_salary", function(frm) {
-	cur_frm.doc.calculated_payment_days = Math.round(cur_frm.doc.payment_days * cur_frm.doc.actual_salary / cur_frm.doc.reporting_salary);
-	cur_frm.refresh_field("calculated_payment_days");
+	let calculation_dialog = new frappe.ui.Dialog({
+			title: "Calculate Actual Salary",
+			fields: [
+				{
+					label: "Actual Salary",
+					fieldname: "actual_salary",
+					fieldtype: "Currency"
+				},
+				{
+					label: "Reporting Salary",
+					fieldname: "reporting_salary",
+					fieldtype: "Currency"
+				},
+				{
+					label: "Actual Payment Days",
+					fieldname: "actual_payment_days",
+					fieldtype: "Int"
+				},
+				{
+					label: "Reporting Payment Days",
+					fieldname: "reporting_payment_days",
+					fieldtype: "Int",
+					read_only: 1
+				},
+				{
+					label: "Calculate",
+					fieldname: "calculate_button",
+					fieldtype: "Button"
+				}
+			],
+			primary_action_label: "Close",
+			primary_action(values) {
+				calculation_dialog.hide();
+			}
+	});
+
+	console.log(calculation_dialog);
+	calculation_dialog.fields_dict.calculate_button.$input.on("click", function (e) {
+		calculation_dialog.set_value("reporting_payment_days",
+			Math.round(calculation_dialog.get_value('actual_payment_days') * calculation_dialog.get_value('actual_salary') / calculation_dialog.get_value('reporting_salary')));
+		calculation_dialog.refresh_fields(["reporting_payment_days"]);
+	});
+
+	calculation_dialog.set_value('actual_salary',frm.doc.actual_salary);
+	calculation_dialog.set_value('reporting_salary',frm.doc.reporting_salary);
+	calculation_dialog.show();
 });
 
 frappe.ui.form.on("Salary Slip","end_date", function(frm) {
-	if (frm.doc.start_date) {
+	fetch_actual_reporting_salary(frm);
+});
+
+frappe.ui.form.on("Salary Slip","employee", function(frm) {
+	fetch_actual_reporting_salary(frm);
+});
+
+function fetch_actual_reporting_salary(frm) {
+	if (frm.doc.salary_structure) {
 		frappe.db.get_value("Salary Structure Assignment",
 					{
 						"salary_structure": frm.doc.salary_structure,
@@ -18,9 +70,9 @@ frappe.ui.form.on("Salary Slip","end_date", function(frm) {
 						"actual_salary",
 						"no_pf_deduction"
 					],function(val) {
-						console.log(val);
+						//--DEBUG--console.log(val);
 						frm.doc.actual_salary = val.actual_salary;
-						frm.doc.reporting_salary = value.reported_salary;
+						frm.doc.reporting_salary = val.reported_salary;
 						if (val.no_pf_deduction != 0) {
 				                        frm.set_df_property("reporting_salary", "hidden", 0);
 							frm.set_df_property("actual_salary", "hidden", 0);
@@ -33,4 +85,4 @@ frappe.ui.form.on("Salary Slip","end_date", function(frm) {
 					}
 		);
 	}
-});
+}
