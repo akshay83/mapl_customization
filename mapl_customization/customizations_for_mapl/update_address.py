@@ -90,12 +90,10 @@ def update_address(address_name):
 							"link_value": address_name
 						})
 
-	customer_docs = frappe.get_all('Customer', filters={'customer_primary_address':address_name})
+	customer_docs = frappe.get_all('Customer', fields=["name"], filters={'customer_primary_address':address_name})
 
 	for c in customer_docs:
-		c.db_set('customer_primary_address', new_address)
-
-	frappe.db.commit()
+		frappe.db.set_value('Customer', c.name, 'primary_address', new_address)
 
 
 def get_custom_address_display_fieldnames(table_name):

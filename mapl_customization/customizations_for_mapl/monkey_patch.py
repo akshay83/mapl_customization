@@ -55,33 +55,6 @@ def add_party_gl_entries(self, gl_entries):
 
 			gl_entries.append(gle)
 
-#Patch to Use mapl_customization.customizations_for_mapl.utils.check_average_purchase in Workflow Condition
-#Condition in such a way that if CAP return 0 then only Allowed Role can Approve the Sales Invoice/Or Other Document
-#To use condition like this - Create two Conditions 1. Which can allow all the roles to approve depending on condition == 1
-#2. Which allows only allowed role to Approove depending on Condition == 0
-def get_workflow_safe_globals():
-	# access to frappe.db.get_value, frappe.db.get_list, and date time utils.
-	from mapl_customization.customizations_for_mapl.utils import check_average_purchase as cap
-	return dict(
-		frappe=frappe._dict(
-			db=frappe._dict(get_value=frappe.db.get_value, get_list=frappe.db.get_list),
-			session=frappe.session,
-			utils=frappe._dict(
-				now_datetime=frappe.utils.now_datetime,
-				add_to_date=frappe.utils.add_to_date,
-				get_datetime=frappe.utils.get_datetime,
-				now=frappe.utils.now,
-			),
-		),
-		mapl_customization=frappe._dict(
-			utils=frappe._dict(check_average_purchase=cap)
-		)
-	)
-
-def monkey_patch_safeworkflow():
-	from frappe.model import workflow
-	workflow.get_workflow_safe_globals = get_workflow_safe_globals
-
 def monkey_patch_payment_entry_validate():
 	from erpnext.accounts.doctype.payment_entry import payment_entry
 	payment_entry.PaymentEntry.add_party_gl_entries = add_party_gl_entries
@@ -95,5 +68,3 @@ def do_monkey_patch():
 
 	from mapl_customization.customizations_for_mapl.monkey_patch_salary_slip import monkey_patch_for_salary_slip
 	monkey_patch_for_salary_slip()
-
-	monkey_patch_safeworkflow()

@@ -8,7 +8,7 @@ app_description = "Customizations Done Specifically for Mehta Automobiles Pvt Lt
 app_icon = "octicon octicon-file-directory"
 app_color = "#589494"
 app_email = "mehta.akshay@gmail.com"
-app_version = "0.0.1"
+app_version = "0.1.0"
 app_license = "MIT"
 
 cf_fields = [
@@ -334,6 +334,10 @@ doctype_js = {
 
 standard_queries = {
 	"Customer": "mapl_customization.customizations_for_mapl.queries.mapl_customer_query"
+}
+
+workflow_safe_globals = {
+	"mapl_customization.utils.check_average_purchase" : "mapl_customization.customizations_for_mapl.utils.check_average_purchase"
 }
 
 #Monkey Patch

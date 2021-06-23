@@ -12,13 +12,15 @@ frappe.ui.form.on("Customer","refresh", function(frm) {
 				refresh_field("current_balance");
 	});
 	if (!frm.doc.__islocal) {
-		$.each($('.address-box'),function(key, value) {
+		$.each($('.frappe-control[data-fieldname=address_html] > .address-box'),function(key, value) {
 			//$($(value).find('p:not([class])')[0]).append('<span class="btn btn-default btn-xs pull-right upd-button">Update</span>');
-			let button = $(value).append('<span class="btn btn-default btn-xs pull-right upd-button">Update</span>');
+			let button = $('<span class="btn btn-default btn-xs pull-right upd-button">Update</span>');
+			$(value).append(button);
 			let name = $($(value).find('a')).attr('href');
 			name = name.substring(name.lastIndexOf('/')+1).replace(/%20/g, " ");
-			$(button).on("click", function() {
+			button.on("click", function() {
 				custom.update_address(name);
+				frm.refresh();
 			});
 		});
 	}

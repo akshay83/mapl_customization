@@ -201,7 +201,7 @@ def get_average_purchase_rate_for_item(item,as_value=0):
 	return 0
 
 def check_average_purchase(doc):
-	for i in doc["items"]:
+	for i in doc.get("items"):
 		ar = get_average_purchase_rate_for_item(i.item_code, as_value=1)
 		if i.net_rate < ar:
 			return 0
