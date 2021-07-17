@@ -19,10 +19,15 @@ def sales_on_submit_validation(doc, method):
 def validate_serial_no(doc, method):
 	""" check if serial number is already used in other sales invoice """
 	for item in doc.items:
-		if not item.serial_no:
+		if not item.serial_no or item.serial_no == '':
 			continue
 
 		for serial_no in item.serial_no.split("\n"):
+			#--DEBUG-- print serial_no
+
+			if not serial_no or serial_no == '':
+				continue
+
 			query = """
 				select parent from `tabSales Invoice Item` where serial_no like '%{serial_no}%' and docstatus <> 2 {docname}
 				"""
@@ -32,16 +37,27 @@ def validate_serial_no(doc, method):
 				"docname": "and parent <> '{0}'".format(doc.name) if doc.name else ""
 				})
 
+			#--DEBUG-- print query
 			for c in frappe.db.sql(query, as_dict=1):
-				if c.name:
-					frappe.throw("Serial Number: {0} is already referenced in Sales Invoice: {1} {2}".format(
-						serial_no, c.parent, doc.doctstaus
-					))
+				#--DEBUG-- print c
+				if c.parent:
+					if not (frappe.session.user == "Administrator" or "System Manager" in frappe.get_roles()):
+						frappe.throw("Serial Number: {0} is already referenced in Sales Invoice: {1}".format(
+							serial_no, c.parent
+						))
+					else:
+						frappe.msgprint("Serial Number: {0} is already referenced in Sales Invoice: {1}".format(
+							serial_no, c.parent
+						))
+
 
 
 
 def validate_gst_state(doc, method):
 	parser = HTMLParser.HTMLParser()
+	if doc.special_invoice and doc.special_invoice == 'Bill-to-Ship-to':
+		return
+
 	ship_state = frappe.db.get_value("Address", doc.shipping_address_name, "gst_state")
 	if not ship_state:
 		frappe.throw("""Please update Correct GST State in Shipping Address and then Try Again""")

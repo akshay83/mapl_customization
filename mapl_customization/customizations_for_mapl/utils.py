@@ -94,7 +94,7 @@ def purchase_receipt_on_submit(doc,method):
 				serial_doc.key_no = key_nos[index] if len(key_nos) > index else None
 				serial_doc.color = color[index]
 				serial_doc.year_of_manufacture = i.year_of_manufacture
-				serial_doc.save()
+				serial_doc.save(ignore_permissions=True)
 				index = index+1
 
 def purchase_receipt_validate(doc, method):
@@ -137,6 +137,15 @@ def purchase_invoice_gst_check(doc, method):
 
 	if (doc.taxes_and_charges == 'In State GST' or not doc.taxes_and_charges or doc.taxes_and_charges == "") and state != 'Madhya Pradesh':
 		frappe.throw("""Please Check Correct Address/GSTIN""")
+
+	purchase_invoice_tax_account_check(doc, state)
+
+def purchase_invoice_tax_account_check(doc,address_state):
+	for t in doc.taxes:
+		if (t.account_head.startswith("IGST") and address_state == 'Madhya Pradesh'):
+			frappe.throw("""Please Check Correct Address/GSTIN""")
+		elif ((t.account_head.startswith("CGST") or t.account_head.startswith("SGST")) and address_state != 'Madhya Pradesh'):
+			frappe.throw("""Please Check Correct Address/GSTIN""")
 
 
 def purchase_item_rate_validate_before_submit(doc, method):

@@ -98,6 +98,7 @@ def make_customer(args):
 	customer_doc.relation_to = args["relation_to"] if "relation_to" in customer_keys else None
 	customer_doc.relation_name = args["relation_name"] if "relation_name" in customer_keys else None
 	customer_doc.primary_email = args["primary_email"] if "primary_email" in customer_keys else None
+	customer_doc.aadhar_card_no = args["aadhar_card_no"] if "aadhar_card_no" in customer_keys else None
 	customer_doc.save()
 	return customer_doc
 

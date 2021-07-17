@@ -15,6 +15,7 @@ custom.customer_quick_entry = function (doc) {
 				{fieldtype: "Link", fieldname: "salutation", label: __("Salutation"), reqd:0, options: "Salutation"},
 				{fieldtype: "Select", fieldname: "relation_to", label: __("Relation To"), reqd: 0, options: "\nS/o\nD/o\nW/o\nDIR.", default: ""},
 				{fieldtype: "Data", fieldname: "pan_no", label: __("PAN No"), reqd: 0},
+				{fieldtype: "Data", fieldname: "aadhar_card_no", label: __("Aadhar Card No"), reqd: 0},
 				{fieldtype: "Check", fieldname: "has_email", label: __("Has Email Address"), default: 1},
 				{fieldtype: "Column Break", fieldname: "column_break_5"},
 				{fieldtype: "Data", fieldname: "customer_name", label: __("Customer Name"), reqd: 1},
