@@ -87,11 +87,11 @@ def get_conditions(filters):
 	conditions = ""
 
 	if filters.get("from_date"):
-		conditions += " posting_date >= '%s'" % frappe.db.escape(filters["from_date"])
+		conditions += " posting_date >= %s" % frappe.db.escape(filters["from_date"])
 
 
 	if filters.get("to_date"):
-		conditions += " and posting_date <= '%s'" % frappe.db.escape(filters["to_date"])
+		conditions += " and posting_date <= %s" % frappe.db.escape(filters["to_date"])
 
 	if filters.get("party"):
 		conditions += " and party = '%s'" % filters["party"]
@@ -105,7 +105,7 @@ def get_opening(filters, party_name):
 			from 
 			  `tabGL Entry` 
 			where
-			  posting_date < '{start_date}'
+			  posting_date < {start_date}
 			  and party_type = '{party_type}' and party = '{party_name}'"""
 	build_row = {}
 

@@ -1,0 +1,46 @@
+{
+ "actions": [],
+ "creation": "2021-07-11 14:50:14.202940",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "help",
+  "upload_html"
+ ],
+ "fields": [
+  {
+   "fieldname": "help",
+   "fieldtype": "HTML",
+   "label": "Help"
+  },
+  {
+   "fieldname": "upload_html",
+   "fieldtype": "HTML",
+   "label": "Upload HTML"
+  }
+ ],
+ "hide_toolbar": 1,
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2021-07-17 23:41:10.319125",
+ "modified_by": "Administrator",
+ "module": "Customizations for MAPL",
+ "name": "Import Customers",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC"
+}

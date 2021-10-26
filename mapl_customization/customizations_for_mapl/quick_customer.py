@@ -356,6 +356,8 @@ def validate_customer_before_save(doc, method):
 	#		return
 
 	doc.customer_name = doc.customer_name.strip()
+	if not hasattr(doc,"primary_contact_no"):
+		return
 	pcn, scn = strip_contact_nos(doc.primary_contact_no, doc.secondary_contact_no)
 
 	query = """

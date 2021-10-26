@@ -87,11 +87,11 @@ def get_conditions(filters):
 	conditions = ""
 
 	if filters.get("from_date"):
-		conditions += " posting_date >= '%s'" % frappe.db.escape(filters["from_date"])
+		conditions += " posting_date >= %s" % frappe.db.escape(filters["from_date"])
 
 
 	if filters.get("to_date"):
-		conditions += " and posting_date <= '%s'" % frappe.db.escape(filters["to_date"])
+		conditions += " and posting_date <= %s" % frappe.db.escape(filters["to_date"])
 
 	return conditions
 
@@ -113,12 +113,12 @@ def get_account_filters(filters):
 
 
 def get_opening(filters):
-	query = """select 
+	query = """select
 			  ifnull(sum(debit-credit),0) as opening_balance
-			from 
-			  `tabGL Entry` 
+			from
+			  `tabGL Entry`
 			where
-			  posting_date < '{start_date}'
+			  posting_date < {start_date}
 			  {condition}"""
 	build_row = {}
 
@@ -148,14 +148,14 @@ def get_individual_statement(filters):
 	rows = []
 	rows.append(opening)
 
-	query = """select 
+	query = """select
 			  posting_date,
 			  voucher_type,
 			  voucher_no,
 			  remarks,
 			  if((voucher_type like 'Journal %'),
 			    (select cheque_no from `tabJournal Entry` where name=voucher_no),
-			    if((voucher_type like 'Payment %'), 
+			    if((voucher_type like 'Payment %'),
 			      (select reference_no from `tabPayment Entry` where name=voucher_no),
 			      null
 			    )
@@ -176,7 +176,7 @@ def get_individual_statement(filters):
 				        ),
 				        null
 			  ) as `against_name`
-			from 
+			from
 			  `tabGL Entry` gl
 			where
 			  {date_range}
@@ -219,5 +219,9 @@ def get_individual_statement(filters):
 			"debit": (total_debit-total_credit) if (total_debit>total_credit) else 0,
 			"credit": (total_credit-total_debit) if (total_credit>total_debit) else 0
 		    })
+
+	print ('-'*40)
+	print (rows)
+	print ('-'*40)
 
 	return rows

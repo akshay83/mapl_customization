@@ -8,6 +8,16 @@ frappe.ui.form.on("Sales Invoice", "is_pos", function(frm) {
 	}
 });
 
+function custom_hide_show_print_buttons(show) {
+	if (show) {
+		$('.dropdown-item:contains("Print")').show(); //HIDE MENU ENTRY - FIND BASED ON TEXT AND <A> //
+		$('.text-muted.btn.btn-default.icon-btn[data-original-title="Print"]').show();
+	} else {
+		$('.dropdown-item:contains("Print")').hide(); //HIDE MENU ENTRY - FIND BASED ON TEXT AND <A> //
+		$('.text-muted.btn.btn-default.icon-btn[data-original-title="Print"]').hide();
+	}
+}
+
 function custom_hide_print_button(frm) {
 	//TO HIDE PRINT ICON & PRINT MENU FROM A DOCUMENT IN VERSION 6 USE
 
@@ -16,20 +26,22 @@ function custom_hide_print_button(frm) {
 	//--DEBUG--console.log(cur_frm.doc.__unsaved);
 	//--DEBUG--console.log("Cancel Button:"+$('.grey-link:contains(Cancel)').length);
 	if (typeof frm.doc.workflow_state !== "undefined") {
-		if (frm.doc.workflow_state!="Pending" && frm.doc.workflow_state!="Rejected" && frm.doc.workflow_state!="Cancelled" && !frm.is_dirty()) {
-			$('ul[class="dropdown-menu"] a:contains("Print")').show(); //HIDE MENU ENTRY - FIND BASED ON TEXT AND <A> //
-			$(".page-icon-group.hidden-xs.hidden-sm").show(); //HIDE PRINT ICON - FIND BASED ON ID //
-		} else {
-			$('ul[class="dropdown-menu"] a:contains("Print")').hide(); //HIDE MENU ENTRY - FIND BASED ON TEXT AND <A> //
-			$(".page-icon-group.hidden-xs.hidden-sm").hide(); //HIDE PRINT ICON - FIND BASED ON ID //
-		}
+		frappe.db.get_value('Workflow', {"document_type":"Sales Invoice", "is_active":1}, "name", function(val) {
+			if (Object.keys(val).length > 0) {
+				if (frm.doc.workflow_state!="Pending" && frm.doc.workflow_state!="Rejected" && frm.doc.workflow_state!="Cancelled" && !frm.is_dirty()) {
+					custom_hide_show_print_buttons(true);
+				} else {
+					custom_hide_show_print_buttons(false);
+				}
+			} else {
+				custom_hide_show_print_buttons(true);
+			}
+		});
 	} else {
 		if (!frm.is_dirty()) {
-			$('ul[class="dropdown-menu"] a:contains("Print")').show(); //HIDE MENU ENTRY - FIND BASED ON TEXT AND <A> //
-			$(".page-icon-group.hidden-xs.hidden-sm").show(); //HIDE PRINT ICON - FIND BASED ON ID //
+			custom_hide_show_print_buttons(true);
 		} else {
-			$('ul[class="dropdown-menu"] a:contains("Print")').hide(); //HIDE MENU ENTRY - FIND BASED ON TEXT AND <A> //
-			$(".page-icon-group.hidden-xs.hidden-sm").hide(); //HIDE PRINT ICON - FIND BASED ON ID //
+			custom_hide_show_print_buttons(false);
 		}
 	}
 	//--DEBUG--console.log("Cancel Button:"+$('.grey-link:contains(Cancel)').length);
@@ -172,18 +184,6 @@ frappe.ui.form.on("Sales Invoice", "items_on_form_rendered", function(frm) {
 });
 
 frappe.ui.form.on("Sales Invoice", "validate", function(frm) {
-	if (frm.doc.default_warehouse != null) {
-		frm.doc.items.forEach(function(i) {
-			if (i.warehouse == null) {
-				i.warehouse = frm.doc.default_warehouse;
-			}
-		});
-	}
-	/*frm.doc.items.forEach(function(i) {
-            if (i.gst_hsn_code == null || i.gst_hsn_code == "") {
-            	frappe.msgprint("HSN Code Not found for "+i.item_code+", Please verify");
-            }
-	});*/
 	if (frm.doc.update_stock == 0) {
 		frappe.msgprint("Update Stock not Ticked. Please Verify Before Continuing");
 	}

@@ -46,28 +46,28 @@ frappe.query_reports["Group Statement"] = {
 			"label": __("Party"),
 			"fieldtype": "Dynamic Link",
 			"get_options": function() {
-				var party_type = frappe.query_report_filters_by_name.party_type.get_value();
-				var party = frappe.query_report_filters_by_name.party.get_value();
+				var party_type = frappe.query_report.get_filter_value('party_type');
+				var party = frappe.query_report.get_filter_value('party');
 				if(party && !party_type) {
 					frappe.throw(__("Please select Party Type first"));
 				}
 				return party_type;
 			},
 			"on_change": function() {
-				var party_type = frappe.query_report_filters_by_name.party_type.get_value();
-				var party = frappe.query_report_filters_by_name.party.get_value();
+				var party_type = frappe.query_report.get_filter_value('party_type');
+				var party = frappe.query_report.get_filter_value('party');
 				if(!party_type || !party) {
-					frappe.query_report_filters_by_name.party_name.set_value("");
+					frappe.query_report.set_filter_value('party_name','');
 					return;
 				}
 
 				var fieldname = party_type.toLowerCase() + "_name";
 				frappe.db.get_value(party_type, party, fieldname, function(value) {
-					frappe.query_report_filters_by_name.party_name.set_value(value[fieldname]);
+					frappe.query_report.set_filter_value('party_name',value[fieldname]);
 				});
 			},
 			"get_query": function() {
-				var cg = frappe.query_report_filters_by_name.customer_group;
+				var cg = frappe.query_report.get_filter_value('customer_group');
 				if (cg.value != null) {
 					//console.log(cg.value);
 					return {
@@ -84,24 +84,24 @@ frappe.query_reports["Group Statement"] = {
 			"read_only": 1
 		}
 	],
-	"formatter":function (row, cell, value, columnDef, dataContext, default_formatter) {
-		value = default_formatter(row, cell, value, columnDef, dataContext);
+	"formatter":function (value, row, column, data, default_formatter) {
+		value = default_formatter(value, row, column, data);
 
-		if (dataContext.posting_date == null && ['Opening Balance', 'Closing Totals', 'Balance'].indexOf(dataContext.voucher_type) == -1 && columnDef.id=="Voucher Ref") {
+		if (data.posting_date == null && ['Opening Balance', 'Closing Totals', 'Balance'].indexOf(data.voucher_type) == -1 && column.fieldname=="voucher_ref") {
 			value = "<span style='font-weight:bold'>" + value + "</span>";
 		}
 
-		if (dataContext.voucher_type == 'Balance' && parseFloat(dataContext.debit) > 0 && columnDef.id == "Debit") {
+		if (data.voucher_type == 'Balance' && parseFloat(data.debit) > 0 && column.fieldname == "debit") {
 			value = "<span style='color:green!important;font-weight:bold'>" + value + "</span>";
-		} else if (dataContext.voucher_type == 'Balance' && parseFloat(dataContext.credit) > 0 && columnDef.id == "Credit") {
+		} else if (data.voucher_type == 'Balance' && parseFloat(data.credit) > 0 && column.fieldname == "credit") {
 			value = "<span style='color:red!important;font-weight:bold'>" + value + "</span>";
 		}
 
-		if (dataContext.voucher_type == 'Balance' && columnDef.id == "Type") {
+		if (data.voucher_type == 'Balance' && column.fieldname == "type") {
 			value = "<span style='font-weight:bold'>" + value + "</span>";
 		}
 
-		if (columnDef.id == "Running Balance") {
+		if (column.fieldname == "running") {
 			value = "<div style='text-align:right;'>" + value + "</div>";
 		}
 		return value;

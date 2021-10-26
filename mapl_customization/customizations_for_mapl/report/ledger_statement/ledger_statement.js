@@ -37,24 +37,24 @@ frappe.query_reports["Ledger Statement"] = {
 			"label": __("Party"),
 			"fieldtype": "Dynamic Link",
 			"get_options": function() {
-				var party_type = frappe.query_report_filters_by_name.party_type.get_value();
-				var party = frappe.query_report_filters_by_name.party.get_value();
+				var party_type = frappe.query_report.get_filter_value('party_type');
+				var party = frappe.query_report.get_filter_value('party');
 				if(party && !party_type) {
 					frappe.throw(__("Please select Party Type first"));
 				}
 				return party_type;
 			},
 			"on_change": function() {
-				var party_type = frappe.query_report_filters_by_name.party_type.get_value();
-				var party = frappe.query_report_filters_by_name.party.get_value();
+				var party_type = frappe.query_report.get_filter_value('party_type');
+				var party = frappe.query_report.get_filter_value('party');
 				if(!party_type || !party) {
-					frappe.query_report_filters_by_name.party_name.set_value("");
+					frappe.query_report.set_filter_value('party_name','');
 					return;
 				}
 
 				var fieldname = party_type.toLowerCase() + "_name";
 				frappe.db.get_value(party_type, party, fieldname, function(value) {
-					frappe.query_report_filters_by_name.party_name.set_value(value[fieldname]);
+					frappe.query_report.set_filter_value('party_name',value[fieldname]);
 				});
 			},
 		},
@@ -71,10 +71,10 @@ frappe.query_reports["Ledger Statement"] = {
 			"default": "1"
 		}
 	],
-        "formatter":function (row, cell, value, columnDef, dataContext, default_formatter) {
-                value = default_formatter(row, cell, value, columnDef, dataContext);
+        "formatter":function (value, row, column, data, default_formatter) {
+                value = default_formatter(value, row, column, data);
 
-                if (columnDef.id == "Running Balance") {
+                if (column.fieldname == "running_balance") {
                         value = "<div style='text-align:right;'>" + value + "</div>";
                 }
                 return value;
