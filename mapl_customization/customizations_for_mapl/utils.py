@@ -60,6 +60,8 @@ def validate_input_serial(args,rows,is_vehicle=1, is_electric_vehicle=0):
 	return True
 
 def purchase_receipt_on_submit(doc,method):
+	if doc.ignore_validate_hook:
+		return	
 	validate_hsn_code(doc, method)
 	for i in doc.items:
 		if cint(i.is_vehicle):
@@ -82,6 +84,8 @@ def purchase_receipt_on_submit(doc,method):
 				index = index+1
 
 def purchase_receipt_validate(doc, method):
+	if doc.ignore_validate_hook:
+		return	
 	for i in doc.items:
 		if cint(i.is_vehicle):
 			chassis_nos = i.serial_no.split("\n")
@@ -130,6 +134,8 @@ def purchase_item_rate_validate_before_submit(doc, method):
 			frappe.throw("""Please Check Item Rates, Should Be Non-Zero. Item {0}""".format(i.item_code))
 
 def purchase_receipt_before_submit(doc, method):
+	if doc.ignore_validate_hook:
+		return	
 	purchase_receipt_serial_no_validate_before_submit(doc, method)
 	purchase_item_rate_validate_before_submit(doc, method)
 	purchase_invoice_gst_check(doc, method)

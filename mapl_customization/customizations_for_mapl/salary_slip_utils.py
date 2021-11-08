@@ -24,6 +24,8 @@ def get_repayment_schedule(doc):
 
 
 def salary_slip_before_save(doc, method):
+	if doc.ignore_validate_hook:
+		return	
 	loan_details = get_repayment_schedule(doc)
 
 	if not loan_details:

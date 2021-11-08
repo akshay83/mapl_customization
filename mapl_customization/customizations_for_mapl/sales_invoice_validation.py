@@ -3,6 +3,8 @@ from html.parser import HTMLParser
 from frappe.utils import cint
 
 def sales_invoice_validate(doc, method):
+	if doc.ignore_validate_hook:
+		return	
 	negative_stock_validation(doc, method)
 	validate_stock_entry_serial_no(doc, method)
 	validate_serial_no(doc, method)
@@ -10,6 +12,8 @@ def sales_invoice_validate(doc, method):
 	validate_gst_state(doc, method)
 
 def sales_on_submit_validation(doc, method):
+	if doc.ignore_validate_hook:
+		return	
 	vehicle_validation(doc, method)
 	validate_hsn_code(doc, method)
 	taxes_and_charges_validation(doc, method)
@@ -72,6 +76,8 @@ def validate_gst_state(doc, method):
 
 
 def sales_order_validate(doc, method):
+	if doc.ignore_validate_hook:
+		return			
 	finance_validate(doc, method)
 
 def finance_validate(doc, method):
@@ -113,6 +119,8 @@ def validate_grand_total(doc, method):
 		frappe.throw("Invoice Total Should Be Non - Zero. Please Check Total Values")
 
 def validate_stock_entry_serial_no(doc, method):
+	if doc.ignore_validate_hook:
+		return	
 	if doc.doctype.lower() != 'stock entry' and doc.is_return:
 		return
 

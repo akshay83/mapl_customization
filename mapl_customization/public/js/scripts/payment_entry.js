@@ -33,6 +33,7 @@ frappe.ui.form.on("Payment Entry", "mode_of_payment", function(frm) {
 	}
 });
 frappe.ui.form.on("Payment Entry", "onload_post_render", function(frm) {
+	cur_frm.fields_dict.gst_section.wrapper.hide();
 	if (frm.doc.__islocal && !frm.doc.paid_amount) {
 		custom_hide_sections(frm, true);
 	} else {
