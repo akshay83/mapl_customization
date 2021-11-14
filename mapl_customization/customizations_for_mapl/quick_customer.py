@@ -148,6 +148,12 @@ def enter_shipping_address(args, customer):
 def validate_address(doc, method):
 	validate_pin_with_state(doc, method)
 	validate_address_creation(doc, method)
+	validate_state_number(doc, method)
+
+def validate_state_number(doc, method):
+	from erpnext.regional.india import states, state_numbers
+	if doc.gst_state:
+		doc.gst_state_number = state_numbers[doc.gst_state]
 
 def validate_pin_with_state(doc, method):
 	if not doc.gst_state:

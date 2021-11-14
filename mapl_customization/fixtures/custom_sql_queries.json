@@ -358,5 +358,14 @@
   "name": "Instant Cashback Details", 
   "query": "select\n  pe.reporting_name,\n  pe.posting_date,\n  pe.party,\n  pe.party_name,\n  pe.base_amount,\n  pe.paid_amount,\n  pe.mode_of_payment,\n  pe.special_payment,\n  (select group_concat(distinct item.brand) \n    from `tabSales Invoice Item` item join `tabSales Invoice` inv on inv.name = item.parent\n    where\n       inv.docstatus &lt; 2\n       and inv.posting_date between (pe.posting_date - interval 5 day) and (pe.posting_date + interval 5 day)\n       and inv.customer = pe.party\n   ) as brands\nfrom\n  `tabPayment Entry` pe\nwhere\n  pe.docstatus = 1\n  and pe.posting_date between '2021-06-01' and '2021-06-30'\n  and pe.special_payment is not null", 
   "query_name": "Instant Cashback Details"
+ }, 
+ {
+  "description": null, 
+  "docstatus": 0, 
+  "doctype": "Custom SQL Queries", 
+  "modified": "2021-08-08 15:06:19.886653", 
+  "name": "Yearly Salary Details", 
+  "query": "select\n  slip.employee_name,\n  sum(if(detail.salary_component='Arrear',detail.amount,0)) as `Arrear`,\n  sum(if(detail.salary_component='Basic',detail.amount,0)) as `Basic`,  \n  sum(if(detail.salary_component='Children Education Allowance',detail.amount,0)) as `Children Education Allowance`,  \n  sum(if(detail.salary_component='Conveyance',detail.amount,0)) as `Conveyance`,\n  sum(if(detail.salary_component='ESI Contr.',detail.amount,0)) as `ESI Contr.`,  \n  sum(if(detail.salary_component='House Rent Allowance',detail.amount,0)) as `House Rent Allowance`,  \n  sum(if(detail.salary_component='Income Tax',detail.amount,0)) as `Income Tax`,  \n  sum(if(detail.salary_component='Leave Encashment',detail.amount,0)) as `Leave Encashment`,  \n  sum(if(detail.salary_component='Medical Allowance',detail.amount,0)) as `Medical Allowance`,  \n  sum(if(detail.salary_component='P.F. Contr.',detail.amount,0)) as `P.F. Contr.`  \nfrom\n  `tabSalary Slip` slip,\n  `tabSalary Detail` detail\nwhere\n  detail.parent = slip.name\n  and slip.start_date &gt;= '2019-04-01'\n  and slip.end_date &lt;= '2020-03-31'\n  and slip.employee = 'EMP/0021'\n  and slip.docstatus = 1\ngroup by\n  slip.employee", 
+  "query_name": "Yearly Salary Details"
  }
 ]
