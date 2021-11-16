@@ -59,121 +59,6 @@ def validate_input_serial(args,rows,is_vehicle=1, is_electric_vehicle=0):
 
 	return True
 
-def purchase_receipt_on_submit(doc,method):
-	if doc.ignore_validate_hook:
-		return	
-	validate_hsn_code(doc, method)
-	for i in doc.items:
-		if cint(i.is_vehicle):
-			chassis_nos = i.serial_no.split("\n")
-			engine_nos = i.engine_nos.split("\n") if i.engine_nos else []
-			key_nos = i.key_nos.split("\n") if i.key_nos else []
-			color = i.color.split("\n")
-
-			index = 0
-			for serials in chassis_nos:
-				serial_doc = frappe.get_doc("Serial No",serials)
-				serial_doc.is_vehicle = 1
-				serial_doc.is_electric_vehicle = i.is_electric_vehicle
-				serial_doc.chassis_no = serials
-				serial_doc.engine_no = engine_nos[index] if len(engine_nos) > index else None
-				serial_doc.key_no = key_nos[index] if len(key_nos) > index else None
-				serial_doc.color = color[index]
-				serial_doc.year_of_manufacture = i.year_of_manufacture
-				serial_doc.save()
-				index = index+1
-
-def purchase_receipt_validate(doc, method):
-	if doc.ignore_validate_hook:
-		return	
-	for i in doc.items:
-		if cint(i.is_vehicle):
-			chassis_nos = i.serial_no.split("\n")
-			color = i.color.split("\n")
-			engine_nos = i.engine_nos.split("\n") if i.engine_nos else []
-			key_nos = i.key_nos.split("\n") if i.key_nos else []
-
-			throw_error = False
-			if len(chassis_nos) != len(engine_nos) and not cint(i.is_electric_vehicle):
-				throw_error = True
-			if not throw_error and len(engine_nos) != len(key_nos) and not cint(i.is_electric_vehicle):
-				throw_error = True
-			if not throw_error and len(key_nos) != len(color) and not cint(i.is_electric_vehicle):
-				throw_error = True
-			if not throw_error and cint(i.is_electric_vehicle) and len(color) != len(chassis_nos):
-				throw_error = True
-
-			if throw_error:
-				frappe.throw("Check Entered Serial Nos Values")
-
-			if not i.year_of_manufacture:
-				frappe.throw("Check Year of Manufacture")
-
-def purchase_invoice_gst_check(doc, method):
-	from html.parser import HTMLParser
-	state = frappe.db.get_value("Address", doc.supplier_address, "gst_state")
-	if not state:
-		frappe.throw("""Please update Correct GST State in Supplier Address and then Try Again""")
-
-	from frappe.contacts.doctype.address.address import get_address_display
-	parser = HTMLParser()
-	da = get_address_display(doc.supplier_address)
-	if da != parser.unescape(doc.address_display):
-		frappe.throw("""Please use 'Update Address' under Address to update the correct Address in the Document""")
-
-	if doc.taxes_and_charges == 'Out of State GST' and state == 'Madhya Pradesh':
-		frappe.throw("""Please Check Correct Address/GSTIN""")
-
-	if (doc.taxes_and_charges == 'In State GST' or not doc.taxes_and_charges or doc.taxes_and_charges == "") and state != 'Madhya Pradesh':
-		frappe.throw("""Please Check Correct Address/GSTIN""")
-
-
-def purchase_item_rate_validate_before_submit(doc, method):
-	for i in doc.items:
-		if not i.rate:
-			frappe.throw("""Please Check Item Rates, Should Be Non-Zero. Item {0}""".format(i.item_code))
-
-def purchase_receipt_before_submit(doc, method):
-	if doc.ignore_validate_hook:
-		return	
-	purchase_receipt_serial_no_validate_before_submit(doc, method)
-	purchase_item_rate_validate_before_submit(doc, method)
-	purchase_invoice_gst_check(doc, method)
-
-def purchase_receipt_serial_no_validate_before_submit(doc, method):
-	if doc.is_return:
-		return
-
-	for i in doc.items:
-		if not i.serial_no:
-			continue
-
-		snos = i.serial_no.strip(' \n').split('\n')
-		snos = "|".join(snos)
-
-		rows = frappe.db.sql("""select name from `tabSerial No` where name regexp '%s'""" % snos)
-
-		for r in rows:
-			frappe.throw("""Atleast One of The Serial No(s) for Item {0} Already Exists. Please Verify""".format(i.item_code))
-
-
-def validate_hsn_code(doc, method):
-	for i in doc.items:
-		if not i.gst_hsn_code:
-			frappe.throw("HSN Code not found for {0}".format(i.item_code))
-
-def before_insert_lead(doc, method):
-	if ("," in doc.mobile_no or len(doc.mobile_no.strip()) != 10):
-		frappe.throw("Please Check Mobile No. Ensure that it is only one Number and of 10 Digits")
-
-def on_save_lead(doc, method):
-	from erpnext.setup.doctype.sms_settings.sms_settings import send_sms
-	message = """Thankyou for Visiting CORAL ELECTRONICS.Hope you had a pleasant Experience.Should you have any further queries.Please call 08305181711"""
-	receiver_list = []
-	receiver_list.append(str(doc.mobile_no))
-	send_sms(receiver_list, message)
-
-
 @frappe.whitelist()
 def get_money_in_words(number):
 	from frappe.utils import money_in_words
@@ -286,3 +171,12 @@ def get_effective_stock_at_all_warehouse(item_code, date=None):
 			'date': date if date else datetime.date.today().strftime('%Y-%m-%d'),
 			'item_code': item_code },
 			as_dict=1)
+
+@frappe.whitelist()
+def get_non_stock_sales_purchase(from_date, to_date):
+	query = """
+				select distinct voucher_no,voucher_type from `tabGL Entry` where voucher_type in ('Sales Invoice', 'Purchase Invoice') 
+				and voucher_no not in (select distinct voucher_no from `tabStock Ledger Entry` 
+								where voucher_type in ('Sales Invoice', 'Purchase Invoice')) and posting_date between '{0}' and '{1}'
+			""".format(getdate(from_date),getdate(to_date))
+	return frappe.db.sql(query, as_dict=1)

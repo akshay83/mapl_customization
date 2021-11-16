@@ -65,6 +65,8 @@ def set_loan_repayment(self):
 	from mapl_customization.customizations_for_mapl.salary_slip_utils import get_repayment_schedule
 	schedule = get_repayment_schedule(self)
 
+	#--DEBUG--print ("Check", schedule)
+
 	if schedule and len(schedule)>0:
 		for l in schedule:
 			self.total_interest_amount += l.interest_amount
@@ -112,11 +114,13 @@ def term_loan_accrual_pending(date):
 	return repayment_list
 
 def monkey_patch_salary_slip_for_rounding():
+	print ('Patching Salary Slip Monkey')
 	from erpnext.payroll.doctype.salary_slip.salary_slip import SalarySlip
 	SalarySlip.get_amount_based_on_payment_days = get_amount_based_on_payment_days
 	SalarySlip.set_loan_repayment = set_loan_repayment
 
 def monkey_patch_term_loan_processing():
+	print ('Patching Term Loan Schedular Monkey')
 	from erpnext.loan_management.doctype.process_loan_interest_accrual import process_loan_interest_accrual
 	process_loan_interest_accrual.term_loan_accrual_pending = term_loan_accrual_pending
 

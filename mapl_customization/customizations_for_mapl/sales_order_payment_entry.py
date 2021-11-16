@@ -4,7 +4,7 @@ from frappe.utils import now, cint
 
 @frappe.whitelist()
 def validate(doc, method):
-	if doc.ignore_validate_hook:
+	if doc.get('ignore_validate_hook'):
 		return	
 	if cint(doc.is_payment_received):
 		if not doc.payments:
@@ -79,7 +79,7 @@ def make_payment_entry_with_sales_order(doc, method):
 
 @frappe.whitelist()
 def before_cancel_sales_order(doc, method):
-	if doc.ignore_validate_hook:
+	if doc.get('ignore_validate_hook'):
 		return	
 	from erpnext.accounts.utils import remove_ref_doc_link_from_pe
 	remove_ref_doc_link_from_pe('Sales Order', doc.name)

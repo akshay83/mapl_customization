@@ -176,7 +176,7 @@ def enter_shipping_address(args, customer):
 	address_doc.save()
 
 def validate_address(doc, method):
-	if doc.ignore_validate_hook:
+	if doc.get('ignore_validate_hook'):
 		return	
 	validate_pin_with_state(doc, method)
 	validate_address_creation(doc, method)
@@ -314,7 +314,7 @@ def get_all_contact_nos(party):
 def validate_customer(doc, method):
 	#if doc.customer_group == 'Web User':
 	#	return
-	if doc.ignore_validate_hook:
+	if doc.get('ignore_validate_hook'):
 		return
 
 	doc.customer_name = doc.customer_name.strip()
@@ -355,7 +355,7 @@ def validate_customer_creation(doc, method):
 	check_creation_date(existing, "Name")
 
 def validate_customer_before_save(doc, method):
-	if doc.ignore_validate_hook:
+	if doc.get('ignore_validate_hook'):
 		return
 	#if doc.customer_group == 'Web User':
 	#	if not doc.primary_contact_no:

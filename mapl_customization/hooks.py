@@ -245,7 +245,7 @@ doc_events = {
 		"validate" : "mapl_customization.customizations_for_mapl.naming.check_series"
 	},
 	"Sales Order": {
-		"validate" : "mapl_customization.customizations_for_mapl.sales_invoice_validation.sales_order_validate",
+		"validate" : "mapl_customization.customizations_for_mapl.sales_order_validation.sales_order_validate",
 		"before_cancel": "mapl_customization.customizations_for_mapl.sales_order_payment_entry.before_cancel_sales_order",
 		"on_submit": "mapl_customization.customizations_for_mapl.sales_order_payment_entry.make_payment_entry_with_sales_order",
 		"validate": "mapl_customization.customizations_for_mapl.sales_order_payment_entry.validate"
@@ -254,13 +254,13 @@ doc_events = {
 		"validate": "mapl_customization.customizations_for_mapl.payment_entry_validation.payment_entry_validate"
 	},
 	"Purchase Receipt" : {
-		"on_submit" : "mapl_customization.customizations_for_mapl.utils.purchase_receipt_on_submit",
-		"validate" : "mapl_customization.customizations_for_mapl.utils.purchase_receipt_validate"
+		"on_submit" : "mapl_customization.customizations_for_mapl.purchase_validation.purchase_receipt_on_submit",
+		"validate" : "mapl_customization.customizations_for_mapl.purchase_validation.purchase_receipt_validate"
 	},
 	"Purchase Invoice" : {
-		"on_submit" : "mapl_customization.customizations_for_mapl.utils.purchase_receipt_on_submit",
-		"validate" : "mapl_customization.customizations_for_mapl.utils.purchase_receipt_validate",
-		"before_submit": "mapl_customization.customizations_for_mapl.utils.purchase_receipt_before_submit"
+		"on_submit" : "mapl_customization.customizations_for_mapl.purchase_validation.purchase_receipt_on_submit",
+		"validate" : "mapl_customization.customizations_for_mapl.purchase_validation.purchase_receipt_validate",
+		"before_submit": "mapl_customization.customizations_for_mapl.purchase_validation.purchase_receipt_before_submit"
 	},
 	"Sales Invoice" : {
 		"validate" : "mapl_customization.customizations_for_mapl.sales_invoice_validation.sales_invoice_validate",
@@ -278,8 +278,8 @@ doc_events = {
 		"validate": "mapl_customization.customizations_for_mapl.quick_customer.validate_customer"
 	},
 	"Lead" : {
-		"after_insert": "mapl_customization.customizations_for_mapl.utils.on_save_lead",
-		"before_insert": "mapl_customization.customizations_for_mapl.utils.before_insert_lead"
+		"after_insert": "mapl_customization.customizations_for_mapl.lead_hooks.on_save_lead",
+		"before_insert": "mapl_customization.customizations_for_mapl.lead_hooks.before_insert_lead"
 	},
 	"Address": {
 		"validate": "mapl_customization.customizations_for_mapl.quick_customer.validate_address"
@@ -340,8 +340,8 @@ workflow_safe_globals = {
 }
 
 #Monkey Patch
-from mapl_customization.customizations_for_mapl.monkey_patch import do_monkey_patch
-do_monkey_patch()
+#from mapl_customization.customizations_for_mapl.monkey_patch import do_monkey_patch
+#do_monkey_patch()
 
 # Includes in <head>
 # ------------------

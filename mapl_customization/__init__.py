@@ -1,0 +1,3 @@
+#Monkey Patch
+from mapl_customization.customizations_for_mapl.monkey_patch import do_monkey_patch
+do_monkey_patch()

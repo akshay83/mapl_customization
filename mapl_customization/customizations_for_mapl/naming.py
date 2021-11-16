@@ -80,7 +80,7 @@ def set_auto_name(doc, method):
 	#print "DEBUG:-------------------------------------------------------------"
 
 def check_series(doc, method):
-	if doc.ignore_validate_hook:
+	if doc.get('ignore_validate_hook'):
 		return
 		
 	if doc.doctype not in ("Sales Invoice", "Purchase Invoice", "Payment Entry", "Delivery Note", \
