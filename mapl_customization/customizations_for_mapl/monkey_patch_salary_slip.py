@@ -105,6 +105,7 @@ def set_loan_repayment(self):
 		self.total_loan_repayment += payment.total_payment
 
 def term_loan_accrual_pending(date):
+	#Only Return Results if they are not "Repay from Salary", ie. Return Results which are not Employee Loans
 	repayment_list = frappe.db.sql("""select repay.name from `tabRepayment Schedule` repay,`tabLoan` loan where repay.payment_date <= %s
 			and repay.is_accrued = 0 and loan.name = repay.parent and loan.repay_from_salary = 0""".format(date),as_dict=1)
 
@@ -113,11 +114,27 @@ def term_loan_accrual_pending(date):
 
 	return repayment_list
 
+def make_loan_repayment_entry(self):
+	for loan in self.loans:
+		#Monkey Here - Dont Create a Loan Repay Entry for Employee Loans
+		if cint(frappe.get_value('Loan', loan.loan, "repay_from_salary")):
+			continue
+		#Monkey Ends
+		repayment_entry = create_repayment_entry(loan.loan, self.employee,
+			self.company, self.posting_date, loan.loan_type, "Regular Payment", loan.interest_amount,
+			loan.principal_amount, loan.total_payment)
+
+		repayment_entry.save()
+		repayment_entry.submit()
+
+		frappe.db.set_value("Salary Slip Loan", loan.name, "loan_repayment_entry", repayment_entry.name)
+
 def monkey_patch_salary_slip_for_rounding():
 	print ('Patching Salary Slip Monkey')
 	from erpnext.payroll.doctype.salary_slip.salary_slip import SalarySlip
 	SalarySlip.get_amount_based_on_payment_days = get_amount_based_on_payment_days
 	SalarySlip.set_loan_repayment = set_loan_repayment
+	SalarySlip.make_loan_repayment_entry = make_loan_repayment_entry
 
 def monkey_patch_term_loan_processing():
 	print ('Patching Term Loan Schedular Monkey')

@@ -2,8 +2,11 @@ import frappe
 import json
 import datetime
 from .frappeclient import FrappeClient
-from frappe.utils import cstr, validate_email_address, validate_phone_number, flt
+from frappe.utils import cstr, validate_email_address, validate_phone_number, flt, getdate, format_date
 from erpnext import get_default_company
+
+class SkipRecordException(Exception):
+    pass 
 
 class ImportDB(object):
     def __init__(self, url, username, password, parent_module=None):
@@ -56,33 +59,63 @@ class ImportDB(object):
     def import_salary_details(self):
         self.import_salary_structures()
         self.import_employee_loans()
+        self.import_employee_salary_slips()
+    
+    def process(self, till_date=False, import_modules=None):
+        if not frappe.db.get_single_value('Global Defaults', 'default_company'):
+            frappe.throw("Please set Global Defaults")
+        if not import_modules or "masters" in import_modules:
+            self.import_masters()
+        if not import_modules or "entities" in import_modules:            
+            self.import_entities()
+        if not import_modules or "items" in import_modules:            
+            self.import_items(to_record=10000)
+        if not import_modules or "salary_details" in import_modules:                        
+            self.import_salary_details()
+        dates_map = [
+            [None, "30-06-2017"],
+            ["01-07-2017", "30-09-2017"],
+            ["01-10-2017", "31-03-2018"],
+            ["01-04-2018", "30-09-2018"],
+            ["01-10-2018", "31-03-2019"],
+            ["01-04-2019", "30-09-2019"],
+            ["01-10-2019", "31-03-2020"],
+            ["01-04-2020", "30-09-2020"],
+            ["01-10-2020", "31-03-2021"],
+        ]
+        dt = format_date(getdate())        
+        if not import_modules or "stock_transactions" in import_modules:
+            for d in dates_map:
+                self.import_stock_transactions(from_date=d[0],to_date=d[1])
+            if till_date:
+                self.import_stock_transactions(from_date="01-04-2021",to_date=dt)
+        if not import_modules or "non_stock_transactions" in import_modules:
+            for d in dates_map:
+                self.import_non_stock_transactions(from_date=d[0],to_date=d[1])
+            if till_date:
+                self.import_non_stock_transactions(from_date="01-04-2021",to_date=dt)
+        if not import_modules or "payments" in import_modules:
+            for d in dates_map:
+                self.import_payment_entries(from_date=d[0],to_date=d[1])
+            if till_date:
+                self.import_payment_entries(from_date="01-04-2021",to_date=dt)
+        if not import_modules or "journal" in import_modules:                
+            for d in dates_map:
+                self.import_journal_entries(from_date=d[0],to_date=d[1])        
+            if till_date:
+                self.import_journal_entries(from_date="01-04-2021",to_date=dt)
+
 
     def import_accounts(self, overwrite=False):
-        chart_of_accounts = self.remoteDBClient.get_list('Account', fields=["*"], limit_page_length=1000, order_by="lft")
-        total_list_length = len(chart_of_accounts)
-        #Initialize Progress Bar
-        printProgressBar('Account', 0, total_list_length, prefix = 'Progress:', suffix = 'Complete', length = 50)
-        for i, account in enumerate(chart_of_accounts):
-            account = frappe._dict(account)            
-            new_doc = None
-            if not frappe.db.exists("Account", account.name):
-                new_doc = frappe.new_doc("Account")
-            else:
-                new_doc = frappe.get_doc("Account", account.name)
-                if not new_doc.get('parent_account'):
-                    continue
-            self.copy_attr(account, new_doc)
+        def before_inserting(new_doc, old_doc):
             new_doc.lft = None
             new_doc.rgt = None
             if not new_doc.get('parent_account'):
                 new_doc.flags.ignore_mandatory = True
-            if new_doc.is_new():
-                self.insert_doc(new_doc, new_name=account.name)
-            elif overwrite:                
-                self.save_doc(new_doc)
-            #Update Progress Bar
-            printProgressBar('Account', i + 1, total_list_length, prefix = 'Progress:', suffix = 'Complete', length = 50)
-        frappe.db.commit()
+            if not new_doc.is_new() and not new_doc.get('parent_account'):
+                raise SkipRecordException("Skiped Record {0}".format(new_doc.name))
+
+        self.import_simple_documents('Account', to_record=1000, order_by="lft", before_insert=before_inserting, overwrite=overwrite)                
 
     def import_customer_group(self):
         self.import_simple_documents('Customer Group')
@@ -256,15 +289,17 @@ class ImportDB(object):
             #New Fields in New Version
             new_doc.is_term_loan = 1
             new_doc.mode_of_payment = "Cash"
+            new_doc.company = get_default_company()
             new_doc.payment_account = frappe.db.get_value("Account", filters=dict(name=("like", "Cash -%")))            
             new_doc.loan_account = frappe.db.get_value("Account", filters=dict(name=("like", "Salary Advance %")))
             new_doc.interest_income_account = frappe.db.get_value("Account", filters=dict(name=("like", "Interest Received %")))
             new_doc.penalty_income_account = frappe.db.get_value("Account", filters=dict(name=("like", "Interest Received %")))
+            print (new_doc.as_dict())
 
         self.import_documents_with_child_tables('Loan Type', before_insert=before_inserting, submit=True)            
 
     def import_salary_structures(self):
-        doc_list = self.get_doc_list('Salary Structure', filters="""[["Salary Structure", "is_active","=","Yes"]]""")
+        doc_list = self.get_doc_list('Salary Structure') #, filters="""[["Salary Structure", "is_active","=","Yes"]]""")
         if not doc_list or len(doc_list)<=0:
             return
         total_list_length = len(doc_list)
@@ -307,6 +342,16 @@ class ImportDB(object):
             doc.flags.ignore_validate = True
 
         self.import_documents_with_child_tables('Employee Loan', new_doctype='Loan', before_insert=before_inserting)
+
+    def import_employee_salary_slips(self):
+        def before_inserting(new_doc, old_doc):                
+            if old_doc.get('loan_deduction_detail'):
+                for idx, l in enumerate(new_doc.loans):
+                    l.loan = old_doc.loan_deduction_detail[idx].get('loan_reference')
+                    l.doctype = 'Salary Slip Loan'
+            new_doc.flags.ignore_validate = True
+
+        self.import_documents_with_child_tables('Salary Slip', child_table_name_map={'loan_deduction_detail':'loans'}, before_insert=before_inserting)
 
     def import_stock_transactions(self,from_date=None, to_date=None, page_length=None):
         #sl_ledger_entries = self.get_sl_entries(from_date=from_date, to_date=to_date, from_record=from_record, to_record=to_record)        
@@ -618,7 +663,7 @@ class ImportDB(object):
                                 'order_by':order_by})
     
     def remove_child_rows(self,new_doc, child_table):
-        if (new_doc.get(child_table) and not new_doc.is_new() and new_doc.docstatus == 0): #Child Not Empty
+        if (new_doc.get(child_table) and not new_doc.is_new()): #Child Not Empty  and new_doc.docstatus == 0
             child_doctype = new_doc.get(child_table)[0].doctype
             remove_rows = []
             for row in new_doc.get(child_table):
@@ -630,12 +675,15 @@ class ImportDB(object):
             new_doc.save()
             new_doc.flags.ignore_mandatory = flag
     
-    def copy_attr(self, old_doc, new_doc, copy_child_table=False, doctype_different=False):
+    def copy_attr(self, old_doc, new_doc, copy_child_table=False, doctype_different=False, child_table_name_map=None):
         for k in old_doc.keys():            
             if isinstance(old_doc[k], dict) or isinstance(old_doc[k], list):
                 if copy_child_table:
-                    self.remove_child_rows(new_doc, k)
-                    self.copy_child_table_attr(old_doc, new_doc, k)
+                    child_table_field_name = k 
+                    if child_table_name_map:
+                        child_table_field_name = child_table_name_map.get(k)
+                    self.remove_child_rows(new_doc, child_table_field_name)
+                    self.copy_child_table_attr(old_doc, new_doc, old_child_fieldname=k, new_child_fieldname=child_table_field_name)
                 continue
             if (k == 'modified'):
                 continue
@@ -650,7 +698,7 @@ class ImportDB(object):
 
         if not new_child_fieldname:
             new_child_fieldname = old_child_fieldname
-        
+
         old_table = old_doc.get(old_child_fieldname)
         if isinstance(old_table, list):
             for i in old_table:
@@ -661,6 +709,12 @@ class ImportDB(object):
                     #'modified' interferes while saving document, gives the following error
                     #"Document has been modified after you have opened it"
                     if (k == 'modified'):
+                        continue
+                    if old_child_fieldname != new_child_fieldname and k =='parentfield':
+                        setattr(new_table,k,new_child_fieldname)
+                        continue
+                    if old_child_fieldname != new_child_fieldname and k =='doctype':
+                        setattr(new_table,k,None)
                         continue
                     setattr(new_table,k,i[k])
         else:
@@ -677,17 +731,22 @@ class ImportDB(object):
         #Initialize Progress Bar
         printProgressBar(doctype, 0, total_list_length, prefix = 'Progress:', suffix = 'Complete', length = 50)
         for i, doc in enumerate(doc_list):
-            doc = frappe._dict(doc)
+            doc = frappe._dict(doc)    
             new_doc = None
             if not frappe.db.exists(doctype, doc.name):
                 new_doc = frappe.new_doc(doctype)
             elif overwrite:
-                new_doc = frappe.new_doc(doctype, doc.name)
+                new_doc = frappe.get_doc(doctype, doc.name)
             if not new_doc:
+                continue
+            if not new_doc.is_new() and new_doc.docstatus == 1: # Dont Touch Submitted Documents
                 continue
             self.copy_attr(doc, new_doc, copy_child_table=True)
             if before_insert:
-                before_insert(new_doc, doc)
+                try:
+                    before_insert(new_doc, doc)
+                except SkipRecordException:
+                    continue
             if new_doc.is_new():
                 self.insert_doc(new_doc, new_name=doc.name)
             elif overwrite:
@@ -696,7 +755,7 @@ class ImportDB(object):
             printProgressBar(doctype, i + 1, total_list_length, prefix = 'Progress:', suffix = 'Complete', length = 50)
         frappe.db.commit()
 
-    def import_documents_with_child_tables(self, doctype, new_doctype=None, overwrite_existing=False, before_insert=None, submit=False):
+    def import_documents_with_child_tables(self, doctype, new_doctype=None, overwrite_existing=False, before_insert=None, submit=False, child_table_name_map=None):
         doc_list = self.get_doc_list(doctype)
         if not doc_list or len(doc_list)<=0:
             return
@@ -710,11 +769,16 @@ class ImportDB(object):
                 new_doc = frappe.new_doc(new_doctype)
             else:
                 new_doc = frappe.get_doc(new_doctype, doc['name'])
+            if not new_doc.is_new() and new_doc.docstatus == 1: # Dont Touch Submitted Documents
+                continue
             doc = frappe._dict(doc)
             #doc = frappe._dict(self.remoteDBClient.get_doc('Asset Category', doc['name']))
-            self.copy_attr(doc, new_doc, copy_child_table=True, doctype_different=True if new_doctype!=doctype else False)
+            self.copy_attr(doc, new_doc, copy_child_table=True, doctype_different=True if new_doctype!=doctype else False, child_table_name_map=child_table_name_map)
             if before_insert:
-                before_insert(new_doc, doc)
+                try:
+                    before_insert(new_doc, doc)
+                except SkipRecordException:
+                    continue
             if new_doc.is_new():
                 self.insert_doc(new_doc, new_name=doc.name, submit=submit)
             elif overwrite_existing:
@@ -758,28 +822,6 @@ class ImportDB(object):
                 print ('Error Updating {0} Name:{1}'.format(new_doc.doctype, new_doc.name))
                 print (str(e))
                 print ('#'*50)
-
-    #Deprecated
-    def get_sl_entries(self, from_date=None, to_date=None, from_record=0, to_record=None):
-        sl_ledger_fields = [
-            "voucher_type",
-            "voucher_no",
-            "posting_date"
-        ]
-        filters = []
-        if from_date:
-            filters.extend([
-                ["posting_date", ">=", from_date]
-            ])
-        if to_date:
-            filters.extend([
-                ["posting_date", "<=", to_date]
-            ])
-        if len(filters>0):
-            from_record = 0
-            to_record = 10000 #Need to Check
-        return self.remoteDBClient.get_list('Stock Ledger Entry', fields=sl_ledger_fields, filters=filters if len(filters)>0 else None,
-                limit_start=from_record, limit_page_length=(to_record-from_record) if to_record else 50, order_by="posting_date")                
 
 # Print iterations progress
 def printProgressBar (doctype, iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█', printEnd = "\r"):
