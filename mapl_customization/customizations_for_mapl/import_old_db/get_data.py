@@ -4,7 +4,7 @@ import datetime
 from frappe.utils import get_safe_filters, getdate, add_to_date, format_date
 
 class FetchData(object):
-    def __init__(self, connection, client_db_api_path):
+    def __init__(self, connection, client_db_api_path, records_per_batch=500, day_interval=1):
         self.DATETIME_FORMAT = "%d-%m-%Y"
         self.conn = connection
         self.client_db_api_path = client_db_api_path
@@ -12,16 +12,21 @@ class FetchData(object):
         self.stock_transactions = False
         self.transactional = False
         self.base_document = False
+        self.max_records_per_batch = records_per_batch
+        self.day_interval = day_interval
 
     def set_datetime_filters(self, from_date, to_date, additional_filters):
         self.from_date = getdate(datetime.datetime.strptime(from_date, self.DATETIME_FORMAT))
         self.to_date = getdate(datetime.datetime.strptime(to_date, self.DATETIME_FORMAT))
+        #deducting 1 day as data would be fetched from 1st to 6th Otherwise with 1st included 
+        self.fetch_till_date = getdate(add_to_date(self.from_date,days=self.day_interval-1))
+        if (self.fetch_till_date > self.to_date):
+            self.fetch_till_date = self.to_date            
         self.additional_filters = additional_filters
         #Convert From Json to String
         self.filters = json.dumps(self.build_filters())
 
-    def init_transactional_entries(self, doctype, from_date=None, to_date=None, \
-                    additional_filters=None):
+    def init_transactional_entries(self, doctype, from_date=None, to_date=None, additional_filters=None):
         self.doctype = doctype
         self.set_datetime_filters(from_date, to_date, additional_filters)
         self.transactional = True
@@ -30,8 +35,7 @@ class FetchData(object):
         #--DEBUG--print (self.filters)
         self.process()
 
-    def init_stock_transactions(self, from_date=None, to_date=None, \
-                    additional_filters=None):
+    def init_stock_transactions(self, from_date=None, to_date=None, additional_filters=None):
         self.doctype = 'Stock Ledger Entry'
         self.set_datetime_filters(from_date, to_date, additional_filters)
         self.stock_transactions = True
@@ -40,8 +44,7 @@ class FetchData(object):
         self.base_document = False
         self.process()
 
-    def init_non_stock_transactions(self, from_date=None, to_date=None, \
-                    additional_filters=None):
+    def init_non_stock_transactions(self, from_date=None, to_date=None, additional_filters=None):
         self.doctype = 'Stock Ledger Entry'
         self.set_datetime_filters(from_date, to_date, additional_filters)
         self.non_stock_transactions = True
@@ -61,7 +64,7 @@ class FetchData(object):
         self.fetch_with_children = fetch_with_children
         self.process()
 
-    def process(self, max_records_per_batch=None):
+    def process(self):
         #-- DEBUG -- print (self.filters, isinstance(self.filters, str))
         if (not self.non_stock_transactions or self.base_document):
             self.total_records = get_record_count(self.conn, self.client_db_api_path, self.doctype, self.filters)
@@ -70,7 +73,6 @@ class FetchData(object):
                     self.doctype, filters={'from_date':self.from_date, 'to_date':self.to_date}, non_stock=True)
         self.current_record = 0
         self.current_date = getattr(self, 'from_date',None)
-        self.max_records_per_batch = max_records_per_batch if max_records_per_batch else 500
         print ('Total Records', self.total_records)
 
     def has_data(self):
@@ -80,22 +82,26 @@ class FetchData(object):
 
     def get_next_batch(self):
         self.list = self._get_next_batch()
-        self.current_record = self.current_record + len(self.list if self.list else [])
-        #--DEBUG-- print ("Length List", len(list))
+        self.current_record = self.current_record + len(self.list or [])
+        #--DEBUG-- print ("Length List", len(self.list))
         return self.list
 
-    def _get_next_batch(self):        
+    def _get_next_batch(self):   
+        #--DEBUG -- print (self.day_interval, self.from_date, self.current_date, self.fetch_till_date, self.to_date)     
         list = None
         if self.transactional:
-            list = get_entries(self.conn, self.client_db_api_path, self.doctype, from_date=self.current_date, to_date=self.current_date)
+            list = get_entries(self.conn, self.client_db_api_path, self.doctype, from_date=self.current_date, to_date=self.fetch_till_date)
         elif self.non_stock_transactions or self.stock_transactions:
-            list = get_stock_transactions(self.conn, self.client_db_api_path, from_date=self.current_date, to_date=self.current_date, non_stock=self.non_stock_transactions)
+            list = get_stock_transactions(self.conn, self.client_db_api_path, from_date=self.current_date, to_date=self.fetch_till_date, non_stock=self.non_stock_transactions)
         elif self.base_document:
             list = self.get_base_document_list()
 
         #--DEBUG-- print ('Current Date:', self.current_date)
         if not self.base_document:
-            self.current_date = getdate(add_to_date(self.current_date,days=1))
+            self.current_date = getdate(add_to_date(self.fetch_till_date,days=1))
+            self.fetch_till_date = getdate(add_to_date(self.current_date,days=self.day_interval-1)) #Componsate for 1 Day Added to current_date in previous line
+            if (self.fetch_till_date > self.to_date):
+                self.fetch_till_date = self.to_date        
 
         if self.has_more_records() and (not list or len(list)<=0):            
             #Skip Current Date which has not Transactions    
@@ -105,17 +111,18 @@ class FetchData(object):
     def get_base_document_list(self):
             if self.fetch_with_children:
                 return get_documents_with_childtables(self.conn, self.client_db_api_path, self.doctype, filters=self.filters, from_record=self.current_record, \
-                                page_length=500, order_by=self.order_by)
+                                page_length=self.max_records_per_batch, order_by=self.order_by)
             else:
                 return get_documents_without_childtables(self.conn, self.doctype, client_db_api_path=self.client_db_api_path, filters=self.fitlers, \
-                                from_record=self.current_record,page_length=500, order_by=self.order_by)
+                                from_record=self.current_record,page_length=self.max_records_per_batch, order_by=self.order_by)
 
     def has_more_records(self):
-        if hasattr(self, 'current_date') and hasattr(self, 'to_date'):
+        if hasattr(self, 'fetch_till_date') and hasattr(self, 'to_date'):
             if getdate(self.current_date) > getdate(self.to_date):
                 return False
-        if self.current_record >= self.total_records:
-            return False
+        if hasattr(self, 'current_record') and hasattr(self, 'total_records'):                
+            if self.current_record >= self.total_records:
+                return False
         #if self.current_record >= self.max_records_per_batch:
         #    return False
         return True
@@ -169,19 +176,6 @@ def get_stock_transactions(conn, client_db_api_path, from_date=None, to_date=Non
                             params={'from_date':from_date,
                                 'to_date':to_date,
                                 'non_stock':non_stock})
-                
-#def get_item_list(conn, from_record=0, to_record=None):
-#    return conn.get_list('Item', fields=["*"], 
-#                limit_start=from_record, limit_page_length=(to_record-from_record) if to_record else 50, order_by="name")
-
-#def get_address_list(conn, doctype, docname, from_record=0, to_record=None):
-#    filters = [
-#            ["Dynamic Link", "link_doctype", "=", doctype],
-#            ["Dynamic Link", "link_name", "=", docname],
-#            ["Dynamic Link", "parenttype", "=", "Address"],
-#        ]
-#    return conn.get_list("Address", fields=["*"], filters=filters,
-#                limit_start=from_record, limit_page_length=(to_record-from_record) if to_record else 500, order_by="name")                
 
 def get_documents_with_childtables(conn, client_db_api_path, doctype, fields=None,filters=None,from_record=0,page_length=50,order_by=None):
     return conn.get_api(client_db_api_path+'.rest_api.get_doc_list',

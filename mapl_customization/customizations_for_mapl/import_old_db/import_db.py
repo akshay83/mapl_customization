@@ -100,9 +100,9 @@ class ImportDB(object):
                 self.import_stock_transactions(from_date="01-04-2021",to_date=dt)
         if not import_modules or "non_stock_transactions" in import_modules:
             for d in dates_map:
-                self.import_non_stock_transactions(from_date=d[0],to_date=d[1])
+                self.import_stock_transactions(from_date=d[0],to_date=d[1], non_sle_entries=True)
             if till_date:
-                self.import_non_stock_transactions(from_date="01-04-2021",to_date=dt)
+                self.import_stock_transactions(from_date="01-04-2021",to_date=dt, non_sle_entries=True)
         if not import_modules or "payments" in import_modules:
             for d in dates_map:
                 self.import_payment_entries(from_date=d[0],to_date=d[1])
@@ -135,9 +135,6 @@ class ImportDB(object):
     def import_price_list(self):
         self.import_documents_having_childtables('Price List')        
 
-    #def get_customer_supplier_list(self, doctype='Customer', from_record=0, to_record=None):
-    #    return get_doc_list(self.conn, self.parent_module,doctype, from_record=from_record, to_record=to_record if to_record else 50,order_by="name")
-
     def import_customers(self, overwrite=False, id=None):
         def before_insert(new_doc, old_doc):
             new_doc.pan = old_doc.get('pan_no')
@@ -148,9 +145,7 @@ class ImportDB(object):
             if auto_create_customer_contacts:
                 self.create_contact(old_customer_dict, old_customer_dict.name)
 
-        #customer_list = self.get_customer_supplier_list(doctype='Customer', from_record=from_record, to_record=to_record)
         self.import_documents_having_childtables('Customer', after_insert=after_insert, before_insert=before_insert, overwrite=overwrite, id=id)
-        #frappe.db.commit()                         
 
     def import_suppliers(self, overwrite=False, id=None):
         def before_insert(new_doc, old_supplier_dict):
@@ -164,9 +159,7 @@ class ImportDB(object):
             if import_addresses:
                 self.import_address('Supplier', old_supplier_dict.name)        
 
-        #supplier_list = self.get_customer_supplier_list(doctype='Supplier', from_record=from_record, to_record=to_record)
         self.import_documents_having_childtables('Supplier', before_insert=before_insert, after_insert=after_insert, overwrite=overwrite, id=id)
-        #frappe.db.commit()
 
     def import_user_groups(self):
         self.import_documents_having_childtables('User Group')
@@ -297,12 +290,8 @@ class ImportDB(object):
                 assign_structure.flags.ignore_validate = True
                 self.insert_doc(assign_structure, new_name=old_doc.name, submit=True)
 
-        #doc_list = get_documents_with_childtables(self.conn, self.parent_module,'Salary Structure') #, filters="""[["Salary Structure", "is_active","=","Yes"]]""")
-        #if not doc_list or len(doc_list)<=0:
-        #    return
         self.import_documents_having_childtables('Salary Structure', before_insert=before_salary_structure, after_insert=after_salary_structute, \
                                     copy_child_table=False, fetch_with_children=True, submit=True)
-        #frappe.db.commit()           
 
     def import_employee_loans(self):
         def before_inserting(doc, old_doc):
@@ -328,17 +317,20 @@ class ImportDB(object):
 
         self.import_documents_having_childtables('Salary Slip', child_table_name_map={'loan_deduction_detail':'loans'}, before_insert=before_inserting)
 
-    def import_stock_transactions(self,from_date=None, to_date=None):
+    def import_stock_transactions(self,from_date=None, to_date=None, non_sle_entries=False):
         print ('Importing Stock Transactions')
-        batchdata = FetchData(self.remoteDBClient, self.parent_module)
-        batchdata.init_stock_transactions(from_date=from_date, to_date=to_date)
+        batchdata = FetchData(self.remoteDBClient, self.parent_module, day_interval=5)
+        if not non_sle_entries:
+            batchdata.init_stock_transactions(from_date=from_date, to_date=to_date)
+        else:
+            batchdata.init_non_stock_transactions(from_date=from_date, to_date=to_date)    
         while batchdata.has_more_records():
             entries = batchdata.get_next_batch()
             if not entries or len(entries)<=0:
                 break
             #--DEBUG-- print ("Testing", len(entries))    
             self.import_transactions(entries)
-    
+
     def import_transactions(self, entries):
         def before_inserting(new_doc, old_doc):
             new_doc.flags.ignore_validate = True
@@ -374,18 +366,7 @@ class ImportDB(object):
                 frappe.db.commit()
         frappe.db.set_value("Stock Settings", None, "allow_negative_stock", negative_stock)
         frappe.db.commit()
-    
-    def import_non_stock_transactions(self, from_date=None, to_date=None):
-        print ('Importing Non Stock Transactions')        
-        batchdata = FetchData(self.remoteDBClient, self.parent_module)
-        batchdata.init_non_stock_transactions(from_date=from_date, to_date=to_date)
-        while batchdata.has_more_records():
-            entries = batchdata.get_next_batch()
-            if not entries or len(entries)<=0:
-                break
-            #--DEBUG--print ("Testing", len(entries))    
-            self.import_transactions(entries)
-    
+        
     def import_payment_entries(self, from_date=None, to_date=None):
         def before_inserting(new_doc, old_doc):
             #if e['docstatus'] == 2:
@@ -448,7 +429,6 @@ class ImportDB(object):
             ["Dynamic Link", "parenttype", "=", "Address"],
         ]
 
-        #address_list = get_address_list(self.conn, doctype=doctype, docname=docname)
         self.import_documents_having_childtables('Address', before_insert=before_insert, filters=filters, \
                         overwrite=True, suppress_msg=True, fetch_with_children=False)
     
@@ -503,7 +483,7 @@ class ImportDB(object):
         return contact_name
 
     def do_batch_import(self, doctype, from_date=None, to_date=None, before_insert=None, after_insert=None):
-        batchdata = FetchData(self.remoteDBClient, self.parent_module)
+        batchdata = FetchData(self.remoteDBClient, self.parent_module, day_interval=5)
         batchdata.init_transactional_entries(doctype, from_date=from_date, to_date=to_date)
         while batchdata.has_more_records():
             entries = batchdata.get_next_batch()
@@ -607,27 +587,25 @@ class ImportDB(object):
                         fetch_with_children=True, doc_list=None, fetch_filters=None, get_new_name=None, suppress_msg=False, \
                         in_batches=True, order_by=None):
 
-        self.batchdata = FetchData(self.remoteDBClient, self.parent_module)
+        self.batchdata = FetchData(self.remoteDBClient, self.parent_module, records_per_batch=1000)
 
         while True:
-            doc_list = self.fetch_data(doctype, id=id, doc_list=doc_list, old_doc_dict=old_doc_dict, order_by=order_by, \
+            fetched_doc_list = self.fetch_data(doctype, id=id, doc_list=doc_list, old_doc_dict=old_doc_dict, order_by=order_by, \
                             filters=fetch_filters, fetch_with_children=fetch_with_children, in_batches=in_batches)        
 
-            if not doc_list or len(doc_list)<=0:
+            if not fetched_doc_list or len(fetched_doc_list)<=0:
                 break
 
-            print ('Total Record', doctype, get_record_count(self.remoteDBClient, self.parent_module, doctype, filters=fetch_filters))
-            print (len(doc_list))
-            print (doc_list[0].get('name'), doc_list[-1].get('name'))
-
-            if not (in_batches and self.batchdata.has_more_records):
-                break
-        
-        return
-
-        self.start_import_process(doctype, doc_list, new_doctype=new_doctype, overwrite=overwrite, before_insert=before_insert, \
+            ##--DEBUG-- print ("Testing", len(fetched_doc_list))
+            ##--DEBUG-- print (doc_list[0].get('name'), doc_list[-1].get('name'))
+            
+            self.start_import_process(doctype, fetched_doc_list, new_doctype=new_doctype, overwrite=overwrite, before_insert=before_insert, \
                         submit=submit, child_table_name_map=child_table_name_map, after_insert=after_insert, copy_child_table=copy_child_table, \
                         get_new_name=get_new_name, suppress_msg=suppress_msg, in_batches=in_batches)
+
+            if not (in_batches and self.batchdata.has_more_records()):
+                break
+
 
     def start_import_process(self, doctype, doc_list, new_doctype=None, overwrite=False, \
                         before_insert=None, submit=False, child_table_name_map=None, after_insert=None, copy_child_table=True, \
@@ -653,7 +631,7 @@ class ImportDB(object):
     def fetch_data(self, doctype, id=None, doc_list=None, old_doc_dict=None, filters=None, \
                             order_by=None, fetch_with_children=True, in_batches=True):
 
-        if in_batches:            
+        if in_batches and not id and not old_doc_dict and not doc_list:  
             if self.batchdata and not self.batchdata.has_data():
                 self.batchdata.init_base_documents_list(doctype, filters=filters, order_by=order_by, fetch_with_children=fetch_with_children, in_batches=in_batches)
             return self.batchdata.get_next_batch()
