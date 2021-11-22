@@ -207,7 +207,7 @@ def get_loan_columns(filters):
 	loan_details = frappe.db.sql("""select
 					  distinct dd.loan_type
 					from
-					  `tabLoan Deduction Detail` dd,
+					  `tabSalary Slip Loan` dd,
 					  `tabSalary Slip` slip
 					where
 					  dd.parent=slip.name
@@ -246,8 +246,8 @@ def get_employee_details(filters):
 					  struct.base
 					from
 					  `tabSalary Slip` slip left join
-					  `tabSalary Structure Employee` struct
-						on (struct.parent = slip.salary_structure and struct.employee = slip.employee)
+					  `tabSalary Structure Assignment` struct
+						on (struct.salary_structure = slip.salary_structure and struct.employee = slip.employee)
 					where
 					  slip.docstatus = 1
 					  and slip.start_date = %s
@@ -321,7 +321,7 @@ def get_loan_details(slip_name):
 					  total_payment,
 					  loan_type
 					from
-					  `tabLoan Deduction Detail`
+					  `tabSalary Slip Loan`
 					where
 					  parent=%s""", slip_name, as_dict=1)
 

@@ -144,9 +144,9 @@ def get_employee_details(filters):
 					  struct_emp.base
 					from
 					  `tabEmployee` employee join
-					  `tabSalary Structure Employee` struct_emp
+					  `tabSalary Structure Assignment` struct_emp
 						on (struct_emp.employee = employee.name) join
-					  `tabSalary Structure` struct on (struct.name = struct_emp.parent and struct.is_active='Yes')
+					  `tabSalary Structure` struct on (struct.name = struct_emp.salary_structure and struct.is_active='Yes')
 					order by
 					  employee.branch, employee.employee_name""", as_dict=True)
 

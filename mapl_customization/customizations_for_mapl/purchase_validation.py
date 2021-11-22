@@ -5,8 +5,6 @@ from frappe.utils import cint, getdate, today
 from six import string_types
 
 def purchase_receipt_on_submit(doc,method):
-	if doc.get('ignore_validate_hook'):
-		return	
 	validate_hsn_code(doc, method)
 	for i in doc.items:
 		if cint(i.is_vehicle):
@@ -29,6 +27,8 @@ def purchase_receipt_on_submit(doc,method):
 				index = index+1
 
 def validate_hsn_code(doc, method):
+	if doc.get('ignore_validate_hook'):
+		return	
 	for i in doc.items:
 		if not i.gst_hsn_code:
 			frappe.throw("HSN Code not found for {0}".format(i.item_code))

@@ -177,6 +177,15 @@ def get_non_stock_sales_purchase(from_date, to_date):
 	query = """
 				select distinct voucher_no,voucher_type from `tabGL Entry` where voucher_type in ('Sales Invoice', 'Purchase Invoice') 
 				and voucher_no not in (select distinct voucher_no from `tabStock Ledger Entry` 
-								where voucher_type in ('Sales Invoice', 'Purchase Invoice')) and posting_date between '{0}' and '{1}'
+				where voucher_type in ('Sales Invoice', 'Purchase Invoice')) and posting_date between '{0}' and '{1}'
 			""".format(getdate(from_date),getdate(to_date))
 	return frappe.db.sql(query, as_dict=1)
+
+@frappe.whitelist()
+def get_non_stock_sales_purchase_count(from_date, to_date):
+	query = """
+				select count(distinct voucher_no,voucher_type) from `tabGL Entry` where voucher_type in ('Sales Invoice', 'Purchase Invoice') 
+				and voucher_no not in (select distinct voucher_no from `tabStock Ledger Entry` 
+				where voucher_type in ('Sales Invoice', 'Purchase Invoice')) and posting_date between '{0}' and '{1}'
+			""".format(getdate(from_date),getdate(to_date))
+	return frappe.db.sql(query, as_list=1)	
