@@ -2,7 +2,7 @@ import frappe
 import datetime
 import logging
 from .frappeclient import FrappeClient
-from .get_data import FetchData, get_item_list, get_address_list, get_doc_list
+from .get_data import FetchData, get_documents_without_childtables, get_documents_with_childtables, get_record_count
 from frappe.utils import cstr, validate_email_address, validate_phone_number, flt, getdate, format_date
 from erpnext import get_default_company
 
@@ -59,9 +59,9 @@ class ImportDB(object):
         self.import_holiday_lists()
 
     def import_entities(self, page_length=None):
-        self.import_employees(to_record=1000 if not page_length else page_length)
-        self.import_customers(to_record=10000 if not page_length else page_length) #30000
-        self.import_suppliers(to_record=1000 if not page_length else page_length)
+        self.import_employees()
+        self.import_customers() #30000
+        self.import_suppliers()
 
     def import_salary_details(self):
         self.import_salary_structures()
@@ -127,7 +127,7 @@ class ImportDB(object):
             if not new_doc.is_new() and not new_doc.get('parent_account'):
                 raise SkipRecordException("Skiped Record {0}".format(new_doc.name))
 
-        self.import_documents_having_childtables('Account', to_record=1000, order_by="lft", before_insert=before_inserting, overwrite=overwrite)                
+        self.import_documents_having_childtables('Account', order_by="lft", before_insert=before_inserting, overwrite=overwrite)                
 
     def import_customer_group(self):
         self.import_documents_having_childtables('Customer Group')
@@ -135,10 +135,10 @@ class ImportDB(object):
     def import_price_list(self):
         self.import_documents_having_childtables('Price List')        
 
-    def get_customer_supplier_list(self, doctype='Customer', from_record=0, to_record=None):
-        return get_doc_list(self.conn, self.parent_module,doctype, from_record=from_record, to_record=to_record if to_record else 50,order_by="name")
+    #def get_customer_supplier_list(self, doctype='Customer', from_record=0, to_record=None):
+    #    return get_doc_list(self.conn, self.parent_module,doctype, from_record=from_record, to_record=to_record if to_record else 50,order_by="name")
 
-    def import_customers(self, from_record=0, to_record=None, overwrite=False):
+    def import_customers(self, overwrite=False, id=None):
         def before_insert(new_doc, old_doc):
             new_doc.pan = old_doc.get('pan_no')
 
@@ -149,10 +149,10 @@ class ImportDB(object):
                 self.create_contact(old_customer_dict, old_customer_dict.name)
 
         #customer_list = self.get_customer_supplier_list(doctype='Customer', from_record=from_record, to_record=to_record)
-        self.import_documents_having_childtables('Customer', after_insert=after_insert, before_insert=before_insert, doc_list=customer_list, overwrite=overwrite, id=id)
+        self.import_documents_having_childtables('Customer', after_insert=after_insert, before_insert=before_insert, overwrite=overwrite, id=id)
         #frappe.db.commit()                         
 
-    def import_suppliers(self, from_record=0, to_record=None, overwrite=False):
+    def import_suppliers(self, overwrite=False, id=None):
         def before_insert(new_doc, old_supplier_dict):
             #Field Name Change in New Version
             setattr(new_doc, 'supplier_group', old_supplier_dict.get('supplier_type'))
@@ -165,7 +165,7 @@ class ImportDB(object):
                 self.import_address('Supplier', old_supplier_dict.name)        
 
         #supplier_list = self.get_customer_supplier_list(doctype='Supplier', from_record=from_record, to_record=to_record)
-        self.import_documents_having_childtables('Supplier', before_insert=before_insert, after_insert=after_insert, doc_list=supplier_list, overwrite=overwrite)
+        self.import_documents_having_childtables('Supplier', before_insert=before_insert, after_insert=after_insert, overwrite=overwrite, id=id)
         #frappe.db.commit()
 
     def import_user_groups(self):
@@ -177,14 +177,14 @@ class ImportDB(object):
     def import_employee_designation(self):
         self.import_documents_having_childtables('Designation')
 
-    def import_employees(self, from_record=0, to_record=None):
+    def import_employees(self):
         def before_inserting(doc, old_doc):
             fn, mn, ln = self.split_name(old_doc.employee_name)
             doc.first_name = fn
             doc.middle_name = mn
             doc.last_name = ln
 
-        self.import_documents_having_childtables(doctype='Employee', from_record=from_record, to_record=to_record, before_insert=before_inserting)
+        self.import_documents_having_childtables(doctype='Employee', before_insert=before_inserting)
 
     def import_brands(self):
         self.import_documents_having_childtables('Brand')
@@ -247,7 +247,7 @@ class ImportDB(object):
 
         self.import_documents_having_childtables('Item Taxes Template', new_doctype='Item Tax Template',before_insert=before_inserting, overwrite=True)
 
-    def import_items(self,from_record=0, to_record=None, id=None):
+    def import_items(self, id=None):
         def before_insert(new_doc, old_item_dict):
             if old_item_dict.get('expense_account') or old_item_dict.get('income_account'):
                 item_defaults = new_doc.append('item_defaults')
@@ -258,10 +258,7 @@ class ImportDB(object):
                 taxes = new_doc.append('taxes')
                 taxes.item_tax_template = old_item_dict.taxes_template
 
-        if not id:
-            item_list = get_item_list(self.conn, from_record, to_record)
-        self.import_documents_having_childtables('Item', before_insert=before_insert, doc_list=item_list, id=id)
-        frappe.db.commit()
+        self.import_documents_having_childtables('Item', before_insert=before_insert, id=id, copy_child_table=False)
 
     def import_holiday_lists(self):
         self.import_documents_having_childtables('Holiday List')
@@ -300,12 +297,12 @@ class ImportDB(object):
                 assign_structure.flags.ignore_validate = True
                 self.insert_doc(assign_structure, new_name=old_doc.name, submit=True)
 
-        doc_list = get_doc_list(self.conn, self.parent_module,'Salary Structure') #, filters="""[["Salary Structure", "is_active","=","Yes"]]""")
-        if not doc_list or len(doc_list)<=0:
-            return
+        #doc_list = get_documents_with_childtables(self.conn, self.parent_module,'Salary Structure') #, filters="""[["Salary Structure", "is_active","=","Yes"]]""")
+        #if not doc_list or len(doc_list)<=0:
+        #    return
         self.import_documents_having_childtables('Salary Structure', before_insert=before_salary_structure, after_insert=after_salary_structute, \
-                                    doc_list=doc_list, copy_child_table=False, submit=True)
-        frappe.db.commit()           
+                                    copy_child_table=False, fetch_with_children=True, submit=True)
+        #frappe.db.commit()           
 
     def import_employee_loans(self):
         def before_inserting(doc, old_doc):
@@ -329,7 +326,7 @@ class ImportDB(object):
             new_doc.flags.ignore_validate = True
             new_doc.flags.ignore_links = True
 
-        self.import_documents_having_childtables('Salary Slip', to_record=5000, child_table_name_map={'loan_deduction_detail':'loans'}, before_insert=before_inserting)
+        self.import_documents_having_childtables('Salary Slip', child_table_name_map={'loan_deduction_detail':'loans'}, before_insert=before_inserting)
 
     def import_stock_transactions(self,from_date=None, to_date=None):
         print ('Importing Stock Transactions')
@@ -445,9 +442,15 @@ class ImportDB(object):
             if new_doc.is_new():
                 new_doc.append('links', dict(link_doctype=doctype, link_name=docname))
 
-        address_list = get_address_list(self.conn, doctype=doctype, docname=docname)
-        self.import_documents_having_childtables('Address', before_insert=before_insert, doc_list=address_list, \
-                                overwrite=True,suppress_msg=True)
+        filters = [
+            ["Dynamic Link", "link_doctype", "=", doctype],
+            ["Dynamic Link", "link_name", "=", docname],
+            ["Dynamic Link", "parenttype", "=", "Address"],
+        ]
+
+        #address_list = get_address_list(self.conn, doctype=doctype, docname=docname)
+        self.import_documents_having_childtables('Address', before_insert=before_insert, filters=filters, \
+                        overwrite=True, suppress_msg=True, fetch_with_children=False)
     
     def create_contact(self, old_doc, new_doc_name):
         contact_nos = self.get_contact_nos(old_doc)
@@ -570,7 +573,7 @@ class ImportDB(object):
             for k in old_table.keys():
                 setattr(new_table,k,old_table[k])
     
-    def import_document(self, old_doc_dict, doctype, different_doctype=False, before_insert=None, submit=False, \
+    def _import_document(self, old_doc_dict, doctype, different_doctype=False, before_insert=None, submit=False, \
                     overwrite=False, after_insert=None, copy_child_table=True, child_table_name_map=None, get_new_name=None):
             doc = frappe._dict(old_doc_dict)
             new_doc = None
@@ -600,13 +603,35 @@ class ImportDB(object):
                 after_insert(new_doc, doc)
 
     def import_documents_having_childtables(self, doctype, new_doctype=None, id=None, old_doc_dict=None, overwrite=False, \
-                            before_insert=None, submit=False, child_table_name_map=None, after_insert=None, copy_child_table=True, \
-                            doc_list=None, get_new_name=None, suppress_msg=False, from_record=0, to_record=500, order_by=None):
+                        before_insert=None, submit=False, child_table_name_map=None, after_insert=None, copy_child_table=True, \
+                        fetch_with_children=True, doc_list=None, fetch_filters=None, get_new_name=None, suppress_msg=False, \
+                        in_batches=True, order_by=None):
 
-        doc_list = self.create_data(doctype, id=id, doc_list=doc_list, old_doc_dict=old_doc_dict, \
-                            from_record=from_record, to_record=to_record, order_by=order_by)        
-        if not doc_list or len(doc_list)<=0:
-            return
+        self.batchdata = FetchData(self.remoteDBClient, self.parent_module)
+
+        while True:
+            doc_list = self.fetch_data(doctype, id=id, doc_list=doc_list, old_doc_dict=old_doc_dict, order_by=order_by, \
+                            filters=fetch_filters, fetch_with_children=fetch_with_children, in_batches=in_batches)        
+
+            if not doc_list or len(doc_list)<=0:
+                break
+
+            print ('Total Record', doctype, get_record_count(self.remoteDBClient, self.parent_module, doctype, filters=fetch_filters))
+            print (len(doc_list))
+            print (doc_list[0].get('name'), doc_list[-1].get('name'))
+
+            if not (in_batches and self.batchdata.has_more_records):
+                break
+        
+        return
+
+        self.start_import_process(doctype, doc_list, new_doctype=new_doctype, overwrite=overwrite, before_insert=before_insert, \
+                        submit=submit, child_table_name_map=child_table_name_map, after_insert=after_insert, copy_child_table=copy_child_table, \
+                        get_new_name=get_new_name, suppress_msg=suppress_msg, in_batches=in_batches)
+
+    def start_import_process(self, doctype, doc_list, new_doctype=None, overwrite=False, \
+                        before_insert=None, submit=False, child_table_name_map=None, after_insert=None, copy_child_table=True, \
+                        get_new_name=None, suppress_msg=False, in_batches=True):
 
         total_list_length = len(doc_list)
         if not new_doctype:
@@ -614,8 +639,8 @@ class ImportDB(object):
         #Initialize Progress Bar
         if not suppress_msg:
             printProgressBar(doctype, 0, total_list_length, prefix = 'Progress:', suffix = 'Complete', length = 50)        
-        for i, doc in enumerate(doc_list):            
-            self.import_document(doc, new_doctype, different_doctype=True if new_doctype!=doctype else False, \
+        for i, doc in enumerate(doc_list):                        
+            self._import_document(doc, new_doctype, different_doctype=True if new_doctype!=doctype else False, \
                             before_insert=before_insert, submit=submit, overwrite=overwrite, after_insert=after_insert, \
                             child_table_name_map=child_table_name_map,get_new_name=get_new_name, copy_child_table=copy_child_table)
             #Update Progress Bar
@@ -625,14 +650,27 @@ class ImportDB(object):
                 frappe.db.commit()
         frappe.db.commit()        
 
-    def create_data(self, doctype, id=None, doc_list=None, old_doc_dict=None, from_record=0, to_record=500, order_by=None):
+    def fetch_data(self, doctype, id=None, doc_list=None, old_doc_dict=None, filters=None, \
+                            order_by=None, fetch_with_children=True, in_batches=True):
+
+        if in_batches:            
+            if self.batchdata and not self.batchdata.has_data():
+                self.batchdata.init_base_documents_list(doctype, filters=filters, order_by=order_by, fetch_with_children=fetch_with_children, in_batches=in_batches)
+            return self.batchdata.get_next_batch()
+
         if id != None:
             return [frappe._dict(self.remoteDBClient.get_doc(doctype=doctype, name=id))]
         elif old_doc_dict != None:
             return [frappe._dict(old_doc_dict)]
         elif doc_list != None:
             return doc_list
-        return get_doc_list(self.conn, self.parent_module, doctype,from_record=from_record,to_record=to_record, order_by=order_by)
+        
+        if fetch_with_children:
+            return get_documents_with_childtables(self.remoteDBClient, self.parent_module, doctype, filters=filters, from_record=0, \
+                            page_length=500, order_by=order_by)
+        else:
+            return get_documents_without_childtables(self.remoteDBClient, doctype, client_db_api_path=self.parent_module, filters=fitlers, \
+                            from_record=0,page_length=500, order_by=order_by)
 
     def insert_doc(self, new_doc, new_name=None, submit=False, ignore_mandatory=None, ignore_if_duplicate=True, continue_on_error=False):
         new_doc.ignore_validate_hook = True

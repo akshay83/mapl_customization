@@ -42,7 +42,7 @@ def get_doc_list_as_per_transactions(filters=None, from_date=None, to_date=None,
     return doc_list
 
 @frappe.whitelist()
-def get_doc_list(doctype, filters=None, fields=None, from_record=0, to_record=None, order_by=None):
+def get_doc_list(doctype, filters=None, fields=None, from_record=0, page_length=50, order_by=None):
     """
     By default the frappe.get_list method does not return the child tables of the documents. This method 
     Returns a List of Documents having all its child tables included inside the "DICT", as a "LIST"
@@ -51,25 +51,25 @@ def get_doc_list(doctype, filters=None, fields=None, from_record=0, to_record=No
     :param filters: A List of filters (Optional)
     :param fields: Not yet implemented
     :param from_record: return results starting from record number
-    :param to_record: return results till the record number. Default 500
+    :param page_length: No of Records to Return from pointer "from_record". Default is 50
     :param order_by: order the results by <fieldname>
     """
     if from_record:
         from_record = cint(from_record)
-    if to_record:
-        to_record = cint(to_record)
-    document_list = get_complete_list(doctype, filters=filters, fields="name", from_record=from_record, to_record=to_record, order_by=order_by)
+    if page_length:
+        page_length = cint(page_length)
+    document_list = get_complete_list(doctype, filters=filters, fields="name", from_record=from_record, page_length=page_length, order_by=order_by)
     doc_list = []
     for doc in document_list:
         doc_list.extend([frappe.get_doc(doctype, doc['name']).as_dict()])
     return doc_list
 
-def get_complete_list(doctype, filters=None, fields=None, from_record=0, to_record=None, order_by=None, distinct=0):
+def get_complete_list(doctype, filters=None, fields=None, from_record=0, page_length=50, order_by=None, distinct=0):
     """
     Wrapper method for frappe.get_list method. Returns a list of records or documents without child tables
     """
     return frappe.get_list(doctype, fields=["*"] if not fields else fields, filters=filters,
-            limit_start=from_record, limit_page_length=(to_record-from_record) if to_record else 500, 
+            limit_start=from_record, limit_page_length=page_length, 
             order_by="name" if not order_by else order_by, distinct=distinct)
 
 @frappe.whitelist()
