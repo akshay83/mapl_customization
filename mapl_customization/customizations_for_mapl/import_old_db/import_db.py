@@ -78,13 +78,14 @@ class ImportDB(object):
         if not import_modules or "entities" in import_modules:            
             self.import_entities()
         if not import_modules or "items" in import_modules:            
-            self.import_items(to_record=10000)
+            self.import_items()
         if not import_modules or "salary_details" in import_modules:                        
             self.import_salary_details()
         dates_map = [
-            ["01-04-2017", "30-06-2017"],
-            ["01-07-2017", "30-09-2017"],
-            ["01-10-2017", "31-03-2018"]
+            #["01-04-2017", "30-06-2017"],
+            ["01-07-2017", "20-07-2017"],
+            #["01-07-2017", "30-09-2017"],
+            #["01-10-2017", "31-03-2018"]
             #["01-04-2018", "30-09-2018"],
             #["01-10-2018", "31-03-2019"],
             #["01-04-2019", "30-09-2019"],
@@ -141,11 +142,12 @@ class ImportDB(object):
 
         def after_insert(new_doc, old_customer_dict, import_addresses=True, auto_create_customer_contacts=True):
             if import_addresses:
-                self.import_address('Customer', old_customer_dict.name)
+                self.import_address('Customer', old_customer_dict)
             if auto_create_customer_contacts:
                 self.create_contact(old_customer_dict, old_customer_dict.name)
 
-        self.import_documents_having_childtables('Customer', after_insert=after_insert, before_insert=before_insert, overwrite=overwrite, id=id)
+        self.import_documents_having_childtables('Customer', after_insert=after_insert, before_insert=before_insert, \
+            overwrite=overwrite, id=id, copy_child_table=False)
 
     def import_suppliers(self, overwrite=False, id=None):
         def before_insert(new_doc, old_supplier_dict):
@@ -157,9 +159,10 @@ class ImportDB(object):
 
         def after_insert(new_doc, old_supplier_dict, import_addresses=True):
             if import_addresses:
-                self.import_address('Supplier', old_supplier_dict.name)        
+                self.import_address('Supplier', old_supplier_dict)        
 
-        self.import_documents_having_childtables('Supplier', before_insert=before_insert, after_insert=after_insert, overwrite=overwrite, id=id)
+        self.import_documents_having_childtables('Supplier', before_insert=before_insert, after_insert=after_insert, \
+            overwrite=overwrite, id=id, copy_child_table=False)
 
     def import_user_groups(self):
         self.import_documents_having_childtables('User Group')
@@ -346,6 +349,7 @@ class ImportDB(object):
                 new_doc.invoice_copy = 'Original for Recipient'
                 new_doc.delayed_payment_remarks = old_doc.get('special_remarks')
                 new_doc.notes = old_doc.get('reference_details')
+                new_doc.advances = None
             #--DEBUG-- print (new_doc.doctype, new_doc.name, new_doc.posting_date, new_doc.posting_time)
 
         if not entries or len(entries)<=0:
@@ -356,12 +360,11 @@ class ImportDB(object):
         #Initialize Progress Bar
         printProgressBar('Transactions', 0, total_list_length, prefix = 'Progress:', suffix = 'Complete', length = 50)
         for idx, s in enumerate(entries):
+            #Update Progress Bar                                    
             printProgressBar('Transactions', idx + 1, total_list_length, prefix = 'Progress:', suffix = 'Complete', length = 50)
-            if frappe.db.exists(s['doctype'], s['name']):
-                continue
             s = frappe._dict(s)            
-            self.import_documents_having_childtables(s.doctype, old_doc_dict=s, before_insert=before_inserting, suppress_msg=True)
-            #Update Progress Bar                        
+            self.import_documents_having_childtables(s.doctype, old_doc_dict=s, before_insert=before_inserting, suppress_msg=True, \
+                                        in_batches=False, reset_batch=False)            
             if idx % self.COMMIT_DELAY == 0:
                 frappe.db.commit()
         frappe.db.set_value("Stock Settings", None, "allow_negative_stock", negative_stock)
@@ -404,7 +407,7 @@ class ImportDB(object):
     def import_period_closing_vouchers(self):
         self.import_documents_having_childtables('Period Closing Voucher', order_by='transaction_date')
 
-    def import_address(self, doctype, docname):
+    def import_address(self, doctype, old_doc_dict):
         def before_insert(new_doc, old_doc):
             if new_doc.get('email_id') and not validate_email_address(new_doc.email_id):
                     delattr(new_doc, 'email_id')
@@ -421,16 +424,10 @@ class ImportDB(object):
 
             new_doc.flags.ignore_validate = True
             if new_doc.is_new():
-                new_doc.append('links', dict(link_doctype=doctype, link_name=docname))
+                new_doc.append('links', dict(link_doctype=doctype, link_name=old_doc_dict.name))
 
-        filters = [
-            ["Dynamic Link", "link_doctype", "=", doctype],
-            ["Dynamic Link", "link_name", "=", docname],
-            ["Dynamic Link", "parenttype", "=", "Address"],
-        ]
-
-        self.import_documents_having_childtables('Address', before_insert=before_insert, filters=filters, \
-                        overwrite=True, suppress_msg=True, fetch_with_children=False)
+        self.import_documents_having_childtables('Address', before_insert=before_insert, doc_list=old_doc_dict.addresses, \
+                        overwrite=True, suppress_msg=True, fetch_with_children=False, in_batches=False, reset_batch=False)
     
     def create_contact(self, old_doc, new_doc_name):
         contact_nos = self.get_contact_nos(old_doc)
@@ -554,7 +551,8 @@ class ImportDB(object):
                 setattr(new_table,k,old_table[k])
     
     def _import_document(self, old_doc_dict, doctype, different_doctype=False, before_insert=None, submit=False, \
-                    overwrite=False, after_insert=None, copy_child_table=True, child_table_name_map=None, get_new_name=None):
+                    overwrite=False, after_insert=None, copy_child_table=True, child_table_name_map=None, get_new_name=None, \
+                    continue_on_error=False):
             doc = frappe._dict(old_doc_dict)
             new_doc = None
             if not frappe.db.exists(doctype, doc.name):
@@ -565,7 +563,6 @@ class ImportDB(object):
                 return
             if not new_doc.is_new() and new_doc.docstatus == 1: # Dont Touch Submitted Documents
                 return
-            #self.copy_attr(doc, new_doc, copy_child_table=True)
             self.copy_attr(doc, new_doc, copy_child_table=copy_child_table, doctype_different=different_doctype, child_table_name_map=child_table_name_map)
             if before_insert:
                 try:
@@ -576,7 +573,7 @@ class ImportDB(object):
             if new_doc.is_new():
                 if get_new_name:
                     new_name = get_new_name(doc)
-                self.insert_doc(new_doc, new_name=doc.name)
+                self.insert_doc(new_doc, new_name=doc.name, continue_on_error=continue_on_error)
             elif overwrite:
                 self.save_doc(new_doc)
             if after_insert:
@@ -585,9 +582,10 @@ class ImportDB(object):
     def import_documents_having_childtables(self, doctype, new_doctype=None, id=None, old_doc_dict=None, overwrite=False, \
                         before_insert=None, submit=False, child_table_name_map=None, after_insert=None, copy_child_table=True, \
                         fetch_with_children=True, doc_list=None, fetch_filters=None, get_new_name=None, suppress_msg=False, \
-                        in_batches=True, order_by=None):
+                        in_batches=True, order_by=None, reset_batch=True, continue_on_error=False):
 
-        self.batchdata = FetchData(self.remoteDBClient, self.parent_module, records_per_batch=1000)
+        if reset_batch and in_batches:
+            self.batchdata = FetchData(self.remoteDBClient, self.parent_module, records_per_batch=1000)
 
         while True:
             fetched_doc_list = self.fetch_data(doctype, id=id, doc_list=doc_list, old_doc_dict=old_doc_dict, order_by=order_by, \
@@ -596,20 +594,20 @@ class ImportDB(object):
             if not fetched_doc_list or len(fetched_doc_list)<=0:
                 break
 
-            ##--DEBUG-- print ("Testing", len(fetched_doc_list))
-            ##--DEBUG-- print (doc_list[0].get('name'), doc_list[-1].get('name'))
+            #--DEBUG-- print (fetched_doc_list)
+            #--DEBUG-- print ("Testing", len(fetched_doc_list))
+            #--DEBUG-- print (fetched_doc_list[0].get('name'), fetched_doc_list[-1].get('name'))
             
             self.start_import_process(doctype, fetched_doc_list, new_doctype=new_doctype, overwrite=overwrite, before_insert=before_insert, \
                         submit=submit, child_table_name_map=child_table_name_map, after_insert=after_insert, copy_child_table=copy_child_table, \
-                        get_new_name=get_new_name, suppress_msg=suppress_msg, in_batches=in_batches)
+                        get_new_name=get_new_name, suppress_msg=suppress_msg, in_batches=in_batches, continue_on_error=continue_on_error)
 
             if not (in_batches and self.batchdata.has_more_records()):
-                break
-
+                break            
 
     def start_import_process(self, doctype, doc_list, new_doctype=None, overwrite=False, \
                         before_insert=None, submit=False, child_table_name_map=None, after_insert=None, copy_child_table=True, \
-                        get_new_name=None, suppress_msg=False, in_batches=True):
+                        get_new_name=None, suppress_msg=False, in_batches=True, continue_on_error=False):
 
         total_list_length = len(doc_list)
         if not new_doctype:
@@ -617,10 +615,11 @@ class ImportDB(object):
         #Initialize Progress Bar
         if not suppress_msg:
             printProgressBar(doctype, 0, total_list_length, prefix = 'Progress:', suffix = 'Complete', length = 50)        
-        for i, doc in enumerate(doc_list):                        
+        for i, doc in enumerate(doc_list):     
             self._import_document(doc, new_doctype, different_doctype=True if new_doctype!=doctype else False, \
                             before_insert=before_insert, submit=submit, overwrite=overwrite, after_insert=after_insert, \
-                            child_table_name_map=child_table_name_map,get_new_name=get_new_name, copy_child_table=copy_child_table)
+                            child_table_name_map=child_table_name_map,get_new_name=get_new_name, copy_child_table=copy_child_table, \
+                            continue_on_error=continue_on_error)
             #Update Progress Bar
             if not suppress_msg:
                 printProgressBar(doctype, i + 1, total_list_length, prefix = 'Progress:', suffix = 'Complete', length = 50)
@@ -631,7 +630,7 @@ class ImportDB(object):
     def fetch_data(self, doctype, id=None, doc_list=None, old_doc_dict=None, filters=None, \
                             order_by=None, fetch_with_children=True, in_batches=True):
 
-        if in_batches and not id and not old_doc_dict and not doc_list:  
+        if in_batches and not id and not old_doc_dict and not doc_list:                  
             if self.batchdata and not self.batchdata.has_data():
                 self.batchdata.init_base_documents_list(doctype, filters=filters, order_by=order_by, fetch_with_children=fetch_with_children, in_batches=in_batches)
             return self.batchdata.get_next_batch()

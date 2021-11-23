@@ -3,12 +3,28 @@ import json
 from frappe.utils import cint, getdate
 
 @frappe.whitelist()
+def get_entities_with_addresses(doctype, filters=None, from_record=0, page_length=500):
+    from_record=cint(from_record)
+    page_length=cint(page_length)
+
+    entities = get_complete_list(doctype, filters=filters, from_record=from_record, page_length=page_length, order_by="name")
+    for e in entities:
+        if isinstance(e, dict):
+            address_filters = [
+                ["Dynamic Link", "link_doctype", "=", doctype],
+                ["Dynamic Link", "link_name", "=", e['name']],
+                ["Dynamic Link", "parenttype", "=", "Address"],
+            ]                        
+            e['addresses'] = get_complete_list('Address', filters=address_filters, page_length=500)
+    return entities
+
+@frappe.whitelist()
 def get_doc_list_as_per_transactions(filters=None, from_date=None, to_date=None, order_by=None, non_stock=False):
 
     if isinstance(non_stock, basestring):
         non_stock = non_stock == "True"
 
-    default_fields = ["voucher_type, voucher_no, posting_date"]
+    default_fields = ["voucher_type, voucher_no, posting_date, posting_time"]
     default_order_by = "posting_date,posting_time"
     default_records_length = 10000
 
@@ -38,7 +54,10 @@ def get_doc_list_as_per_transactions(filters=None, from_date=None, to_date=None,
         document_list = get_non_stock_sales_purchase(from_date=from_date, to_date=to_date)
     doc_list = []
     for doc in document_list:
-        doc_list.extend([frappe.get_doc(doc['voucher_type'], doc['voucher_no']).as_dict()])
+        doc_doc = frappe.get_doc(doc['voucher_type'], doc['voucher_no'])
+        if not doc_doc.get('posting_time'):
+            doc_doc.posting_time = doc.get('posting_time')
+        doc_list.extend([doc_doc.as_dict()])
     return doc_list
 
 @frappe.whitelist()

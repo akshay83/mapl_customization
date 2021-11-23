@@ -87,7 +87,7 @@ class FetchData(object):
         return self.list
 
     def _get_next_batch(self):   
-        #--DEBUG -- print (self.day_interval, self.from_date, self.current_date, self.fetch_till_date, self.to_date)     
+        #--DEBUG-- print (self.day_interval, self.from_date, self.current_date, self.fetch_till_date, self.to_date)     
         list = None
         if self.transactional:
             list = get_entries(self.conn, self.client_db_api_path, self.doctype, from_date=self.current_date, to_date=self.fetch_till_date)
@@ -108,13 +108,16 @@ class FetchData(object):
             list = self._get_next_batch()
         return list
         
-    def get_base_document_list(self):
-            if self.fetch_with_children:
-                return get_documents_with_childtables(self.conn, self.client_db_api_path, self.doctype, filters=self.filters, from_record=self.current_record, \
-                                page_length=self.max_records_per_batch, order_by=self.order_by)
-            else:
-                return get_documents_without_childtables(self.conn, self.doctype, client_db_api_path=self.client_db_api_path, filters=self.fitlers, \
-                                from_record=self.current_record,page_length=self.max_records_per_batch, order_by=self.order_by)
+    def get_base_document_list(self):        
+        if self.doctype.lower() in ['customer', 'supplier']:
+            return get_entites_with_addresses(self.conn, self.client_db_api_path, self.doctype, filters=self.filters, \
+                    from_record=self.current_record, page_length=self.max_records_per_batch)
+        if self.fetch_with_children:
+            return get_documents_with_childtables(self.conn, self.client_db_api_path, self.doctype, filters=self.filters, \
+                from_record=self.current_record, page_length=self.max_records_per_batch, order_by=self.order_by)
+        else:
+            return get_documents_without_childtables(self.conn, self.doctype, client_db_api_path=self.client_db_api_path, filters=self.fitlers, \
+                            from_record=self.current_record,page_length=self.max_records_per_batch, order_by=self.order_by)
 
     def has_more_records(self):
         if hasattr(self, 'fetch_till_date') and hasattr(self, 'to_date'):
@@ -176,6 +179,13 @@ def get_stock_transactions(conn, client_db_api_path, from_date=None, to_date=Non
                             params={'from_date':from_date,
                                 'to_date':to_date,
                                 'non_stock':non_stock})
+
+def get_entites_with_addresses(conn, client_db_api_path, doctype, filters=None, from_record=0, page_length=50):
+    return conn.get_api(client_db_api_path+'.rest_api.get_entities_with_addresses',
+                            params={'doctype':doctype,
+                                'filters':filters,
+                                'from_record':from_record,
+                                'page_length':page_length})    
 
 def get_documents_with_childtables(conn, client_db_api_path, doctype, fields=None,filters=None,from_record=0,page_length=50,order_by=None):
     return conn.get_api(client_db_api_path+'.rest_api.get_doc_list',
