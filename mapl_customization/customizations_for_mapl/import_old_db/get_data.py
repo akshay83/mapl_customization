@@ -71,6 +71,8 @@ class FetchData(object):
         else:
             self.total_records = get_record_count(self.conn, self.client_db_api_path, \
                     self.doctype, filters={'from_date':self.from_date, 'to_date':self.to_date}, non_stock=True)
+        if not self.total_records:
+            self.total_records = 0
         self.current_record = 0
         self.current_date = getattr(self, 'from_date',None)
         print ('Total Records', self.total_records)

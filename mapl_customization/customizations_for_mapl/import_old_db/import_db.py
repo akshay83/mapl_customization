@@ -1,23 +1,33 @@
 import frappe
 import datetime
 import logging
+from frappe import CharacterLengthExceededError
+from .monkey_patch_import import *
+from .common import *
 from .frappeclient import FrappeClient
-from .get_data import FetchData, get_documents_without_childtables, get_documents_with_childtables, get_record_count
-from frappe.utils import cstr, validate_email_address, validate_phone_number, flt, getdate, format_date
+from .get_data import *
+from frappe.utils import cstr, validate_email_address, validate_phone_number, flt, getdate, format_date, cint
 from erpnext import get_default_company
 
 class SkipRecordException(Exception):
     pass 
 
+class ErrorInsertingRecord(Exception):
+    pass
+
+class InvalidStockEntries(Exception):
+    pass
+
 class ImportDB(object):
     def __init__(self, url, username, password, parent_module=None):
         self.remoteDBClient = FrappeClient(url, username=username, password=password)
         self.parent_module = parent_module
+        self.retry = -1        
         logging.basicConfig(filename="/home/frappe/import_log.log",level=logging.INFO)
         logging.info('Initialized Importing Instance at {0}'.format(datetime.datetime.utcnow()))
         self.COMMIT_DELAY = 500
         if not self.parent_module:
-            self.parent_module = "mapl_customization.customizations_for_mapl"
+            self.parent_module = "mapl_customization.customizations_for_mapl"            
 
     def __exit__(self, *args, **kwargs):
         self.logout()
@@ -83,9 +93,9 @@ class ImportDB(object):
             self.import_salary_details()
         dates_map = [
             #["01-04-2017", "30-06-2017"],
-            ["01-07-2017", "20-07-2017"],
-            #["01-07-2017", "30-09-2017"],
-            #["01-10-2017", "31-03-2018"]
+            #["01-07-2017", "20-07-2017"],
+            #["30-07-2017", "30-09-2017"],
+            ["01-10-2017", "31-03-2018"],
             #["01-04-2018", "30-09-2018"],
             #["01-10-2018", "31-03-2019"],
             #["01-04-2019", "30-09-2019"],
@@ -96,12 +106,12 @@ class ImportDB(object):
         dt = format_date(getdate())        
         if not import_modules or "stock_transactions" in import_modules:
             for d in dates_map:
-                self.import_stock_transactions(from_date=d[0],to_date=d[1])
+                self.import_stock_transactions(from_date=d[0],to_date=d[1], day_interval=10)
             if till_date:
                 self.import_stock_transactions(from_date="01-04-2021",to_date=dt)
         if not import_modules or "non_stock_transactions" in import_modules:
             for d in dates_map:
-                self.import_stock_transactions(from_date=d[0],to_date=d[1], non_sle_entries=True)
+                self.import_stock_transactions(from_date=d[0],to_date=d[1], non_sle_entries=True, day_interval=10)
             if till_date:
                 self.import_stock_transactions(from_date="01-04-2021",to_date=dt, non_sle_entries=True)
         if not import_modules or "payments" in import_modules:
@@ -175,7 +185,7 @@ class ImportDB(object):
 
     def import_employees(self):
         def before_inserting(doc, old_doc):
-            fn, mn, ln = self.split_name(old_doc.employee_name)
+            fn, mn, ln = split_name(old_doc.employee_name)
             doc.first_name = fn
             doc.middle_name = mn
             doc.last_name = ln
@@ -320,21 +330,28 @@ class ImportDB(object):
 
         self.import_documents_having_childtables('Salary Slip', child_table_name_map={'loan_deduction_detail':'loans'}, before_insert=before_inserting)
 
-    def import_stock_transactions(self,from_date=None, to_date=None, non_sle_entries=False):
+    def import_stock_transactions(self,from_date=None, to_date=None, non_sle_entries=False, day_interval=5):
         print ('Importing Stock Transactions')
-        batchdata = FetchData(self.remoteDBClient, self.parent_module, day_interval=5)
+        monkey_patch_sales_invoice_temporarily()
+        batchdata = FetchData(self.remoteDBClient, self.parent_module, day_interval=day_interval)
         if not non_sle_entries:
             batchdata.init_stock_transactions(from_date=from_date, to_date=to_date)
         else:
             batchdata.init_non_stock_transactions(from_date=from_date, to_date=to_date)    
+        negative_stock = frappe.db.get_value("Stock Settings", None, "allow_negative_stock")
+        frappe.db.set_value("Stock Settings", None, "allow_negative_stock", 1)        
         while batchdata.has_more_records():
             entries = batchdata.get_next_batch()
             if not entries or len(entries)<=0:
                 break
             #--DEBUG-- print ("Testing", len(entries))    
-            self.import_transactions(entries)
+            self.import_transactions(entries, non_sle_entries=non_sle_entries)
+        frappe.db.set_value("Stock Settings", None, "allow_negative_stock", negative_stock)
+        frappe.db.commit()
 
-    def import_transactions(self, entries):
+    def import_transactions(self, entries, non_sle_entries=False):
+        from erpnext.stock.doctype.serial_no.serial_no import SerialNoNotExistsError, SerialNoWarehouseError
+        from erpnext.stock.stock_ledger import NegativeStockError
         def before_inserting(new_doc, old_doc):
             new_doc.flags.ignore_validate = True
             new_doc.amended_from = None
@@ -344,31 +361,61 @@ class ImportDB(object):
                     for i in new_doc.items:
                         i.allow_zero_valuation_rate = 1
             if old_doc.doctype == 'Purchase Invoice':
-                pass
+                for i in new_doc.items:
+                    if i.amount == 0:
+                        i.allow_zero_valuation_rate = 1
             if old_doc.doctype == 'Sales Invoice':
                 new_doc.invoice_copy = 'Original for Recipient'
                 new_doc.delayed_payment_remarks = old_doc.get('special_remarks')
                 new_doc.notes = old_doc.get('reference_details')
                 new_doc.advances = None
-            #--DEBUG-- print (new_doc.doctype, new_doc.name, new_doc.posting_date, new_doc.posting_time)
+                new_doc.update_current_stock()
+            #--DEBUG-- print ("Old Doc:", old_doc.doctype, old_doc.name, old_doc.posting_date, old_doc.posting_time)                
+            #--DEBUG-- print ("New Doc:", new_doc.doctype, new_doc.name, new_doc.posting_date, new_doc.posting_time)
+            #--DEBUG-- raise SkipRecordException("testing")
+        
+        def after_inserting(new_doc, old_doc):
+            if non_sle_entries:
+                return 
+            if not validate_sle_entries(new_doc):
+                raise InvalidStockEntries("Invalid Stock Entries for {0}, Aborting".format(new_doc.name))
 
         if not entries or len(entries)<=0:
             return
-        negative_stock = frappe.db.get_value("Stock Settings", None, "allow_negative_stock")
-        frappe.db.set_value("Stock Settings", None, "allow_negative_stock", 1)        
         total_list_length = len(entries)
         #Initialize Progress Bar
         printProgressBar('Transactions', 0, total_list_length, prefix = 'Progress:', suffix = 'Complete', length = 50)
+        do_later = []
         for idx, s in enumerate(entries):
             #Update Progress Bar                                    
-            printProgressBar('Transactions', idx + 1, total_list_length, prefix = 'Progress:', suffix = 'Complete', length = 50)
-            s = frappe._dict(s)            
-            self.import_documents_having_childtables(s.doctype, old_doc_dict=s, before_insert=before_inserting, suppress_msg=True, \
-                                        in_batches=False, reset_batch=False)            
+            printProgressBar('Transactions', idx + 1, total_list_length, prefix = 'Progress:', suffix = 'Complete', length = 50, supplement_msg=s.get('posting_date') or "")
+            s = frappe._dict(s) 
+            try:           
+                self.import_documents_having_childtables(s.doctype, old_doc_dict=s, before_insert=before_inserting, suppress_msg=True, \
+                                        in_batches=False, reset_batch=False, auto_commit=False, after_insert=after_inserting)
+            except SerialNoNotExistsError:
+                do_later.append(s)
+            except SerialNoWarehouseError:
+                do_later.append(s)
+            except NegativeStockError as n:
+                #Repost & Retry
+                self.repost(s, n)
+                self.import_documents_having_childtables(s.doctype, old_doc_dict=s, before_insert=before_inserting, suppress_msg=True, \
+                                        in_batches=False, reset_batch=False, auto_commit=False, after_insert=after_inserting)
             if idx % self.COMMIT_DELAY == 0:
                 frappe.db.commit()
-        frappe.db.set_value("Stock Settings", None, "allow_negative_stock", negative_stock)
+        for idx, d in enumerate(do_later):
+            self.import_documents_having_childtables(d.doctype, old_doc_dict=d, before_insert=before_inserting, suppress_msg=True, \
+                                    in_batches=False, reset_batch=False, auto_commit=False, after_insert=after_inserting)
         frappe.db.commit()
+    
+    def repost(self, doc, error):
+        warehouse = None
+        for w in frappe.get_all("Warehouse", fields=['name']):
+            if w['name'] in str(error):
+                warehouse = w['name']
+        for i in doc.get('items'):
+            repost_entries(i['item_code'], warehouse)
         
     def import_payment_entries(self, from_date=None, to_date=None):
         def before_inserting(new_doc, old_doc):
@@ -383,6 +430,7 @@ class ImportDB(object):
             new_doc.amended_from = None
             new_doc.unallocated_amount = new_doc.paid_amount
 
+        monkey_patch_payment_entry_temporarily()
         self.do_batch_import('Payment Entry', from_date=from_date, to_date=to_date, before_insert=before_inserting)
 
     def import_journal_entries(self, from_date=None, to_date=None, id=None):
@@ -420,7 +468,10 @@ class ImportDB(object):
             if new_doc.get('gst_state') and new_doc.gst_state.lower() == 'dadra and nagar haveli':
                     new_doc.gst_state = 'Dadra and Nagar Haveli and Daman and Diu'                    
             if new_doc.get('state') and new_doc.state.lower() == 'dadra and nagar haveli':
-                    new_doc.state = 'Dadra and Nagar Haveli and Daman and Diu'                    
+                    new_doc.state = 'Dadra and Nagar Haveli and Daman and Diu'       
+
+            if new_doc.get('gstin') and len(new_doc.get('gstin')) > 15:
+                setattr(new_doc, 'gstin', new_doc.get('gstin')[:15])
 
             new_doc.flags.ignore_validate = True
             if new_doc.is_new():
@@ -435,7 +486,7 @@ class ImportDB(object):
             return
 
         contact_nos = contact_nos.split(',')
-        fn, mn, ln = self.split_name(old_doc.customer_name)        
+        fn, mn, ln = split_name(old_doc.customer_name)        
 
         new_doc = None
         generated_name = self.generate_contact_name(fn, ln, new_doc_name)        
@@ -457,13 +508,6 @@ class ImportDB(object):
         if save_doc:
             self.save_doc(new_doc)
 
-    def split_name(self, customer_name):
-        names = customer_name.strip().split(' ')
-        fn = (' '.join(names[0:len(names)-2]) if len(names) >= 3 else names[0])
-        ln = names[-1]
-        mn = (names[-2] if len(names) >= 3 else None)
-        return fn, mn, ln        
-
     def get_contact_nos(self, old_doc):
         if not old_doc.get('primary_contact_no'):
             return None
@@ -482,12 +526,13 @@ class ImportDB(object):
     def do_batch_import(self, doctype, from_date=None, to_date=None, before_insert=None, after_insert=None):
         batchdata = FetchData(self.remoteDBClient, self.parent_module, day_interval=5)
         batchdata.init_transactional_entries(doctype, from_date=from_date, to_date=to_date)
+        entries = []
         while batchdata.has_more_records():
             entries = batchdata.get_next_batch()
             if not entries or len(entries)<=0:
                 break
             #--DEBUG--print ("Testing", len(entries))        
-        self.import_documents_having_childtables(self, doctype, before_insert=before_inserting, doc_list=entries) 
+            self.import_documents_having_childtables(doctype, before_insert=before_insert, doc_list=entries, reset_batch=False) 
         frappe.db.commit()
 
     def remove_child_rows(self,new_doc, child_table):
@@ -582,7 +627,7 @@ class ImportDB(object):
     def import_documents_having_childtables(self, doctype, new_doctype=None, id=None, old_doc_dict=None, overwrite=False, \
                         before_insert=None, submit=False, child_table_name_map=None, after_insert=None, copy_child_table=True, \
                         fetch_with_children=True, doc_list=None, fetch_filters=None, get_new_name=None, suppress_msg=False, \
-                        in_batches=True, order_by=None, reset_batch=True, continue_on_error=False):
+                        in_batches=True, order_by=None, reset_batch=True, continue_on_error=False, auto_commit=True):
 
         if reset_batch and in_batches:
             self.batchdata = FetchData(self.remoteDBClient, self.parent_module, records_per_batch=1000)
@@ -597,17 +642,19 @@ class ImportDB(object):
             #--DEBUG-- print (fetched_doc_list)
             #--DEBUG-- print ("Testing", len(fetched_doc_list))
             #--DEBUG-- print (fetched_doc_list[0].get('name'), fetched_doc_list[-1].get('name'))
-            
             self.start_import_process(doctype, fetched_doc_list, new_doctype=new_doctype, overwrite=overwrite, before_insert=before_insert, \
                         submit=submit, child_table_name_map=child_table_name_map, after_insert=after_insert, copy_child_table=copy_child_table, \
-                        get_new_name=get_new_name, suppress_msg=suppress_msg, in_batches=in_batches, continue_on_error=continue_on_error)
+                        get_new_name=get_new_name, suppress_msg=suppress_msg, in_batches=in_batches, continue_on_error=continue_on_error, auto_commit=auto_commit)
 
-            if not (in_batches and self.batchdata.has_more_records()):
+            if not (doc_list == None and old_doc_dict == None and id == None):
+                break
+
+            if hasattr(self,'batchdata') and not (in_batches and self.batchdata.has_more_records()):
                 break            
 
     def start_import_process(self, doctype, doc_list, new_doctype=None, overwrite=False, \
                         before_insert=None, submit=False, child_table_name_map=None, after_insert=None, copy_child_table=True, \
-                        get_new_name=None, suppress_msg=False, in_batches=True, continue_on_error=False):
+                        get_new_name=None, suppress_msg=False, in_batches=True, continue_on_error=False, auto_commit=True):
 
         total_list_length = len(doc_list)
         if not new_doctype:
@@ -623,14 +670,15 @@ class ImportDB(object):
             #Update Progress Bar
             if not suppress_msg:
                 printProgressBar(doctype, i + 1, total_list_length, prefix = 'Progress:', suffix = 'Complete', length = 50)
-            if i % self.COMMIT_DELAY == 0:
+            if i % self.COMMIT_DELAY == 0 and auto_commit:
                 frappe.db.commit()
-        frappe.db.commit()        
+        if auto_commit:
+            frappe.db.commit()        
 
     def fetch_data(self, doctype, id=None, doc_list=None, old_doc_dict=None, filters=None, \
                             order_by=None, fetch_with_children=True, in_batches=True):
 
-        if in_batches and not id and not old_doc_dict and not doc_list:                  
+        if in_batches and id == None and old_doc_dict == None and doc_list == None:                  
             if self.batchdata and not self.batchdata.has_data():
                 self.batchdata.init_base_documents_list(doctype, filters=filters, order_by=order_by, fetch_with_children=fetch_with_children, in_batches=in_batches)
             return self.batchdata.get_next_batch()
@@ -650,11 +698,11 @@ class ImportDB(object):
                             from_record=0,page_length=500, order_by=order_by)
 
     def insert_doc(self, new_doc, new_name=None, submit=False, ignore_mandatory=None, ignore_if_duplicate=True, continue_on_error=False):
-        new_doc.ignore_validate_hook = True
+        new_doc.ignore_validate_hook = True        
         try:
             new_doc.insert(ignore_permissions=True, set_name=new_name, ignore_if_duplicate=ignore_if_duplicate, ignore_mandatory=ignore_mandatory)
             if submit:
-                new_doc.submit()
+                new_doc.submit()     
         except Exception as e:
             if not continue_on_error:
                 raise 
@@ -678,73 +726,3 @@ class ImportDB(object):
                 print ('Error Updating {0} Name:{1}'.format(new_doc.doctype, new_doc.name))
                 print (str(e))
                 print ('#'*50)
-
-# Print iterations progress
-def printProgressBar (doctype, iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█', printEnd = "\r"):
-    """
-    Call in a loop to create terminal progress bar
-    @params:
-        iteration   - Required  : current iteration (Int)
-        total       - Required  : total iterations (Int)
-        prefix      - Optional  : prefix string (Str)
-        suffix      - Optional  : suffix string (Str)
-        decimals    - Optional  : positive number of decimals in percent complete (Int)
-        length      - Optional  : character length of bar (Int)
-        fill        - Optional  : bar fill character (Str)
-        printEnd    - Optional  : end character (e.g. "\r", "\r\n") (Str)
-    """
-    if iteration <= 0:
-        print ("Importing:", doctype, "Total Records:", total, 'Started At:',datetime.datetime.utcnow())
-    percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
-    filledLength = int(length * iteration // total)
-    bar = fill * filledLength + '-' * (length - filledLength)
-    print(f'\r{prefix} |{bar}| {percent}% {suffix}', end = printEnd)
-    # Print New Line on Complete
-    if iteration == total: 
-        print()
-        print ("Imported:", doctype, "Total Records:", total, 'Completed At:',datetime.datetime.utcnow())
-
-def make_gl_entries(self, cancel=0, adv_adj=0):
-	from erpnext.accounts.general_ledger import make_gl_entries
-
-	gl_map = []
-	for d in self.get("accounts"):
-		if d.debit or d.credit:
-			r = [d.user_remark, self.remark]
-			r = [x for x in r if x]
-			remarks = "\n".join(r)
-
-			gl_map.append(
-				self.get_gl_dict({
-					"account": d.account,
-					"party_type": d.party_type,
-					"due_date": self.due_date,
-					"party": d.party,
-					"against": d.against_account,
-					"debit": flt(d.debit, d.precision("debit")),
-					"credit": flt(d.credit, d.precision("credit")),
-					"account_currency": d.account_currency,
-					"debit_in_account_currency": flt(d.debit_in_account_currency, d.precision("debit_in_account_currency")),
-					"credit_in_account_currency": flt(d.credit_in_account_currency, d.precision("credit_in_account_currency")),
-					"against_voucher_type": d.reference_type,
-					"against_voucher": d.reference_name,
-					"remarks": remarks,
-					"voucher_detail_no": d.reference_detail_no,
-					"cost_center": d.cost_center,
-					"project": d.project,
-					"finance_book": self.finance_book
-				}, item=d)
-			)
-
-	if self.voucher_type in ('Deferred Revenue', 'Deferred Expense'):
-		update_outstanding = 'No'
-	else:
-		update_outstanding = 'Yes'
-
-	if gl_map:
-        #monkey here
-		make_gl_entries(gl_map, cancel=cancel, adv_adj=adv_adj, update_outstanding=update_outstanding,from_repost=True)
-
-def monkey_patch_journal_entry_temporarily():
-    from erpnext.accounts.doctype.journal_entry.journal_entry import JournalEntry
-    JournalEntry.make_gl_entries = make_gl_entries

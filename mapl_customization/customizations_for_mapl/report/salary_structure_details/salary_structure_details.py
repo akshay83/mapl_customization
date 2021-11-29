@@ -175,7 +175,7 @@ def get_earnings_and_deductions(struct_name):
 	deductions = 0
 	details = frappe.db.sql("""select
 					  formula,
-					  depends_on_lwp,
+					  depends_on_payment_days,
 					  salary_component,
 					  rounding,
 					  amount
@@ -186,7 +186,7 @@ def get_earnings_and_deductions(struct_name):
 
 	for d in details:
 		build_row[d.salary_component+"formula"] = d.formula
-		build_row[d.salary_component+"lwp"] = d.depends_on_lwp
+		build_row[d.salary_component+"lwp"] = d.depends_on_payment_days
 		build_row[d.salary_component+"rounding"] = d.rounding
 		build_row[d.salary_component+"amt"] = d.amount
 
