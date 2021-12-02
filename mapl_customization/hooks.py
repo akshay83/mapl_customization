@@ -290,12 +290,11 @@ after_install = "mapl_customization.customizations_for_mapl.install.after_instal
 
 app_include_css = "/assets/mapl_customization/css/custom_css.css"
 app_include_js = ["/assets/mapl_customization/js/core.js",
-		"/assets/mapl_customization/js/quick_customer.js",
-		"/assets/mapl_customization/js/monkey_patch_list_view.js"
+		"/assets/mapl_customization/js/quick_customer.js"
 		]
 
-doctype_list_js = {"Payment Entry" : "/public/js/payment_entry_list.js",
-			"Sales Invoice" : "/public/js/sales_invoice_list.js"}
+#doctype_list_js = {"Payment Entry" : "/public/js/payment_entry_list.js",
+#			"Sales Invoice" : "/public/js/sales_invoice_list.js"}
 
 #version-13 branch supports this
 jenv = {

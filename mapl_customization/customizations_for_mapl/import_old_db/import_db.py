@@ -6,7 +6,7 @@ from .monkey_patch_import import *
 from .common import *
 from .frappeclient import FrappeClient
 from .get_data import *
-from frappe.utils import cstr, validate_email_address, validate_phone_number, flt, getdate, format_date, cint
+from frappe.utils import cstr, validate_email_address, validate_phone_number, flt, getdate, format_date, cint, add_to_date
 from erpnext import get_default_company
 
 class SkipRecordException(Exception):
@@ -19,10 +19,10 @@ class InvalidStockEntries(Exception):
     pass
 
 class ImportDB(object):
-    def __init__(self, url, username, password, parent_module=None):
+    def __init__(self, url, username, password, parent_module=None, log_test=False):
         self.remoteDBClient = FrappeClient(url, username=username, password=password)
         self.parent_module = parent_module
-        self.retry = -1        
+        self.log_test = log_test        
         logging.basicConfig(filename="/home/frappe/import_log.log",level=logging.INFO)
         logging.info('Initialized Importing Instance at {0}'.format(datetime.datetime.utcnow()))
         self.COMMIT_DELAY = 500
@@ -80,7 +80,7 @@ class ImportDB(object):
     
     def process(self, till_date=False, import_modules=None):
         print ("Staring Process at",datetime.datetime.utcnow())
-        logging.info('Started Process at {0}'.format(datetime.datetime.utcnow()))
+        log_info(logging, 'Started Process at {0}'.format(datetime.datetime.utcnow()))
         if not frappe.db.get_single_value('Global Defaults', 'default_company'):
             frappe.throw("Please set Global Defaults")
         if not import_modules or "masters" in import_modules:
@@ -94,9 +94,9 @@ class ImportDB(object):
         dates_map = [
             #["01-04-2017", "30-06-2017"],
             #["01-07-2017", "20-07-2017"],
-            #["30-07-2017", "30-09-2017"],
-            ["01-10-2017", "31-03-2018"],
-            #["01-04-2018", "30-09-2018"],
+            #["01-07-2017", "30-09-2017"],
+            #["01-10-2017", "31-03-2018"],
+            ["01-02-2018", "31-03-2018"],
             #["01-10-2018", "31-03-2019"],
             #["01-04-2019", "30-09-2019"],
             #["01-10-2019", "31-03-2020"],
@@ -127,7 +127,7 @@ class ImportDB(object):
         if not import_modules or "period_closing" in import_modules:                
             self.import_period_closing_vouchers()
         print ("Completed Process at",datetime.datetime.utcnow())
-        logging.info('Completed Process at {0}'.format(datetime.datetime.utcnow()))
+        log_info(logging,'Completed Process at {0}'.format(datetime.datetime.utcnow()))
 
     def import_accounts(self, overwrite=False):
         def before_inserting(new_doc, old_doc):
@@ -347,11 +347,12 @@ class ImportDB(object):
             #--DEBUG-- print ("Testing", len(entries))    
             self.import_transactions(entries, non_sle_entries=non_sle_entries)
         frappe.db.set_value("Stock Settings", None, "allow_negative_stock", negative_stock)
-        frappe.db.commit()
+        self.commit()
 
     def import_transactions(self, entries, non_sle_entries=False):
         from erpnext.stock.doctype.serial_no.serial_no import SerialNoNotExistsError, SerialNoWarehouseError
-        from erpnext.stock.stock_ledger import NegativeStockError
+        from erpnext.stock.stock_ledger import NegativeStockError, SerialNoExistsInFutureTransaction
+
         def before_inserting(new_doc, old_doc):
             new_doc.flags.ignore_validate = True
             new_doc.amended_from = None
@@ -375,13 +376,44 @@ class ImportDB(object):
             #--DEBUG-- raise SkipRecordException("testing")
         
         def after_inserting(new_doc, old_doc):
+            if not self.log_test:
+                return
             if non_sle_entries:
                 return 
             if not validate_sle_entries(new_doc):
                 raise InvalidStockEntries("Invalid Stock Entries for {0}, Aborting".format(new_doc.name))
+            try:
+                if not validate_sle_entries(frappe.get_doc("Stock Entry", "MAPL/VN/STE/2018/000045")):
+                    raise InvalidStockEntries("Invalid Stock Entries for Problematic Stock Entry")
+            except frappe.DoesNotExistError:
+                pass
+
+        def do_queued(do_later):
+            for idx, d in enumerate(do_later):
+                log_info(logging, 'Retrying Doctype {0} with Name {1}'.format(d.doctype, d.name))
+                d.posting_time = "23:55"
+                retry = 0
+                while True:
+                    try:
+                        save_point('QUEUED_IMPORT')
+                        self.import_documents_having_childtables(d.doctype, old_doc_dict=d, before_insert=before_inserting, suppress_msg=True, \
+                                        in_batches=False, reset_batch=False, auto_commit=False, after_insert=after_inserting)
+                        retry = 0
+                        release_savepoint('QUEUED_IMPORT')
+                        break
+                    except (SerialNoExistsInFutureTransaction, SerialNoWarehouseError):
+                        # Retry 5 Times with date + 1, Lots of Errors while using ERPNext for first 2 Years
+                        rollback_to_savepoint('QUEUED_IMPORT')
+                        retry = retry + 1
+                        d.posting_date = add_to_date(getdate(d.posting_date),days=1)
+                        log_info(logging, 'Retrying with +1 Date, Doctype {0} with Name {1}, new Date {2}'.format(d.doctype, d.name, d.posting_date))                    
+                        if retry > 5:
+                            retry = 0
+                            raise            
 
         if not entries or len(entries)<=0:
             return
+
         total_list_length = len(entries)
         #Initialize Progress Bar
         printProgressBar('Transactions', 0, total_list_length, prefix = 'Progress:', suffix = 'Complete', length = 50)
@@ -390,24 +422,26 @@ class ImportDB(object):
             #Update Progress Bar                                    
             printProgressBar('Transactions', idx + 1, total_list_length, prefix = 'Progress:', suffix = 'Complete', length = 50, supplement_msg=s.get('posting_date') or "")
             s = frappe._dict(s) 
-            try:           
+            try:
+                save_point('DOC_IMPORT')
                 self.import_documents_having_childtables(s.doctype, old_doc_dict=s, before_insert=before_inserting, suppress_msg=True, \
                                         in_batches=False, reset_batch=False, auto_commit=False, after_insert=after_inserting)
-            except SerialNoNotExistsError:
+                release_savepoint('DOC_IMPORT')
+            except (SerialNoNotExistsError, SerialNoWarehouseError) as n:
+                log_info(logging, n, s)                
                 do_later.append(s)
-            except SerialNoWarehouseError:
-                do_later.append(s)
+                rollback_to_savepoint('DOC_IMPORT')
             except NegativeStockError as n:
                 #Repost & Retry
+                log_info(logging, n, s)
+                rollback_to_savepoint('DOC_IMPORT')
                 self.repost(s, n)
                 self.import_documents_having_childtables(s.doctype, old_doc_dict=s, before_insert=before_inserting, suppress_msg=True, \
-                                        in_batches=False, reset_batch=False, auto_commit=False, after_insert=after_inserting)
-            if idx % self.COMMIT_DELAY == 0:
-                frappe.db.commit()
-        for idx, d in enumerate(do_later):
-            self.import_documents_having_childtables(d.doctype, old_doc_dict=d, before_insert=before_inserting, suppress_msg=True, \
-                                    in_batches=False, reset_batch=False, auto_commit=False, after_insert=after_inserting)
-        frappe.db.commit()
+                                        in_batches=False, reset_batch=False, auto_commit=False, after_insert=after_inserting)            
+            #if idx % self.COMMIT_DELAY == 0 and len(do_later) <= 0:
+            #    self.commit()
+        do_queued(do_later)
+        self.commit()
     
     def repost(self, doc, error):
         warehouse = None
@@ -445,12 +479,6 @@ class ImportDB(object):
 
         monkey_patch_journal_entry_temporarily()        
         self.do_batch_import('Journal Entry', from_date=from_date, to_date=to_date, before_insert=before_inserting)
-
-    def import_single_jv(self, id):
-        doc = self.remoteDBClient.get_doc('Journal Entry',id)
-        if doc and not frappe.db.exists('Journal Entry', doc['name']):
-            self.import_journal_entry(frappe._dict(doc))
-            frappe.db.commit()     
 
     def import_period_closing_vouchers(self):
         self.import_documents_having_childtables('Period Closing Voucher', order_by='transaction_date')
@@ -533,7 +561,7 @@ class ImportDB(object):
                 break
             #--DEBUG--print ("Testing", len(entries))        
             self.import_documents_having_childtables(doctype, before_insert=before_insert, doc_list=entries, reset_batch=False) 
-        frappe.db.commit()
+        self.commit()
 
     def remove_child_rows(self,new_doc, child_table):
         if (new_doc.get(child_table) and not new_doc.is_new()): #Child Not Empty  and new_doc.docstatus == 0
@@ -605,8 +633,10 @@ class ImportDB(object):
             elif overwrite:
                 new_doc = frappe.get_doc(doctype, doc.name)
             if not new_doc:
+                log_info(logging, 'Skipping Doctype {0} with Name {1}, Already Exists and Overwrite Not Allowed'.format(doctype, doc.name))
                 return
             if not new_doc.is_new() and new_doc.docstatus == 1: # Dont Touch Submitted Documents
+                log_info(logging, 'Skipping Doctype {0} with Name {1}, Already Submitted'.format(doctype, doc.name))
                 return
             self.copy_attr(doc, new_doc, copy_child_table=copy_child_table, doctype_different=different_doctype, child_table_name_map=child_table_name_map)
             if before_insert:
@@ -614,7 +644,7 @@ class ImportDB(object):
                     before_insert(new_doc, doc)
                 except SkipRecordException:
                     return
-            logging.info('Importing Doctype {0} with Name {1}'.format(doctype, doc.name))
+            log_info(logging, 'Importing Doctype {0} with Name {1}'.format(doctype, doc.name))
             if new_doc.is_new():
                 if get_new_name:
                     new_name = get_new_name(doc)
@@ -671,9 +701,9 @@ class ImportDB(object):
             if not suppress_msg:
                 printProgressBar(doctype, i + 1, total_list_length, prefix = 'Progress:', suffix = 'Complete', length = 50)
             if i % self.COMMIT_DELAY == 0 and auto_commit:
-                frappe.db.commit()
+                self.commit()
         if auto_commit:
-            frappe.db.commit()        
+            self.commit()        
 
     def fetch_data(self, doctype, id=None, doc_list=None, old_doc_dict=None, filters=None, \
                             order_by=None, fetch_with_children=True, in_batches=True):
@@ -726,3 +756,7 @@ class ImportDB(object):
                 print ('Error Updating {0} Name:{1}'.format(new_doc.doctype, new_doc.name))
                 print (str(e))
                 print ('#'*50)
+
+    def commit(self):
+        if not self.log_test:
+            frappe.db.commit()

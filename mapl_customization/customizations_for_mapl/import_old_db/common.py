@@ -3,7 +3,36 @@ import datetime
 from frappe.utils import cint, cstr, getdate, get_time
 from erpnext import get_default_company
 
+def save_point(name):
+    frappe.db.sql("SAVEPOINT {0}".format(name))
+
+def rollback_to_savepoint(name):
+    frappe.db.sql("ROLLBACK TO SAVEPOINT {0}".format(name))
+
+def release_savepoint(name):
+    frappe.db.sql("RELEASE SAVEPOINT {0}".format(name))
+
+def log_info(logging, error, document=None):
+    from erpnext.stock.doctype.serial_no.serial_no import SerialNoNotExistsError, SerialNoWarehouseError
+    from erpnext.stock.stock_ledger import NegativeStockError, SerialNoExistsInFutureTransaction
+
+    if isinstance(error, str):
+        logging.info(error)
+    else:
+        logging.info(str(error))  
+    if not document:
+        return          
+    if isinstance(error, SerialNoNotExistsError):
+        logging.info('Serial No Exists Error. Queueing for Later Insertion, Doctype {0} with Name {1}'.format(document.doctype, document.name))
+    elif isinstance(error, SerialNoWarehouseError):
+        logging.info('Serial No Warehouse Error. Queueing for Later Insertion, Doctype {0} with Name {1}'.format(document.doctype, document.name))
+    elif isinstance(error,NegativeStockError):
+        logging.info('Negative Stock Error. Reposting & Retrying Doctype {0} with Name {1}'.format(document.doctype, document.name))
+
 def validate_sle_entries(doc):
+    if not doc:
+        return True
+
     expected_balance_qty = None
     if doc.get('doctype') == 'Stock Entry':
         sl_entries = []
