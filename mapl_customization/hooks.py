@@ -203,7 +203,9 @@ cf_fields = [
 		"Stock Entry-reporting_name",
 		"Supplier-current_balance",
 		"User-user_group",
-		"Salary Slip-bank_column_break"
+		"Salary Slip-bank_column_break",
+		"Customer-aadhar_card_no",
+		"Customer-signature"
 ]
 
 print_fs = [
@@ -227,16 +229,11 @@ fixtures = [	{
 			"filters": [["name", "in", cf_fields]]
 		},
 		{
-			"dt": "Property Setter",
-			"filters": [
-				["name", "in", ["DocField-fieldtype-options",
-						"Customize Form Field-fieldtype-options",
-						"Custom Field-fieldtype-options"]]]
-		},
-		{
 			"dt": "Print Format",
 			"filters": [["name", "in", print_fs]]
-		}, "Letter Head", "Custom SQL Queries"
+		}, 
+		"Letter Head", 
+		"Custom SQL Queries"
 ]
 
 doc_events = {

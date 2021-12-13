@@ -94,6 +94,7 @@ def make_customer(args):
 	customer_doc.customer_type = args.get("customer_type")
 	customer_doc.tax_id = args.get("tax_id")
 	customer_doc.pan = args.get("pan_no")
+	customer_doc.aadhar_card_no = args.get("aadhar_card_no")
 	customer_doc.company_name = args.get("company_name")
 	customer_doc.vehicle_no = args.get("vehicle_no")
 	customer_doc.relation_to = args.get("relation_to")

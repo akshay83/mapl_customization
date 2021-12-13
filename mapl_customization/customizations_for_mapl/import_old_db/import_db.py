@@ -78,7 +78,18 @@ class ImportDB(object):
         self.import_employee_loans()
         self.import_employee_salary_slips()
     
-    def process(self, till_date=False, import_modules=None):
+    def process(self, till_date=False, import_modules=None, dates_map=None):
+        default_dates_map = [
+            ["01-04-2017", "30-06-2017"],
+            ["01-07-2017", "30-09-2017"],
+            ["01-10-2017", "31-03-2018"],
+            ["01-04-2018", "30-06-2018"],
+            ["01-10-2018", "31-03-2019"],
+            ["01-04-2019", "30-09-2019"],
+            ["01-10-2019", "31-03-2020"],
+            ["01-04-2020", "30-09-2020"],
+            ["01-10-2020", "31-03-2021"]
+        ]
         print ("Staring Process at",datetime.datetime.utcnow())
         log_info(logging, 'Started Process at {0}'.format(datetime.datetime.utcnow()))
         if not frappe.db.get_single_value('Global Defaults', 'default_company'):
@@ -91,18 +102,8 @@ class ImportDB(object):
             self.import_items()
         if not import_modules or "salary_details" in import_modules:                        
             self.import_salary_details()
-        dates_map = [
-            #["01-04-2017", "30-06-2017"],
-            #["01-07-2017", "20-07-2017"],
-            #["01-07-2017", "30-09-2017"],
-            #["01-10-2017", "31-03-2018"],
-            ["01-02-2018", "31-03-2018"],
-            #["01-10-2018", "31-03-2019"],
-            #["01-04-2019", "30-09-2019"],
-            #["01-10-2019", "31-03-2020"],
-            #["01-04-2020", "30-09-2020"],
-            #["01-10-2020", "31-03-2021"],
-        ]
+        if not dates_map:
+            dates_map = default_dates_map
         dt = format_date(getdate())        
         if not import_modules or "stock_transactions" in import_modules:
             for d in dates_map:
@@ -126,6 +127,7 @@ class ImportDB(object):
                 self.import_journal_entries(from_date="01-04-2021",to_date=dt)
         if not import_modules or "period_closing" in import_modules:                
             self.import_period_closing_vouchers()
+        self.update_naming_series()
         print ("Completed Process at",datetime.datetime.utcnow())
         log_info(logging,'Completed Process at {0}'.format(datetime.datetime.utcnow()))
 
@@ -291,7 +293,7 @@ class ImportDB(object):
             self.copy_child_table_attr(old_doc, new_doc, 'deductions')
             new_doc.flags.ignore_validate = True
 
-        def after_salary_structute(new_doc, old_doc):
+        def after_salary_structure(new_doc, old_doc):
             for employees in old_doc.get('employees'):                
                 if frappe.db.exists("Salary Structure Assignment", old_doc.name):
                     continue
@@ -303,7 +305,7 @@ class ImportDB(object):
                 assign_structure.flags.ignore_validate = True
                 self.insert_doc(assign_structure, new_name=old_doc.name, submit=True)
 
-        self.import_documents_having_childtables('Salary Structure', before_insert=before_salary_structure, after_insert=after_salary_structute, \
+        self.import_documents_having_childtables('Salary Structure', before_insert=before_salary_structure, after_insert=after_salary_structure, \
                                     copy_child_table=False, fetch_with_children=True, submit=True)
 
     def import_employee_loans(self):
@@ -483,6 +485,35 @@ class ImportDB(object):
     def import_period_closing_vouchers(self):
         self.import_documents_having_childtables('Period Closing Voucher', order_by='transaction_date')
 
+    def update_naming_series(self):
+        docs = [
+            "Sales Invoice",
+            "Purchase Invoice",
+            "Stock Entry",
+            "Payment Entry",
+            "Journal Entry"            
+        ]
+        for d in docs:
+            series_list = self.get_series_list(d)
+            for s in series_list:
+                self.update_series(s.series_key, s.series_value)
+        self.commit()
+
+    def get_series_list(self, doctype):
+        query = """
+                select  distinct substring(name, 1, length(name)-length(substring_index(name,'/',-1))) as series_key, 
+                        max(substring_index(name,'/',-1)) as series_value from `tab{0}` 
+                        group by substring(name, 1, length(name)-length(substring_index(name,'/',-1)))
+                """
+        return frappe.db.sql(query.format(doctype), as_dict=1)
+
+    def update_series(self, key, value):
+        check = frappe.db.sql("select * from `tabSeries` where name='{0}'".format(key), as_list=1)
+        if check and len(check) > 0:
+            frappe.db.sql("update `tabSeries` set current = {0} where name = '{1}'".format(value, key))
+        else:
+            frappe.db.sql("insert into `tabSeries` (current, name) values ({0},'{1}')".format(value, key))
+
     def import_address(self, doctype, old_doc_dict):
         def before_insert(new_doc, old_doc):
             if new_doc.get('email_id') and not validate_email_address(new_doc.email_id):
@@ -648,7 +679,7 @@ class ImportDB(object):
             if new_doc.is_new():
                 if get_new_name:
                     new_name = get_new_name(doc)
-                self.insert_doc(new_doc, new_name=doc.name, continue_on_error=continue_on_error)
+                self.insert_doc(new_doc, new_name=doc.name, continue_on_error=continue_on_error, submit=submit)
             elif overwrite:
                 self.save_doc(new_doc)
             if after_insert:
@@ -737,25 +768,20 @@ class ImportDB(object):
             if not continue_on_error:
                 raise 
             else:
-                print ('#'*50)
-                print ('Error Creating {0} Name:{1}'.format(new_doc.doctype, new_doc.name))
-                print (str(e))
-                print ('#'*50)
+                log_info(logging, 'Error Creating {0} Name:{1}, Continuing...'.format(new_doc.doctype, new_doc.name))
             
-    def save_doc(self, new_doc, submit=False, continue_on_error=False):
+    def save_doc(self, new_doc, continue_on_error=False):
+        """
+        No Submit Option, As save_doc is called if overwrite is enabled, and Submitted Documents are not Overwritten
+        """
         new_doc.ignore_validate_hook = True
         try:
             new_doc.save(ignore_permissions=True)
-            if submit:
-                new_doc.submit()      
         except Exception as e:
             if not continue_on_error:
                 raise 
             else:
-                print ('#'*50)
-                print ('Error Updating {0} Name:{1}'.format(new_doc.doctype, new_doc.name))
-                print (str(e))
-                print ('#'*50)
+                log_info(logging, 'Error Updating {0} Name:{1}, Continuing...'.format(new_doc.doctype, new_doc.name))
 
     def commit(self):
         if not self.log_test:
