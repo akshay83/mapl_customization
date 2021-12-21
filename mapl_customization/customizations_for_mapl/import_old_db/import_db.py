@@ -23,7 +23,7 @@ class ImportDB(object):
         self.remoteDBClient = FrappeClient(url, username=username, password=password)
         self.parent_module = parent_module
         self.log_test = log_test        
-        logging.basicConfig(filename="/home/frappe/import_log.log",level=logging.INFO)
+        logging.basicConfig(filename="/home/frappe/import_log.log",filemode='w',level=logging.INFO)
         logging.info('Initialized Importing Instance at {0}'.format(datetime.datetime.utcnow()))
         self.COMMIT_DELAY = 500
         if not self.parent_module:
@@ -530,14 +530,20 @@ class ImportDB(object):
                     new_doc.state = 'Dadra and Nagar Haveli and Daman and Diu'       
 
             if new_doc.get('gstin') and len(new_doc.get('gstin')) > 15:
-                setattr(new_doc, 'gstin', new_doc.get('gstin')[:15])
+                setattr(new_doc, 'gstin', new_doc.get('gstin')[:15])                
 
             new_doc.flags.ignore_validate = True
             if new_doc.is_new():
                 new_doc.append('links', dict(link_doctype=doctype, link_name=old_doc_dict.name))
 
+        def after_insert(new_doc, old_doc): 
+            if new_doc.get('gstin'):
+                gst_category = frappe.db.get_value(doctype, old_doc_dict.name, 'gst_category')
+                if not gst_category or gst_category != 'Registered Regular':
+                    frappe.db.set_value(doctype, old_doc_dict.name, "gst_category", "Registered Regular")
+
         self.import_documents_having_childtables('Address', before_insert=before_insert, doc_list=old_doc_dict.addresses, \
-                        overwrite=True, suppress_msg=True, fetch_with_children=False, in_batches=False, reset_batch=False)
+                        after_insert=after_insert, overwrite=True, suppress_msg=True, fetch_with_children=False, in_batches=False, reset_batch=False)
     
     def create_contact(self, old_doc, new_doc_name):
         contact_nos = self.get_contact_nos(old_doc)
@@ -669,13 +675,13 @@ class ImportDB(object):
             if not new_doc.is_new() and new_doc.docstatus == 1: # Dont Touch Submitted Documents
                 log_info(logging, 'Skipping Doctype {0} with Name {1}, Already Submitted'.format(doctype, doc.name))
                 return
+            log_info(logging, 'Importing Doctype {0} with Name {1}'.format(doctype, doc.name))                
             self.copy_attr(doc, new_doc, copy_child_table=copy_child_table, doctype_different=different_doctype, child_table_name_map=child_table_name_map)
             if before_insert:
                 try:
                     before_insert(new_doc, doc)
                 except SkipRecordException:
                     return
-            log_info(logging, 'Importing Doctype {0} with Name {1}'.format(doctype, doc.name))
             if new_doc.is_new():
                 if get_new_name:
                     new_name = get_new_name(doc)
