@@ -1,6 +1,8 @@
+import frappe
 import erpnext
 from frappe.utils import cint, flt
 from erpnext.accounts.general_ledger import make_gl_entries, make_reverse_gl_entries, process_gl_map
+from erpnext.stock.doctype.serial_no.serial_no import get_serial_nos
 
 def si_make_gl_entries(self, gl_entries=None, from_repost=False):
 	#monkey comment out as imported globally
@@ -86,6 +88,43 @@ def jv_make_gl_entries(self, cancel=0, adv_adj=0):
         #monkey here
 		make_gl_entries(gl_map, cancel=cancel, adv_adj=adv_adj, update_outstanding=update_outstanding,from_repost=True)
 
+def get_stock_ledger_entries(self, serial_no=None):
+	sle_dict = {}
+	if not serial_no:
+		serial_no = self.name
+
+	for sle in frappe.db.sql("""
+		SELECT voucher_type, voucher_no,
+			posting_date, posting_time, incoming_rate, actual_qty, serial_no
+		FROM
+			`tabStock Ledger Entry`
+		WHERE
+			item_code=%s AND company = %s
+			AND is_cancelled = 0
+			AND (serial_no = %s
+				OR serial_no like %s
+				OR serial_no like %s
+				OR serial_no like %s
+				OR serial_no like %s
+			)
+		ORDER BY
+			posting_date desc, posting_time desc, creation desc""",
+		(
+			self.item_code, self.company,
+			serial_no,
+			serial_no+'\n%',
+			'%\n'+serial_no,
+			'%\n'+serial_no+'\n%',
+			'%'+serial_no+'%' #monkey-here
+		), as_dict=1):
+			if serial_no.upper() in get_serial_nos(sle.serial_no):
+				if cint(sle.actual_qty) > 0:
+					sle_dict.setdefault("incoming", []).append(sle)
+				else:
+					sle_dict.setdefault("outgoing", []).append(sle)
+
+	return sle_dict
+
 def monkey_patch_journal_entry_temporarily():
     from erpnext.accounts.doctype.journal_entry.journal_entry import JournalEntry
     JournalEntry.make_gl_entries = jv_make_gl_entries            
@@ -96,4 +135,8 @@ def monkey_patch_sales_invoice_temporarily():
 
 def monkey_patch_payment_entry_temporarily():
     from erpnext.accounts.doctype.payment_entry.payment_entry import PaymentEntry
-    PaymentEntry.make_gl_entries = pe_make_gl_entries                	
+    PaymentEntry.make_gl_entries = pe_make_gl_entries   
+
+def monkey_patch_serial_no_temporarily():
+	from erpnext.stock.doctype.serial_no.serial_no import SerialNo
+	SerialNo.get_stock_ledger_entries = get_stock_ledger_entries             	

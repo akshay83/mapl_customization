@@ -78,17 +78,36 @@ class ImportDB(object):
         self.import_employee_loans()
         self.import_employee_salary_slips()
     
-    def process(self, till_date=False, import_modules=None, dates_map=None):
+    def get_day_interval_from_date_map(self, dmap):
+        interval = None
+        try:
+            interval = dmap[2]
+        except IndexError:
+            pass
+        return interval
+
+    def process(self, till_date=False, import_modules=None, dates_map=None, day_interval=10):
         default_dates_map = [
             ["01-04-2017", "30-06-2017"],
             ["01-07-2017", "30-09-2017"],
-            ["01-10-2017", "31-03-2018"],
-            ["01-04-2018", "30-06-2018"],
-            ["01-10-2018", "31-03-2019"],
+            ["01-10-2017", "16-10-2017"], # 
+            ["17-10-2017", "31-10-2017", 20], # To Avoid a Serial No Purchase on 30.10, Sold on 17.10, Day Interval=20
+            ["01-11-2017", "31-03-2018"],
+            ["01-04-2018", "07-05-2018"],
+            ["08-05-2018", "31-05-2018"], # To Avoid a Serial No Purchase on 10.05, Sold on 08.05
+            ["01-06-2018", "15-09-2018"], # 16.09 There was a problem serial no unupdated
+            ["16-09-2018", "25-12-2018"],
+            ["26-12-2018", "31-12-2018"], # MAPL/PINV-RET/VN/18-19/000010 purchase return has wrong serial no
+            ["01-01-2019", "31-03-2019"],
             ["01-04-2019", "30-09-2019"],
             ["01-10-2019", "31-03-2020"],
             ["01-04-2020", "30-09-2020"],
-            ["01-10-2020", "31-03-2021"]
+            ["01-10-2020", "31-03-2021"],
+            ["01-04-2021", "30-06-2021"],
+            ["01-07-2021", "30-09-2021"],
+            ["01-10-2021", "06-11-2021"],
+            ["07-11-2021", "17-11-2021", 15], # To Avoid a Serial No Purchase on 15.11, Sold on 07.11 
+            ["18-11-2021", "30-11-2021"]
         ]
         print ("Staring Process at",datetime.datetime.utcnow())
         log_info(logging, 'Started Process at {0}'.format(datetime.datetime.utcnow()))
@@ -107,12 +126,14 @@ class ImportDB(object):
         dt = format_date(getdate())        
         if not import_modules or "stock_transactions" in import_modules:
             for d in dates_map:
-                self.import_stock_transactions(from_date=d[0],to_date=d[1], day_interval=10)
+                self.import_stock_transactions(from_date=d[0],to_date=d[1], 
+                        day_interval=self.get_day_interval_from_date_map(d) or day_interval)
             if till_date:
                 self.import_stock_transactions(from_date="01-04-2021",to_date=dt)
         if not import_modules or "non_stock_transactions" in import_modules:
             for d in dates_map:
-                self.import_stock_transactions(from_date=d[0],to_date=d[1], non_sle_entries=True, day_interval=10)
+                self.import_stock_transactions(from_date=d[0],to_date=d[1], non_sle_entries=True, 
+                        day_interval=self.get_day_interval_from_date_map(d) or day_interval)
             if till_date:
                 self.import_stock_transactions(from_date="01-04-2021",to_date=dt, non_sle_entries=True)
         if not import_modules or "payments" in import_modules:
@@ -335,6 +356,7 @@ class ImportDB(object):
     def import_stock_transactions(self,from_date=None, to_date=None, non_sle_entries=False, day_interval=5):
         print ('Importing Stock Transactions')
         monkey_patch_sales_invoice_temporarily()
+        monkey_patch_serial_no_temporarily()
         batchdata = FetchData(self.remoteDBClient, self.parent_module, day_interval=day_interval)
         if not non_sle_entries:
             batchdata.init_stock_transactions(from_date=from_date, to_date=to_date)
@@ -355,6 +377,18 @@ class ImportDB(object):
         from erpnext.stock.doctype.serial_no.serial_no import SerialNoNotExistsError, SerialNoWarehouseError
         from erpnext.stock.stock_ledger import NegativeStockError, SerialNoExistsInFutureTransaction
 
+        def common_functions(new_doc, old_doc):
+            for i in new_doc.items:
+                if i.get('brand') and i.brand.lower() == 'jbl':
+                    i.brand = 'JBL/HARMAN'
+                # Exceptions for Wrong Serial No
+                if old_doc.name == 'MAPL/PINV-RET/VN/18-19/000010':
+                    if '211548100772368PRPEIL' in i.serial_no:
+                        i.serial_no = i.serial_no.replace('211548100772368PRPEIL','21154810075608PRPEIL')
+                if old_doc.name == 'MAPL/INV/VN/20-21/001595':
+                    if '0D154DBN700796' in i.serial_no:
+                        i.serial_no = i.serial_no.replace('0D154DBN700796','0D154DBN300065')                
+
         def before_inserting(new_doc, old_doc):
             new_doc.flags.ignore_validate = True
             new_doc.amended_from = None
@@ -367,12 +401,18 @@ class ImportDB(object):
                 for i in new_doc.items:
                     if i.amount == 0:
                         i.allow_zero_valuation_rate = 1
+
             if old_doc.doctype == 'Sales Invoice':
                 new_doc.invoice_copy = 'Original for Recipient'
                 new_doc.delayed_payment_remarks = old_doc.get('special_remarks')
                 new_doc.notes = old_doc.get('reference_details')
                 new_doc.advances = None
-                new_doc.update_current_stock()
+                if new_doc.get('vehicle_no'):
+                    new_doc.vehicle_no = new_doc.vehicle_no.replace(" ","")
+                    if len(new_doc.vehicle_no) > 10:
+                        new_doc.vehicle_no = new_doc.vehicle_no[:10]
+                #new_doc.update_current_stock()
+            common_functions(new_doc, old_doc)                
             #--DEBUG-- print ("Old Doc:", old_doc.doctype, old_doc.name, old_doc.posting_date, old_doc.posting_time)                
             #--DEBUG-- print ("New Doc:", new_doc.doctype, new_doc.name, new_doc.posting_date, new_doc.posting_time)
             #--DEBUG-- raise SkipRecordException("testing")
@@ -389,6 +429,19 @@ class ImportDB(object):
                     raise InvalidStockEntries("Invalid Stock Entries for Problematic Stock Entry")
             except frappe.DoesNotExistError:
                 pass
+        
+        def update_serial_no(error):
+            if isinstance(error, SerialNoNotExistsError):
+                error_split = str(error).split(" ")
+                for element in error_split:
+                    try:                                    
+                        serial_no = frappe.get_doc("Serial No", element)
+                    except frappe.DoesNotExistError:
+                        continue
+                    if serial_no and not serial_no.is_new():
+                        serial_no.update_serial_no_reference()
+                        serial_no.save()
+                        break
 
         def do_queued(do_later):
             for idx, d in enumerate(do_later):
@@ -403,13 +456,15 @@ class ImportDB(object):
                         retry = 0
                         release_savepoint('QUEUED_IMPORT')
                         break
-                    except (SerialNoExistsInFutureTransaction, SerialNoWarehouseError):
-                        # Retry 5 Times with date + 1, Lots of Errors while using ERPNext for first 2 Years
+                    except (SerialNoExistsInFutureTransaction, SerialNoWarehouseError, SerialNoNotExistsError) as e:
+                        # Retry 15 Times with date + 1, Lots of Errors while using ERPNext for first 2 Years
                         rollback_to_savepoint('QUEUED_IMPORT')
+                        if retry == 0:
+                            update_serial_no(e)
                         retry = retry + 1
                         d.posting_date = add_to_date(getdate(d.posting_date),days=1)
                         log_info(logging, 'Retrying with +1 Date, Doctype {0} with Name {1}, new Date {2}'.format(d.doctype, d.name, d.posting_date))                    
-                        if retry > 5:
+                        if retry > 15:
                             retry = 0
                             raise            
 
@@ -439,9 +494,7 @@ class ImportDB(object):
                 rollback_to_savepoint('DOC_IMPORT')
                 self.repost(s, n)
                 self.import_documents_having_childtables(s.doctype, old_doc_dict=s, before_insert=before_inserting, suppress_msg=True, \
-                                        in_batches=False, reset_batch=False, auto_commit=False, after_insert=after_inserting)            
-            #if idx % self.COMMIT_DELAY == 0 and len(do_later) <= 0:
-            #    self.commit()
+                                        in_batches=False, reset_batch=False, auto_commit=False, after_insert=after_inserting)
         do_queued(do_later)
         self.commit()
     
@@ -541,6 +594,16 @@ class ImportDB(object):
                 gst_category = frappe.db.get_value(doctype, old_doc_dict.name, 'gst_category')
                 if not gst_category or gst_category != 'Registered Regular':
                     frappe.db.set_value(doctype, old_doc_dict.name, "gst_category", "Registered Regular")
+        
+        if (not old_doc_dict.addresses):
+            address_filters = [
+                ["Dynamic Link", "link_doctype", "=", doctype],
+                ["Dynamic Link", "link_name", "=", old_doc_dict.name],
+                ["Dynamic Link", "parenttype", "=", "Address"],
+            ]
+            old_doc_dict.addresses = get_documents_without_childtables(self.remoteDBClient, 'Address', filters=address_filters)
+            if not old_doc_dict.addresses or len(old_doc_dict.addresses) <= 0:
+                return
 
         self.import_documents_having_childtables('Address', before_insert=before_insert, doc_list=old_doc_dict.addresses, \
                         after_insert=after_insert, overwrite=True, suppress_msg=True, fetch_with_children=False, in_batches=False, reset_batch=False)
@@ -688,7 +751,7 @@ class ImportDB(object):
                 self.insert_doc(new_doc, new_name=doc.name, continue_on_error=continue_on_error, submit=submit)
             elif overwrite:
                 self.save_doc(new_doc)
-            if after_insert:
+            if after_insert and ((overwrite and not new_doc.is_new()) or (not overwrite and new_doc.is_new())):
                 after_insert(new_doc, doc)
 
     def import_documents_having_childtables(self, doctype, new_doctype=None, id=None, old_doc_dict=None, overwrite=False, \
@@ -696,7 +759,7 @@ class ImportDB(object):
                         fetch_with_children=True, doc_list=None, fetch_filters=None, get_new_name=None, suppress_msg=False, \
                         in_batches=True, order_by=None, reset_batch=True, continue_on_error=False, auto_commit=True):
 
-        if reset_batch and in_batches:
+        if reset_batch and in_batches and id == None:
             self.batchdata = FetchData(self.remoteDBClient, self.parent_module, records_per_batch=1000)
 
         while True:
@@ -717,7 +780,7 @@ class ImportDB(object):
                 break
 
             if hasattr(self,'batchdata') and not (in_batches and self.batchdata.has_more_records()):
-                break            
+                break        
 
     def start_import_process(self, doctype, doc_list, new_doctype=None, overwrite=False, \
                         before_insert=None, submit=False, child_table_name_map=None, after_insert=None, copy_child_table=True, \
@@ -761,7 +824,7 @@ class ImportDB(object):
             return get_documents_with_childtables(self.remoteDBClient, self.parent_module, doctype, filters=filters, from_record=0, \
                             page_length=500, order_by=order_by)
         else:
-            return get_documents_without_childtables(self.remoteDBClient, doctype, client_db_api_path=self.parent_module, filters=fitlers, \
+            return get_documents_without_childtables(self.remoteDBClient, doctype, client_db_api_path=self.parent_module, filters=filters, \
                             from_record=0,page_length=500, order_by=order_by)
 
     def insert_doc(self, new_doc, new_name=None, submit=False, ignore_mandatory=None, ignore_if_duplicate=True, continue_on_error=False):
