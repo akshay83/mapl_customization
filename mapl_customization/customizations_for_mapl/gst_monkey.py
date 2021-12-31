@@ -11,6 +11,7 @@ def validate_document_name(doc, method=None):
 	if country != "India" or getdate(doc.posting_date) < getdate("2021-04-01"):
 		return
 
+	#monkey-here
 	#if len(doc.name) > 16:
 	#	frappe.throw(_("Maximum length of document number should be 16 characters as per GST rules. Please change the naming series."))
 

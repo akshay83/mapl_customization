@@ -8,6 +8,7 @@ from .frappeclient import FrappeClient
 from .get_data import *
 from frappe.utils import cstr, validate_email_address, validate_phone_number, flt, getdate, format_date, cint, add_to_date
 from erpnext import get_default_company
+from erpnext.regional.india import number_state_mapping, state_numbers, states
 
 class SkipRecordException(Exception):
     pass 
@@ -90,8 +91,8 @@ class ImportDB(object):
         default_dates_map = [
             ["01-04-2017", "30-06-2017"],
             ["01-07-2017", "30-09-2017"],
-            ["01-10-2017", "16-10-2017"], # 
-            ["17-10-2017", "31-10-2017", 20], # To Avoid a Serial No Purchase on 30.10, Sold on 17.10, Day Interval=20
+            ["01-10-2017", "15-10-2017"], # 
+            ["16-10-2017", "31-10-2017", 20], # To Avoid a Serial No Purchase on 30.10, Sold on 17.10, Day Interval=20
             ["01-11-2017", "31-03-2018"],
             ["01-04-2018", "07-05-2018"],
             ["08-05-2018", "31-05-2018"], # To Avoid a Serial No Purchase on 10.05, Sold on 08.05
@@ -353,25 +354,50 @@ class ImportDB(object):
 
         self.import_documents_having_childtables('Salary Slip', child_table_name_map={'loan_deduction_detail':'loans'}, before_insert=before_inserting)
 
-    def import_stock_transactions(self,from_date=None, to_date=None, non_sle_entries=False, day_interval=5):
+    def import_stock_transactions(self,from_date=None, to_date=None, non_sle_entries=False, day_interval=5, id=None):
+        if id and (not isinstance(id, dict) or (not id.get('name') or not id.get('doctype'))):
+            print ("ID Format Error")
+            print ("Should be a Dictionary with name and doctype")
+            return
         print ('Importing Stock Transactions')
         monkey_patch_sales_invoice_temporarily()
         monkey_patch_serial_no_temporarily()
+        negative_stock = frappe.db.get_value("Stock Settings", None, "allow_negative_stock")
+        frappe.db.set_value("Stock Settings", None, "allow_negative_stock", 1)
+        self._import_stock_transactions(from_date=from_date, to_date=to_date, non_sle_entries=non_sle_entries, day_interval=day_interval, id=id)
+        frappe.db.set_value("Stock Settings", None, "allow_negative_stock", negative_stock)
+        self.commit()
+
+    def _import_stock_transactions(self,from_date=None, to_date=None, non_sle_entries=False, day_interval=5, id=None):
+        def import_single_entry():
+            entries = [frappe._dict(self.remoteDBClient.get_doc(doctype=id.get('doctype'), name=id.get('name')))]
+            id_filters = {
+                "voucher_no": id.get('name'),
+                "voucher_type": id.get('doctype')
+            }
+            if not self.remoteDBClient.get_value('Stock Ledger Entry', filters=id_filters):
+                non_sle_entries = True
+            else:
+                non_sle_entries = False
+            if not entries or len(entries)<=0:
+                print ('No Record Found')
+                return
+            self.import_transactions(entries, non_sle_entries=non_sle_entries)
+
+        if id:
+            import_single_entry()
+            return
         batchdata = FetchData(self.remoteDBClient, self.parent_module, day_interval=day_interval)
         if not non_sle_entries:
             batchdata.init_stock_transactions(from_date=from_date, to_date=to_date)
         else:
             batchdata.init_non_stock_transactions(from_date=from_date, to_date=to_date)    
-        negative_stock = frappe.db.get_value("Stock Settings", None, "allow_negative_stock")
-        frappe.db.set_value("Stock Settings", None, "allow_negative_stock", 1)        
         while batchdata.has_more_records():
             entries = batchdata.get_next_batch()
             if not entries or len(entries)<=0:
                 break
             #--DEBUG-- print ("Testing", len(entries))    
             self.import_transactions(entries, non_sle_entries=non_sle_entries)
-        frappe.db.set_value("Stock Settings", None, "allow_negative_stock", negative_stock)
-        self.commit()
 
     def import_transactions(self, entries, non_sle_entries=False):
         from erpnext.stock.doctype.serial_no.serial_no import SerialNoNotExistsError, SerialNoWarehouseError
@@ -387,7 +413,9 @@ class ImportDB(object):
                         i.serial_no = i.serial_no.replace('211548100772368PRPEIL','21154810075608PRPEIL')
                 if old_doc.name == 'MAPL/INV/VN/20-21/001595':
                     if '0D154DBN700796' in i.serial_no:
-                        i.serial_no = i.serial_no.replace('0D154DBN700796','0D154DBN300065')                
+                        i.serial_no = i.serial_no.replace('0D154DBN700796','0D154DBN300065')
+            if old_doc.doctype in ['Sales Invoice', 'Purchase Invoice']:
+                new_doc.set_incoming_rate() #Set Incoming Rate - Specially when a SRN is Done
 
         def before_inserting(new_doc, old_doc):
             new_doc.flags.ignore_validate = True
@@ -397,6 +425,8 @@ class ImportDB(object):
                 if new_doc.total_incoming_value == 0 and new_doc.total_outgoing_value == 0:
                     for i in new_doc.items:
                         i.allow_zero_valuation_rate = 1
+                if old_doc.purpose.lower() != 'material receipt':
+                    new_doc.get_stock_and_rate() #Update Rate in Stock Entry, Don't Take Original Values from Old DB
             if old_doc.doctype == 'Purchase Invoice':
                 for i in new_doc.items:
                     if i.amount == 0:
@@ -588,6 +618,15 @@ class ImportDB(object):
             new_doc.flags.ignore_validate = True
             if new_doc.is_new():
                 new_doc.append('links', dict(link_doctype=doctype, link_name=old_doc_dict.name))
+
+            if not new_doc.get('gst_state_number'):
+                if not new_doc.get('gst_state') or new_doc.get('gst_state') == '':
+                    if (not new_doc.get('state')) or (new_doc.state == ''):
+                        new_doc.state = 'Madhya Pradesh' #Default State
+                    new_doc.gst_state = new_doc.state if new_doc.state.lower() in [x.lower() for x in states] else None                    
+                    if not new_doc.get('gst_state') or new_doc.get('gst_state') == '':
+                        new_doc.gst_state = 'Madhya Pradesh' #Default State
+                new_doc.gst_state_number = state_numbers[new_doc.gst_state]
 
         def after_insert(new_doc, old_doc): 
             if new_doc.get('gstin'):

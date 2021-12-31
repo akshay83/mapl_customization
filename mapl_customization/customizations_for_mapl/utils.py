@@ -107,22 +107,6 @@ def get_party_balance(party, party_type, company):
 	return outstanding_amount
 
 @frappe.whitelist()
-def get_current_stock_at_all_warehouse(item_code, date=None):
-	return frappe.db.sql("""SELECT WAREHOUSE, `OPENING STOCK`+`IN QTY`-`OUT QTY` AS `CLOSING STOCK` FROM
-			  (SELECT OUTSTK.ITEM_CODE, OUTSTK.WAREHOUSE,
-			    IFNULL((SELECT SUM(ACTUAL_QTY) FROM `tabStock Ledger Entry` Stk WHERE
-			    ITEM_CODE=OUTSTK.ITEM_CODE AND POSTING_DATE < %(date)s AND WAREHOUSE=OUTSTK.WAREHOUSE),0) AS `OPENING STOCK`,
-			    IFNULL((SELECT SUM(ACTUAL_QTY) FROM `tabStock Ledger Entry` Stk WHERE
-			    ITEM_CODE=OUTSTK.ITEM_CODE AND ACTUAL_QTY > 0 AND POSTING_DATE>=%(date)s AND WAREHOUSE=OUTSTK.WAREHOUSE),0) AS `IN QTY`,
-			    IFNULL((SELECT SUM(ABS(ACTUAL_QTY)) FROM `tabStock Ledger Entry` Stk WHERE
-			    ITEM_CODE=OUTSTK.ITEM_CODE AND ACTUAL_QTY < 0 AND POSTING_DATE<=%(date)s AND WAREHOUSE=OUTSTK.WAREHOUSE),0) AS `OUT QTY`
-			    FROM `tabStock Ledger Entry` OUTSTK, `tabWarehouse` WARE WHERE WARE.NAME=OUTSTK.WAREHOUSE AND OUTSTK.ITEM_CODE=%(item_code)s
-			  ) DER GROUP BY ITEM_CODE, WAREHOUSE""",
-		{ 	'date': date if date else 'CURDATE()',
-			'item_code': item_code
-		},as_dict=1)
-
-@frappe.whitelist()
 def get_effective_stock_at_all_warehouse(item_code, date=None):
 	query = """
 			SELECT

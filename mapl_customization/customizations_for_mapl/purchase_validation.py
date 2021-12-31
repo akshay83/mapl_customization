@@ -3,6 +3,7 @@ import json
 import datetime
 from frappe.utils import cint, getdate, today
 from six import string_types
+import html
 
 def purchase_receipt_on_submit(doc,method):
 	validate_hsn_code(doc, method)
@@ -88,15 +89,13 @@ def purchase_item_rate_validate_before_submit(doc, method):
 			frappe.throw("""Please Check Item Rates, Should Be Non-Zero. Item {0}""".format(i.item_code))
 
 def purchase_invoice_gst_check(doc, method):
-	from html.parser import HTMLParser
 	state = frappe.db.get_value("Address", doc.supplier_address, "gst_state")
 	if not state:
 		frappe.throw("""Please update Correct GST State in Supplier Address and then Try Again""")
 
 	from frappe.contacts.doctype.address.address import get_address_display
-	parser = HTMLParser()
 	da = get_address_display(doc.supplier_address)
-	if da != parser.unescape(doc.address_display):
+	if da != html.unescape(doc.address_display):
 		frappe.throw("""Please use 'Update Address' under Address to update the correct Address in the Document""")
 
 	if doc.taxes_and_charges == 'Out of State GST' and state == 'Madhya Pradesh':

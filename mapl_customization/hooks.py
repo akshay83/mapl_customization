@@ -224,6 +224,15 @@ print_fs = [
 		"Sales Invoice Standard"
 ]
 
+ps_fields = [
+	"Sales Invoice-update_stock-default",
+	"Sales Invoice-set_posting_time-default",
+	"Customer-main-allow_rename",
+	"Selling Settings-cust_master_name-default",
+	"Accounts Settings-add_taxes_from_item_tax_template-default",
+	"Buying Settings-supp_master_name-default"
+]
+
 fixtures = [	{
 			"dt": "Custom Field",
 			"filters": [["name", "in", cf_fields]]
@@ -231,6 +240,10 @@ fixtures = [	{
 		{
 			"dt": "Print Format",
 			"filters": [["name", "in", print_fs]]
+		}, 
+		{
+			"dt": "Property Setter",
+			"filters": [["name", "in", ps_fields]]
 		}, 
 		"Letter Head", 
 		"Custom SQL Queries"

@@ -1,7 +1,17 @@
 import frappe
 import datetime
+import difflib
 from frappe.utils import cint, cstr, getdate, get_time
 from erpnext import get_default_company
+
+def find_closest_match(self, str, in_list):
+    uncase_list = [x.lower() for x in in_list]
+    match = difflib.get_close_matches(str.lower(), uncase_list, n=1)
+    try:
+        idx = uncase_list.index(match)
+        print (match)
+    except ValueError:
+        print ('Unable to Find:',str)
 
 def save_point(name):
     frappe.db.sql("SAVEPOINT {0}".format(name))

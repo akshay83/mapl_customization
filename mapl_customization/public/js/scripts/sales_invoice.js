@@ -2,8 +2,8 @@ frappe.ui.form.on("Sales Invoice", "is_pos", function(frm) {
 	console.log('is pos');
 	if (frm.doc.is_pos==1) {
 		setTimeout(function() {
-			cur_frm.clear_table('payments');
-			cur_frm.refresh_field('payments');
+			frm.clear_table('payments');
+			frm.refresh_field('payments');
 		}, 2000 );
 	}
 });
@@ -106,7 +106,7 @@ frappe.ui.form.on("Sales Invoice","onload_post_render", function(frm) {
 				filters: {'customer':doc.customer}
 		}
 	});
-	cur_frm.set_query("customer_address", function(doc) {
+	frm.set_query("customer_address", function(doc) {
 		return{
 			query: "mapl_customization.customizations_for_mapl.queries.mapl_address_query",
 				filters: {'customer':doc.customer}
@@ -115,14 +115,20 @@ frappe.ui.form.on("Sales Invoice","onload_post_render", function(frm) {
 	$('.frappe-control.input-max-width[data-fieldname="grand_total"]').find('.control-value.like-disabled-input.bold').css('background','lightblue')
 });
 
+frappe.ui.form.on("Sales Invoice", "customer_address", function(frm) {
+	if (frm.doc.customer_address && !frm.doc.shipping_address_name) {
+		frm.set_value("shipping_address_name",frm.doc.customer_address);
+		frm.refresh_field('shipping_address_name');
+	}
+});
 frappe.ui.form.on("Sales Invoice", "shipping_address_name", function(frm) {
 	if (!frm.doc.shipping_address_name) {
 		frm.set_value("shipping_address",null);
 	}
 });
 frappe.ui.form.on("Sales Invoice", "is_finance", function (frm) {
-	cur_frm.set_df_property("hypothecation", "reqd", frm.doc.is_finance==1);
-	cur_frm.refresh_field("hypothecation");
+	frm.set_df_property("hypothecation", "reqd", frm.doc.is_finance==1);
+	frm.refresh_field("hypothecation");
 });
 frappe.ui.form.on("Sales Invoice", "service_invoice", function (frm) {
 	frm.set_df_property("model", "reqd", frm.doc.service_invoice==1);
@@ -152,7 +158,7 @@ frappe.ui.form.on("Sales Invoice", "customer", function (frm) {
 frappe.ui.form.on("Sales Invoice", "items_on_form_rendered", function(frm) {
 	// Important Note : Sub Form Fieldname+"_on_form_rendered" would trigger and add
 	// The button in child form
-	var grid_row = cur_frm.open_grid_row();
+	var grid_row = frm.open_grid_row();
 
 	//Set target_warehouse as Null, overcome problem of Default Warehouse
 	grid_row.grid_form.fields_dict.target_warehouse.set_model_value(null);
@@ -171,7 +177,7 @@ frappe.ui.form.on("Sales Invoice", "items_on_form_rendered", function(frm) {
 				method: "mapl_customization.customizations_for_mapl.utils.get_effective_stock_at_all_warehouse",
 				args: {
 					"item_code": grid_row.grid_form.fields_dict.item_code.value,
-					"date": cur_frm.doc.posting_date
+					"date": frm.doc.posting_date
 				},
 				callback: function(r) {
 					if (r.message) {
@@ -186,6 +192,12 @@ frappe.ui.form.on("Sales Invoice", "items_on_form_rendered", function(frm) {
 frappe.ui.form.on("Sales Invoice", "validate", function(frm) {
 	if (frm.doc.update_stock == 0) {
 		frappe.msgprint("Update Stock not Ticked. Please Verify Before Continuing");
+	}
+	if (!frm.doc.shipping_address_name) {
+		if (frm.doc.customer_address) {
+			frm.set_value("shipping_address_name",frm.doc.customer_address);
+			frm.refresh_field('shipping_address_name');
+		}	
 	}
 });
 

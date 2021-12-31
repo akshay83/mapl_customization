@@ -1,5 +1,5 @@
 import frappe
-from html.parser import HTMLParser
+import html
 from frappe.utils import cint
 
 def sales_invoice_validate(doc, method):
@@ -17,7 +17,6 @@ def sales_on_submit_validation(doc, method):
 	vehicle_validation(doc, method)
 	validate_hsn_code(doc, method)
 	taxes_and_charges_validation(doc, method)
-	finance_validate(doc, method)
 	validate_grand_total(doc, method)
 
 def validate_serial_no(doc, method):
@@ -45,7 +44,6 @@ def validate_serial_no(doc, method):
 
 
 def validate_gst_state(doc, method):
-	parser = HTMLParser()
 	ship_state = frappe.db.get_value("Address", doc.shipping_address_name, "gst_state")
 	if not ship_state:
 		frappe.throw("""Please update Correct GST State in Shipping Address and then Try Again""")
@@ -56,11 +54,11 @@ def validate_gst_state(doc, method):
 
 	from frappe.contacts.doctype.address.address import get_address_display
 	da = get_address_display(doc.customer_address)
-	if da != parser.unescape(doc.address_display):
+	if da != html.unescape(doc.address_display):
 		frappe.throw("""Please use 'Update Address' under Address to update the correct Billing Address in the Document""")
 
 	da = get_address_display(doc.shipping_address_name)
-	if da != parser.unescape(doc.shipping_address):
+	if da != html.unescape(doc.shipping_address):
 		frappe.throw("""Please use 'Update Address' under Address to update the correct Shipping Address in the Document""")
 
 
@@ -73,10 +71,6 @@ def validate_gst_state(doc, method):
 		if doc.special_invoice and doc.special_invoice == 'Insurance Claim':
 			return
 		frappe.throw("""Please Check Correct Shipping Address/Taxes""")
-
-def finance_validate(doc, method):
-	if doc.is_finance and not doc.finance_charges:
-		frappe.throw('Need Finance Details')
 
 def vehicle_validation(doc, method):
 	if cint(doc.b2b_vehicles):
