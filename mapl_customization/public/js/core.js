@@ -1,18 +1,6 @@
 frappe.provide("frappe");
 frappe.provide("custom");
 
-var orig_mk_control = frappe.ui.form.make_control;
-
-//Monkey Patched to Create a New Type of Control 'Volatile' which Does Not Store in Database
-frappe.ui.form.make_control = function(opts) {
-	var control_name = "Control"+opts.df.fieldtype.replace(/ /g,"");
-	//console.log(control_name);
-	if (control_name == "ControlVolatile") {
-		return new frappe.ui.form["ControlReadOnly"](opts);
-	}
-	return orig_mk_control(opts);
-};
-
 custom._get_party_balance = function(party,customer_name,company, _callback) {
 	var result = 0.0;
 	if (customer_name!=null && company!=null) {
@@ -47,11 +35,11 @@ custom._get_party_balance_in_drcr = function(party,customer_name,company, _callb
 				if(!r.exc && r.message) {
 					balance_value = parseFloat(r.message);
 					if (balance_value > 0) {
-						alert_msg = "<b><span style=\"color:red;\">"+Math.abs(balance_value)+" Dr.</span></b>";
+						alert_msg = "<b><span style=\"color:red;font-weight:initial;\">"+Math.abs(balance_value)+" Dr.</span></b>";
 					} else if (balance_value < 0) {
-						alert_msg = "<b><span style=\"color:blue;\">"+Math.abs(balance_value)+" Cr.</span></b>";
+						alert_msg = "<b><span style=\"color:blue;font-weight:initial;\">"+Math.abs(balance_value)+" Cr.</span></b>";
 					} else {
-						alert_msg = "<b><span style=\"color:black;\"> 0.00</span></b>";
+						alert_msg = "<b><span style=\"color:black;font-weight:initial;\"> 0.00</span></b>";
 					}
 				}
 				else {
@@ -79,14 +67,14 @@ custom._get_party_balance_formatted = function(party, customer_name,company, _ca
 				 if(!r.exc && r.message) {
 					balance_value = parseFloat(r.message);
 					if (balance_value > 0) {
-						alert_msg = alert_msg+"<b><span style=\"color:red;\">"+Math.abs(balance_value)+" Dr.</span></b>";
+						alert_msg = alert_msg+"<b><span style=\"color:red;font-weight:initial;\">"+Math.abs(balance_value)+" Dr.</span></b>";
 					} else if (balance_value < 0) {
-						alert_msg = alert_msg+"<b><span style=\"color:blue;\">"+Math.abs(balance_value)+" Cr.</span></b>";
+						alert_msg = alert_msg+"<b><span style=\"color:blue;font-weight:initial;\">"+Math.abs(balance_value)+" Cr.</span></b>";
 					} else {
-						alert_msg = alert_msg+"<b><span style=\"color:black;\"> 0.00</span></b>";
+						alert_msg = alert_msg+"<b><span style=\"color:black;font-weight:initial;\"> 0.00</span></b>";
 					}
 				} else {
-					alert_msg = customer_name+" Current Balance:<b><span style=\"color:black;\"> 0.00</span></b>";
+					alert_msg = customer_name+" Current Balance:<b><span style=\"color:black;font-weight:initial;\"> 0.00</span></b>";
 				}
 				_callback(alert_msg);
 			}

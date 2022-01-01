@@ -6,8 +6,7 @@ frappe.ui.form.on("Customer","refresh", function(frm) {
 		custom.customer_quick_entry(frm);
 	}
 
-        custom._get_party_balance_in_drcr('Customer', frm.doc.name,
-		frappe.defaults.get_user_default("company"), function(result) {
+    custom._get_party_balance_in_drcr('Customer', frm.doc.name, frappe.defaults.get_user_default("company"), function(result) {
 				frm.doc.current_balance=result;
 				refresh_field("current_balance");
 	});

@@ -5,6 +5,40 @@ from frappe.utils import cint, getdate, today
 from six import string_types
 
 
+def update_state_code(doctype='Customer', verbose=True):
+	address_filters = [
+                ["Dynamic Link", "link_doctype", "=", doctype],
+                ["Dynamic Link", "parenttype", "=", "Address"]
+	]
+	address_list = frappe.get_list("Address", filters=address_filters)
+	for a in address_list:
+		doc = frappe.get_doc('Address', a.name)
+		if verbose:
+			print ('Checking:',a.name,'  State Code:', doc.gst_state_number)
+		set_state_code(doc, verbose=verbose)
+	frappe.db.commit()
+
+def set_state_code(address_doc, save=True, verbose=False):
+	from erpnext.regional.india import state_numbers, states
+	if not address_doc.get('gst_state_number') or address_doc.get('gst_state_number') == '0':
+		if not address_doc.get('gst_state') or address_doc.get('gst_state') == '':
+			if (not address_doc.get('state')) or (address_doc.state == ''):
+				address_doc.state = 'Madhya Pradesh' #Default State
+			address_doc.gst_state = address_doc.state if address_doc.state.lower() in [x.lower() for x in states] else None                    
+			if not address_doc.get('gst_state') or address_doc.get('gst_state') == '':
+				address_doc.gst_state = 'Madhya Pradesh' #Default State
+		try:
+			address_doc.gst_state_number = state_numbers[address_doc.gst_state]
+			if verbose:
+				print ('Updated State Code For:', address_doc.name)
+			if save:
+				address_doc.flags.ignore_validate = True
+				address_doc.save(ignore_permissions=True)
+		except Exception as e:
+				print ('Could Not Find GST State for:', address_doc.name)
+				if verbose:
+					print (str(e))
+
 @frappe.whitelist()
 def get_party_name(party, party_type):
 	doc = frappe.get_doc(party_type, party)
@@ -135,7 +169,7 @@ def get_effective_stock_at_all_warehouse(item_code, date=None):
 			        AND INV.POSTING_DATE<=%(date)s),0) AS `UNCONFIRMED`,
 
 			      IFNULL((SELECT SUM(INV_ITEM.QTY-INV_ITEM.DELIVERED_QTY) FROM `tabSales Invoice` INV,`tabSales Invoice Item` INV_ITEM
-			        WHERE INV_ITEM.PARENT=INV.NAME AND INV.DOCSTATUS=1 AN INV_ITEM.WAREHOUSE=OUTSTK.NAME
+			        WHERE INV_ITEM.PARENT=INV.NAME AND INV.DOCSTATUS=1 AND INV_ITEM.WAREHOUSE=OUTSTK.NAME
 			        AND INV_ITEM.DELIVERED_QTY<>INV_ITEM.QTY AND INV.UPDATE_STOCK=0 AND INV_ITEM.ITEM_CODE=%(item_code)s
 			        AND INV.POSTING_DATE<=%(date)s),0) AS `UNDELIVERED`,
 

@@ -4,19 +4,19 @@ frappe.ui.form.on("Delivery Note", "shipping_address_name", function(frm) {
        frm.set_value("shipping_address",null);
     }
 });
-cur_frm.cscript.onload = function() {
-   cur_frm.set_query("customer", function(doc) {
-   	return{
-		query: "mapl_customization.customizations_for_mapl.queries.mapl_customer_query"
-	}
+frappe.ui.form.on("Delivery Note", "setup", function(frm) {
+   frm.set_query("customer", function(doc) {
+      return {
+		      query: "mapl_customization.customizations_for_mapl.queries.mapl_customer_query"
+	   }
    });
-   cur_frm.set_query("shipping_address_name", function(doc) {
-   	return{
-		query: "mapl_customization.customizations_for_mapl.queries.mapl_address_query",
-                filters: {'customer':doc.customer}
-	}
+   frm.set_query("shipping_address_name", function(doc) {
+   	return {
+		   query: "mapl_customization.customizations_for_mapl.queries.mapl_address_query",
+                  filters: {'customer':doc.customer}
+	   }
    });
-};
+});
 frappe.ui.form.on("Delivery Note", "items_on_form_rendered", function(frm) {	
     // Important Note : Sub Form Fieldname+"_on_form_rendered" would trigger and add
     // The button in child form

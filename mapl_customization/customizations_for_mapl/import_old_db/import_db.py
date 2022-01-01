@@ -9,6 +9,7 @@ from .get_data import *
 from frappe.utils import cstr, validate_email_address, validate_phone_number, flt, getdate, format_date, cint, add_to_date
 from erpnext import get_default_company
 from erpnext.regional.india import number_state_mapping, state_numbers, states
+from mapl_customization.customizations_for_mapl.utils import set_state_code
 
 class SkipRecordException(Exception):
     pass 
@@ -259,8 +260,8 @@ class ImportDB(object):
     def import_asset_category(self):
         self.import_documents_having_childtables('Asset Category')
 
-    def import_mode_of_payment(self):
-        self.import_documents_having_childtables('Mode of Payment')
+    def import_mode_of_payment(self, overwrite=False):
+        self.import_documents_having_childtables('Mode of Payment', overwrite=overwrite)
 
     def import_salutation(self):
         self.import_documents_having_childtables('Salutation')
@@ -619,14 +620,7 @@ class ImportDB(object):
             if new_doc.is_new():
                 new_doc.append('links', dict(link_doctype=doctype, link_name=old_doc_dict.name))
 
-            if not new_doc.get('gst_state_number'):
-                if not new_doc.get('gst_state') or new_doc.get('gst_state') == '':
-                    if (not new_doc.get('state')) or (new_doc.state == ''):
-                        new_doc.state = 'Madhya Pradesh' #Default State
-                    new_doc.gst_state = new_doc.state if new_doc.state.lower() in [x.lower() for x in states] else None                    
-                    if not new_doc.get('gst_state') or new_doc.get('gst_state') == '':
-                        new_doc.gst_state = 'Madhya Pradesh' #Default State
-                new_doc.gst_state_number = state_numbers[new_doc.gst_state]
+            set_state_code(new_doc, save=False)
 
         def after_insert(new_doc, old_doc): 
             if new_doc.get('gstin'):
@@ -716,13 +710,15 @@ class ImportDB(object):
             new_doc.flags.ignore_mandatory = flag
     
     def copy_attr(self, old_doc, new_doc, copy_child_table=False, doctype_different=False, child_table_name_map=None):
-        for k in old_doc.keys():            
+        for k in old_doc.keys():
+            #--DEBUG-- print ("Key:",k)            
             if isinstance(old_doc[k], dict) or isinstance(old_doc[k], list):
                 if copy_child_table:
                     child_table_field_name = k 
                     if child_table_name_map:
                         child_table_field_name = child_table_name_map.get(k)
                     self.remove_child_rows(new_doc, child_table_field_name)
+                    #--DEBUG-- print ("Copying:",k,"  To:",child_table_field_name)
                     self.copy_child_table_attr(old_doc, new_doc, old_child_fieldname=k, new_child_fieldname=child_table_field_name)
                 continue
             if (k == 'modified'):
@@ -756,6 +752,7 @@ class ImportDB(object):
                     if old_child_fieldname != new_child_fieldname and k =='doctype':
                         setattr(new_table,k,None)
                         continue
+                    #--DEBUG-- print ("Setting:",k," With:",i[k])
                     setattr(new_table,k,i[k])
         else:
             new_table = new_doc.append(new_child_fieldname)
@@ -803,7 +800,7 @@ class ImportDB(object):
 
         while True:
             fetched_doc_list = self.fetch_data(doctype, id=id, doc_list=doc_list, old_doc_dict=old_doc_dict, order_by=order_by, \
-                            filters=fetch_filters, fetch_with_children=fetch_with_children, in_batches=in_batches)        
+                            filters=fetch_filters, fetch_with_children=fetch_with_children, in_batches=in_batches)           
 
             if not fetched_doc_list or len(fetched_doc_list)<=0:
                 break

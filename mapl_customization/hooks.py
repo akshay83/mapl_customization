@@ -200,6 +200,8 @@ cf_fields = [
 		"Serial No-key_no",
 		"Serial No-warehouse_details",
 		"Serial No-year_of_manufacture",
+		"Serial No-temporary_warehouse",
+		"Serial No-problem",
 		"Stock Entry-reporting_name",
 		"Supplier-current_balance",
 		"User-user_group",
@@ -217,7 +219,6 @@ print_fs = [
 		"Helmet Dummy Invoice",
 		"Vehicle Receipt Format",
 		"Receipt Print Format",
-		"MOP Format",
 		"ICICI Bank",
 		"Credit Note",
 		"Quotation Standard",
@@ -227,10 +228,7 @@ print_fs = [
 ps_fields = [
 	"Sales Invoice-update_stock-default",
 	"Sales Invoice-set_posting_time-default",
-	"Customer-main-allow_rename",
-	"Selling Settings-cust_master_name-default",
-	"Accounts Settings-add_taxes_from_item_tax_template-default",
-	"Buying Settings-supp_master_name-default"
+	"Customer-main-allow_rename"
 ]
 
 fixtures = [	{

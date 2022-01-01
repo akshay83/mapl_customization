@@ -7,7 +7,7 @@ cur_frm.add_fetch('item_code', 'is_electric_vehicle', 'is_electric_vehicle');
 frappe.ui.form.on("Purchase Invoice", "items_on_form_rendered", function(frm) {
     // Important Note : Sub Form Fieldname+"_on_form_rendered" would trigger and add
     // The button in child form
-    var grid_row = cur_frm.open_grid_row();
+    var grid_row = frm.open_grid_row();
 
 	//Set rejected_warehouse as Null, overcome problem of Default Warehouse
 	grid_row.grid_form.fields_dict.rejected_warehouse.set_model_value(null);
@@ -167,7 +167,7 @@ frappe.ui.form.on("Purchase Invoice", "items_on_form_rendered", function(frm) {
 /***************************************************************/
 
 frappe.ui.form.on("Purchase Invoice", "items_on_form_rendered", function(frm) {
-	var grid_row = cur_frm.open_grid_row();
+	var grid_row = frm.open_grid_row();
 	grid_row.grid_form.fields_dict.warehouse.set_model_value(frm.doc.default_accepted_warehouse);
 });
 
