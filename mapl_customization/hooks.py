@@ -207,7 +207,8 @@ cf_fields = [
 		"User-user_group",
 		"Salary Slip-bank_column_break",
 		"Customer-aadhar_card_no",
-		"Customer-signature"
+		"Customer-signature",
+		"Payment Entry-payment_name"
 ]
 
 print_fs = [
@@ -228,7 +229,8 @@ print_fs = [
 ps_fields = [
 	"Sales Invoice-update_stock-default",
 	"Sales Invoice-set_posting_time-default",
-	"Customer-main-allow_rename"
+	"Customer-main-allow_rename",
+	"Payment Entry-party_name-allow_on_submit"
 ]
 
 fixtures = [	{

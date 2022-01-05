@@ -63,8 +63,8 @@ def do_monkey_patch():
 	print ('-'*20,'MONKEY PATCH MAPL-CUSTOMIZATION','-'*10)
 	monkey_patch_payment_entry_validate()
 
-	from mapl_customization.customizations_for_mapl.gst_monkey import monkey_patch_gst_validate_document_name
-	monkey_patch_gst_validate_document_name()
+	from mapl_customization.customizations_for_mapl.gst_monkey import monkey_patch_gst
+	monkey_patch_gst()
 
 	from mapl_customization.customizations_for_mapl.monkey_patch_salary_slip import monkey_patch_for_salary_slip
 	monkey_patch_for_salary_slip()

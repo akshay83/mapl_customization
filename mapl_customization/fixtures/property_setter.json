@@ -52,5 +52,23 @@
   "property_type": "Check",
   "row_name": null,
   "value": "0"
+ },
+ {
+  "default_value": null,
+  "doc_type": "Payment Entry",
+  "docstatus": 0,
+  "doctype": "Property Setter",
+  "doctype_or_field": "DocField",
+  "field_name": "party_name",
+  "modified": "2022-01-03 14:19:16.246847",
+  "module": null,
+  "name": "Payment Entry-party_name-allow_on_submit",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "property": "allow_on_submit",
+  "property_type": "Check",
+  "row_name": null,
+  "value": "0"
  }
 ]
