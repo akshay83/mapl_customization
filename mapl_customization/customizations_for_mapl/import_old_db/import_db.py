@@ -255,7 +255,14 @@ class ImportDB(object):
             if doc.type=='Deduction':
                 doc.depends_on_payment_days = 0
 
-        self.import_documents_having_childtables('Salary Component', overwrite=True, before_insert=remove_depends_on_payment_days)
+        def before_insert(new_doc, old_doc):
+            remove_depends_on_payment_days(new_doc, old_doc)
+            for a in old_doc.get('accounts'):
+                acc = new_doc.append('accounts')
+                acc.company = a.get('company')
+                acc.account = a.get('default_account')
+
+        self.import_documents_having_childtables('Salary Component', overwrite=True, before_insert=before_insert, copy_child_table=False)
 
     def import_asset_category(self):
         self.import_documents_having_childtables('Asset Category')
@@ -338,6 +345,8 @@ class ImportDB(object):
             doc.applicant_name = doc.employee_name
             doc.loan_account = doc.employee_loan_account
             doc.penalty_income_account = doc.interest_income_account
+            doc.is_term_loan = 1
+            doc.repay_from_salary = 1
             if doc.status == 'Fully Disbursed':
                 doc.status = 'Disbursed'
             doc.flags.ignore_validate = True
@@ -575,7 +584,8 @@ class ImportDB(object):
             "Purchase Invoice",
             "Stock Entry",
             "Payment Entry",
-            "Journal Entry"            
+            "Journal Entry",
+            "Salary Slip"            
         ]
         for d in docs:
             series_list = self.get_series_list(d)

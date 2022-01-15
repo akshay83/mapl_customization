@@ -3,11 +3,12 @@ import erpnext
 import json
 from frappe.utils import cint
 from mapl_customization.customizations_for_mapl.report.custom_salary_register.custom_salary_register import get_employee_details
+from erpnext import get_default_cost_center
 
 @frappe.whitelist()
 def process_staff_salaries_jv(payable_account, date, filters, director):
 
-	if isinstance(filters, basestring):
+	if isinstance(filters, str):
 		filters = json.loads(filters)
 
 	if filters.get("date_range"):
@@ -26,19 +27,16 @@ def process_staff_salaries_jv(payable_account, date, filters, director):
 		if not d["designation"] or (d["designation"] and d["designation"].lower() != 'director'):
 			process_staff_jv(jv, d, payable_account, earnings_deductions)
 
-	for comp, amount in earnings_deductions.iteritems():
-		account = frappe.get_doc("Salary Component", comp).accounts
-
-		account = account[0].default_account
+	for comp, amount in earnings_deductions.items():
 		ac1 = jv.append("accounts")
-		ac1.account = account
+		account = frappe.get_list("Salary Component Account", filters={"parent":comp}, fields=["account","company"])
+		
+		ac1.account = account[0].account #account[0].account
 		if amount > 0:
 			ac1.debit_in_account_currency = amount
 		elif amount < 0:
 			ac1.credit_in_account_currency = abs(amount)
-		ac1.cost_center = 'Main - MAPL' #erpnext.get_default_cost_center(account[0].company)
-		# DEBUG
-		# print ac1.account, ",", amount, "," "Dr" if amount >0 else "CR"
+		ac1.cost_center = get_default_cost_center(account[0].company)
 
 	jv.save()
 
@@ -49,23 +47,18 @@ def process_staff_jv(jv, record, account, ed):
 	ac1.party_name = record["employee_name"]
 	ac1.account = account
 	ac1.credit_in_account_currency = record["net_pay"]
-	# DEBUG
-	# print ac1.party_name, ",", ac1.account, ",", ac1.credit_in_account_currency
 
 	process_earnings_deductions(jv, record, account, ed)
 
 def process_earnings_deductions(jv, record, account, ed):
 	sal_slip = frappe.get_doc("Salary Slip", record["salary_slip_id"])
-	for adv in sal_slip.loan_deduction_detail:
-		loan_account = frappe.db.get_value("Employee Loan", adv.loan_reference , "employee_loan_account")
+	for adv in sal_slip.loans:
 		ac1 = jv.append("accounts")
 		ac1.party_type = 'Employee'
 		ac1.party_name = record["employee_name"]
 		ac1.party = record["employee_id"]
-		ac1.account = loan_account
+		ac1.account = frappe.db.get_value("Loan", adv.loan , "loan_account")
 		ac1.credit_in_account_currency = adv.principal_amount
-		# DEBUG
-		# print ac1.party_name, ",", ac1.account, ",", ac1.credit_in_account_currency
 
 	for earn in sal_slip.earnings:
 		ed[earn.salary_component] = ed.get(earn.salary_component,0) + earn.amount

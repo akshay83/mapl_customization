@@ -58,6 +58,25 @@ frappe.ui.form.on("Salary Slip","employee", function(frm) {
 	fetch_actual_reporting_salary(frm);
 });
 
+frappe.ui.form.on("Salary Slip", "refresh", function (frm) {
+	frappe.db.get_single_value("Payroll Settings", "gl_entry_on_salary_slip_submit").then((value) => {
+		if (value === undefined || !value) return;
+    	if (frm.doc.docstatus == 1) {
+        		frm.add_custom_button(__('Accounting Ledger'), function () {
+            		frappe.route_options = {
+                		voucher_no: frm.doc.name,
+                		from_date: frm.doc.posting_date,
+                		to_date: moment(frm.doc.modified).format('YYYY-MM-DD'),
+                		company: frm.doc.company,
+                		group_by: "Group by Voucher (Consolidated)",
+                		show_cancelled_entries: frm.doc.docstatus === 2
+            		};
+            		frappe.set_route("query-report", "General Ledger");
+        		}, __("View"));		
+    	}
+	});
+});
+
 function fetch_actual_reporting_salary(frm) {
 	if (frm.doc.salary_structure) {
 		frappe.db.get_value("Salary Structure Assignment",

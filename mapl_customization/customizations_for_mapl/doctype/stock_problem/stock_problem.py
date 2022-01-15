@@ -27,12 +27,16 @@ class StockProblem(Document):
 			serial_doc.add_comment("Comment", "Problem Not Found")
 
 	def move_to_temporary_warehouse(self,serial_doc):
+		if not serial_doc.warehouse or serial_doc.warehouse == '':
+			frappe.throw("Serial No Not In Any Warehouse")
 		serial_doc.temporary_warehouse = serial_doc.warehouse
 		serial_doc.warehouse = None
 		serial_doc.problem = self.name
 		serial_doc.save(ignore_permissions=True)
 
 	def move_to_main_warehouse(self,serial_doc):
+		if not serial_doc.temporary_warehouse or serial_doc.temporary_warehouse == '':
+			return
 		serial_doc.warehouse = serial_doc.temporary_warehouse
 		serial_doc.temporary_warehouse = None
 		serial_doc.problem = None

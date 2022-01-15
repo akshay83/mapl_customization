@@ -208,7 +208,12 @@ cf_fields = [
 		"Salary Slip-bank_column_break",
 		"Customer-aadhar_card_no",
 		"Customer-signature",
-		"Payment Entry-payment_name"
+		"Payment Entry-payment_name",
+		"Payroll Settings-gl_entry_on_salary_slip_submit",
+		"Salary Slip-payment_account",
+		"Salary Slip-column_break_87",
+		"Salary Slip-salary_payable_account",
+		"Salary Slip-accounting_details"
 ]
 
 print_fs = [
@@ -281,7 +286,9 @@ doc_events = {
                 "validate": "mapl_customization.customizations_for_mapl.sales_invoice_validation.validate_stock_entry_serial_no"
         },
 	"Salary Slip" : {
-		"validate": "mapl_customization.customizations_for_mapl.salary_slip_utils.salary_slip_before_save"
+		"validate": "mapl_customization.customizations_for_mapl.salary_slip_utils.salary_slip_before_save",
+		"on_submit": "mapl_customization.customizations_for_mapl.salary_slip_gl.on_submit",
+		"before_cancel": "mapl_customization.customizations_for_mapl.salary_slip_gl.before_cancel"
 	},
 	"Customer" : {
 		"before_insert": "mapl_customization.customizations_for_mapl.quick_customer.validate_customer_before_save",
@@ -347,10 +354,6 @@ standard_queries = {
 workflow_safe_globals = {
 	"mapl_customization.utils.check_average_purchase" : "mapl_customization.customizations_for_mapl.utils.check_average_purchase"
 }
-
-#Monkey Patch
-#from mapl_customization.customizations_for_mapl.monkey_patch import do_monkey_patch
-#do_monkey_patch()
 
 # Includes in <head>
 # ------------------

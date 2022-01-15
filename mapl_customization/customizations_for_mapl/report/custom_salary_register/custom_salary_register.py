@@ -250,6 +250,7 @@ def get_employee_details(filters):
 						on (struct.salary_structure = slip.salary_structure and struct.employee = slip.employee)
 					where
 					  slip.docstatus = 1
+					  and struct.docstatus = 1
 					  and slip.start_date = %s
 					  and slip.end_date = %s
 					order by
