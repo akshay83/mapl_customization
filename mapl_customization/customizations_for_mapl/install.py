@@ -9,6 +9,7 @@ def set_default_options():
 	frappe.db.set_value("Global Defaults", None, "disable_rounded_total", 1)
 	frappe.db.set_value("Dashboard Chart", "Profit and Loss", "is_public", 0)
 	frappe.db.set_value("Dashboard Chart", "Outgoing Salary", "is_public", 0)
+	frappe.db.set_value("Payroll Settings", None, "simplify_employee_loan_repayment", 1)
 
 def rebuild_regional_custom_fields():
 	#Hope to Avoid Layout Issues

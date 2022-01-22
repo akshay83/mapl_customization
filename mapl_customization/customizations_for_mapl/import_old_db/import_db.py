@@ -1,6 +1,7 @@
 import frappe
 import datetime
 import logging
+import json
 from frappe import CharacterLengthExceededError
 from .monkey_patch_import import *
 from .common import *
@@ -109,7 +110,8 @@ class ImportDB(object):
             ["01-07-2021", "30-09-2021"],
             ["01-10-2021", "06-11-2021"],
             ["07-11-2021", "17-11-2021", 15], # To Avoid a Serial No Purchase on 15.11, Sold on 07.11 
-            ["18-11-2021", "30-11-2021"]
+            ["18-11-2021", "30-11-2021"],
+            ["01-12-2021", "31-12-2021"]
         ]
         print ("Staring Process at",datetime.datetime.utcnow())
         log_info(logging, 'Started Process at {0}'.format(datetime.datetime.utcnow()))
@@ -151,6 +153,8 @@ class ImportDB(object):
         if not import_modules or "period_closing" in import_modules:                
             self.import_period_closing_vouchers()
         self.update_naming_series()
+        #self.import_draft_documents()
+        #set_loans_accured()
         print ("Completed Process at",datetime.datetime.utcnow())
         log_info(logging,'Completed Process at {0}'.format(datetime.datetime.utcnow()))
 
@@ -190,7 +194,8 @@ class ImportDB(object):
             setattr(new_doc, 'supplier_group', old_supplier_dict.get('supplier_type'))
             if not frappe.db.exists('Supplier Group', new_doc.supplier_group):
                 new_doc.supplier_group = 'All Supplier Groups'
-            delattr(new_doc, 'supplier_type')
+            if new_doc.supplier_type not in new_doc.meta.get_field('supplier_type').options.split('\n'):
+                new_doc.supplier_type = 'Individual'
 
         def after_insert(new_doc, old_supplier_dict, import_addresses=True):
             if import_addresses:
@@ -362,6 +367,7 @@ class ImportDB(object):
             new_doc.flags.ignore_validate = True
             new_doc.flags.ignore_links = True
 
+        monkey_patch_salary_slip_temporarily()
         self.import_documents_having_childtables('Salary Slip', child_table_name_map={'loan_deduction_detail':'loans'}, before_insert=before_inserting)
 
     def import_stock_transactions(self,from_date=None, to_date=None, non_sle_entries=False, day_interval=5, id=None):
@@ -706,6 +712,14 @@ class ImportDB(object):
             self.import_documents_having_childtables(doctype, before_insert=before_insert, doc_list=entries, reset_batch=False) 
         self.commit()
 
+    def import_draft_documents(self):
+        documents = ["Sales Invoice", "Purchase Invoice", "Delivery Note"]        
+        for d in documents:
+            d_list = get_documents_with_childtables(self.remoteDBClient, self.parent_module, d, 
+                                        filters = json.dumps([[d, "docstatus","=","0"]]), page_length=100, order_by="name")
+            
+            self.import_transactions(d_list, non_sle_entries=True)
+
     def remove_child_rows(self,new_doc, child_table):
         if (new_doc.get(child_table) and not new_doc.is_new()): #Child Not Empty  and new_doc.docstatus == 0
             child_doctype = new_doc.get(child_table)[0].doctype
@@ -719,7 +733,7 @@ class ImportDB(object):
             new_doc.save()
             new_doc.flags.ignore_mandatory = flag
     
-    def copy_attr(self, old_doc, new_doc, copy_child_table=False, doctype_different=False, child_table_name_map=None):
+    def copy_attr(self, old_doc, new_doc, copy_child_table=False, doctype_different=False, child_table_name_map=None, overwrite=False):
         for k in old_doc.keys():
             #--DEBUG-- print ("Key:",k)            
             if isinstance(old_doc[k], dict) or isinstance(old_doc[k], list):
@@ -734,6 +748,8 @@ class ImportDB(object):
             if (k == 'modified'):
                 continue
             if doctype_different and k == 'doctype':
+                continue
+            if overwrite and k in ('creation', 'owner'):
                 continue
             setattr(new_doc, k, old_doc[k])
 
@@ -785,7 +801,8 @@ class ImportDB(object):
                 log_info(logging, 'Skipping Doctype {0} with Name {1}, Already Submitted'.format(doctype, doc.name))
                 return
             log_info(logging, 'Importing Doctype {0} with Name {1}'.format(doctype, doc.name))                
-            self.copy_attr(doc, new_doc, copy_child_table=copy_child_table, doctype_different=different_doctype, child_table_name_map=child_table_name_map)
+            self.copy_attr(doc, new_doc, copy_child_table=copy_child_table, doctype_different=different_doctype, \
+                            child_table_name_map=child_table_name_map, overwrite=overwrite)
             if before_insert:
                 try:
                     before_insert(new_doc, doc)

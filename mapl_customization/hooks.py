@@ -213,7 +213,8 @@ cf_fields = [
 		"Salary Slip-payment_account",
 		"Salary Slip-column_break_87",
 		"Salary Slip-salary_payable_account",
-		"Salary Slip-accounting_details"
+		"Salary Slip-accounting_details",
+		"Accounts Settings-verify_party_balance"
 ]
 
 print_fs = [
@@ -238,6 +239,11 @@ ps_fields = [
 	"Payment Entry-party_name-allow_on_submit"
 ]
 
+wf_names = [
+	"Sales Invoice Workflow",
+	"Payment Entry Worklfow"
+]
+
 fixtures = [	{
 			"dt": "Custom Field",
 			"filters": [["name", "in", cf_fields]]
@@ -249,7 +255,19 @@ fixtures = [	{
 		{
 			"dt": "Property Setter",
 			"filters": [["name", "in", ps_fields]]
+		},
+		{
+			"dt": "Workflow",
+			"filters": [["name", "in", wf_names]]
 		}, 
+		{
+			"dt": "Workflow Action Master",
+			"filters": [["name", "in", ["Cancel","Submit"]]]
+		},
+		{
+			"dt": "Workflow State",
+			"filters": [["name", "in", ["Cancelled", "Submitted"]]]
+		},
 		"Letter Head", 
 		"Custom SQL Queries"
 ]

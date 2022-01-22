@@ -46,7 +46,7 @@ def get_doc_list_as_per_transactions(filters=None, from_date=None, to_date=None,
     if not non_stock:
         document_list = get_complete_list('Stock Ledger Entry', filters=filters, 
                         fields=default_fields,
-                        to_record = 100000, #Get Maximum Records 
+                        page_length = 100000, #Get Maximum Records 
                         order_by=default_order_by if not order_by else order_by,
                         distinct=1)
     else:

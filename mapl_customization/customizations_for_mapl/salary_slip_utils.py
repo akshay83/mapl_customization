@@ -1,5 +1,23 @@
 import frappe
 
+@frappe.whitelist()
+def get_salary_payable_account(employee, salary_structure, on_date, company):
+    salary_structure_assignment_payroll_payable = frappe.get_value("Salary Structure Assignment",
+            {
+                "employee": employee,
+                "salary_structure": salary_structure,
+                "from_date": ("<=", on_date),
+                "docstatus": 1,
+                "company": company
+            },
+            "payroll_payable_account",
+            order_by="from_date desc",
+            as_dict=True,
+    )
+    if not salary_structure_assignment_payroll_payable:
+        salary_structure_assignment_payroll_payable = frappe.db.get_value("Company", company, "default_payroll_payable_account")
+    return salary_structure_assignment_payroll_payable
+
 def get_repayment_schedule(doc):
 	loan_details = frappe.db.sql("""select
 					  loan.name,

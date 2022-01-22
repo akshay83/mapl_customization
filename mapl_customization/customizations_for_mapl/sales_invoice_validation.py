@@ -1,6 +1,6 @@
 import frappe
 import html
-from frappe.utils import cint
+from frappe.utils import cint, flt
 
 def sales_invoice_validate(doc, method):
 	if doc.get('ignore_validate_hook'):
@@ -8,8 +8,8 @@ def sales_invoice_validate(doc, method):
 	negative_stock_validation(doc, method)
 	validate_stock_entry_serial_no(doc, method)
 	validate_serial_no(doc, method)
-	#validate_grand_total(doc, method)
 	validate_gst_state(doc, method)
+	validate_customer_balance(doc, method)
 
 def sales_on_submit_validation(doc, method):
 	if doc.get('ignore_validate_hook'):
@@ -18,6 +18,47 @@ def sales_on_submit_validation(doc, method):
 	validate_hsn_code(doc, method)
 	taxes_and_charges_validation(doc, method)
 	validate_grand_total(doc, method)
+	
+def validate_customer_balance(doc, method):
+	def get_customer_invoice_total():
+		filters = {
+					"customer":doc.customer,
+					"docstatus":('<',2)
+		}
+		if doc.name:
+			filters.update({"name":('!=', doc.name)})
+		invoices = frappe.get_all("Sales Invoice", filters = filters, fields=["grand_total"])
+		total = 0
+		for i in invoices:
+			total = total + i.grand_total
+		total = total + doc.grand_total
+		return total
+
+	def get_customer_credit_balance():
+		filters = {
+					"party":doc.customer,
+					"party_type":"Customer",
+					"voucher_type":("!=","Sales Invoice"),
+					"is_cancelled":0
+		}
+		credits = frappe.get_all("GL Entry", filters = filters, fields=["credit", "debit"])
+		total = 0
+		for c in credits:
+			total = total + c.credit - c.debit
+		return total
+
+	if not cint(frappe.db.get_single_value("Accounts Settings", "verify_party_balance")):
+		return
+	if (frappe.session.user == "Administrator" or "System Manager" in frappe.get_roles()):
+		return
+	if cint(doc.delayed_payment) or cint(doc.is_finance):
+		return
+	balance = flt(get_customer_credit_balance())
+	inv_total = flt(get_customer_invoice_total())
+	if abs(balance)-abs(inv_total) < 0:
+		frappe.throw("""Customer does not have Sufficient Balance. Please make sure that Payment has been Received and
+					Payment Entry is Submitted or Select Delayed Payment Option.\n
+					Current Customer Balance {0}, Required {1}""".format(balance, inv_total))
 
 def validate_serial_no(doc, method):
 	""" check if serial number is already used in other sales invoice """
@@ -42,7 +83,6 @@ def validate_serial_no(doc, method):
 					))
 
 
-
 def validate_gst_state(doc, method):
 	ship_state = frappe.db.get_value("Address", doc.shipping_address_name, "gst_state")
 	if not ship_state:
@@ -55,11 +95,13 @@ def validate_gst_state(doc, method):
 	from frappe.contacts.doctype.address.address import get_address_display
 	da = get_address_display(doc.customer_address)
 	if da != html.unescape(doc.address_display):
-		frappe.throw("""Please use 'Update Address' under Address to update the correct Billing Address in the Document""")
+		frappe.throw("""Address has been changed after creating this document, 
+					Please use <b>'Update Address</b> under Address to update the correct Billing Address in the Document""")
 
 	da = get_address_display(doc.shipping_address_name)
 	if da != html.unescape(doc.shipping_address):
-		frappe.throw("""Please use 'Update Address' under Address to update the correct Shipping Address in the Document""")
+		frappe.throw("""Address has been changed after creating this document, 
+					Please use <b>Update Address</b> under Address to update the correct Shipping Address in the Document""")
 
 
 	if doc.taxes_and_charges == 'Out of State GST' and ship_state == 'Madhya Pradesh':

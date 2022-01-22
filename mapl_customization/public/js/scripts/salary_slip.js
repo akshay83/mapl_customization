@@ -52,10 +52,12 @@ frappe.ui.form.on("Salary Slip", "calculate_actual_salary", function(frm) {
 
 frappe.ui.form.on("Salary Slip","end_date", function(frm) {
 	fetch_actual_reporting_salary(frm);
+	fetch_payroll_payable_account(frm);
 });
 
 frappe.ui.form.on("Salary Slip","employee", function(frm) {
 	fetch_actual_reporting_salary(frm);
+	fetch_payroll_payable_account(frm);
 });
 
 frappe.ui.form.on("Salary Slip", "refresh", function (frm) {
@@ -77,6 +79,30 @@ frappe.ui.form.on("Salary Slip", "refresh", function (frm) {
 	});
 });
 
+function fetch_payroll_payable_account(frm) {
+	frappe.db.get_value("Employee", frm.doc.employee, "date_of_joining").then((value) => {
+		let fetch_dt = frm.doc.start_date;
+		if (new Date(value) > new Date(frm.doc.start_date)) {
+			fetch_dt = value;
+		}
+		frappe.call({
+			method: "mapl_customization.customizations_for_mapl.salary_slip_utils.get_salary_payable_account",
+			args: {
+				"employee": frm.doc.employee,
+				"salary_structure": frm.doc.salary_structure,
+				"on_date": fetch_dt,
+				"company": frm.doc.company
+			},
+			callback: function(r) {
+				if (r.message) {
+					frm.doc.salary_payable_account = r.message.payroll_payable_account;
+					frm.refresh_field("salary_payable_account");
+				}
+			}
+		});
+	});
+}
+
 function fetch_actual_reporting_salary(frm) {
 	if (frm.doc.salary_structure) {
 		frappe.db.get_value("Salary Structure Assignment",
@@ -93,7 +119,7 @@ function fetch_actual_reporting_salary(frm) {
 						frm.doc.actual_salary = val.actual_salary;
 						frm.doc.reporting_salary = val.reported_salary;
 						if (val.no_pf_deduction != 0) {
-				                        frm.set_df_property("reporting_salary", "hidden", 0);
+				            frm.set_df_property("reporting_salary", "hidden", 0);
 							frm.set_df_property("actual_salary", "hidden", 0);
 						} else {
 							frm.set_df_property("reporting_salary", "hidden", 1);

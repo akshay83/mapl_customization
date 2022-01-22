@@ -8,45 +8,6 @@ frappe.ui.form.on("Sales Invoice", "is_pos", function(frm) {
 	}
 });
 
-function custom_hide_show_print_buttons(show) {
-	if (show) {
-		$('.dropdown-item:contains("Print")').show(); //HIDE MENU ENTRY - FIND BASED ON TEXT AND <A> //
-		$('.text-muted.btn.btn-default.icon-btn[data-original-title="Print"]').show();
-	} else {
-		$('.dropdown-item:contains("Print")').hide(); //HIDE MENU ENTRY - FIND BASED ON TEXT AND <A> //
-		$('.text-muted.btn.btn-default.icon-btn[data-original-title="Print"]').hide();
-	}
-}
-
-function custom_hide_print_button(frm) {
-	//TO HIDE PRINT ICON & PRINT MENU FROM A DOCUMENT IN VERSION 6 USE
-
-	//--DEBUG--console.log("Calling Hide Print Button");
-	//--DEBUG--console.log(cur_frm.doc.workflow_state);
-	//--DEBUG--console.log(cur_frm.doc.__unsaved);
-	//--DEBUG--console.log("Cancel Button:"+$('.grey-link:contains(Cancel)').length);
-	if (typeof frm.doc.workflow_state !== "undefined") {
-		frappe.db.get_value('Workflow', {"document_type":"Sales Invoice", "is_active":1}, "name", function(val) {
-			if (Object.keys(val).length > 0) {
-				if (frm.doc.workflow_state!="Pending" && frm.doc.workflow_state!="Rejected" && frm.doc.workflow_state!="Cancelled" && !frm.is_dirty()) {
-					custom_hide_show_print_buttons(true);
-				} else {
-					custom_hide_show_print_buttons(false);
-				}
-			} else {
-				custom_hide_show_print_buttons(true);
-			}
-		});
-	} else {
-		if (!frm.is_dirty()) {
-			custom_hide_show_print_buttons(true);
-		} else {
-			custom_hide_show_print_buttons(false);
-		}
-	}
-	//--DEBUG--console.log("Cancel Button:"+$('.grey-link:contains(Cancel)').length);
-};
-
 function custom_disable_save_button(frm) {
 	//--DEBUG--console.log("Calling Disable Save");
 	//--DEBUG--console.log("Cancel Button:"+$('.grey-link:contains(Cancel)').length);
@@ -58,13 +19,13 @@ function custom_disable_save_button(frm) {
 };
 
 frappe.ui.form.on("Sales Invoice", "*", function(frm) {
-	custom_hide_print_button(frm);
+	custom.hide_print_button("Sales Invoice", frm);
 });
 
 frappe.ui.form.on("Sales Invoice", "onload", function(frm) {
 	//--DEBUG--console.log("Called Onload Event");
-	custom_hide_print_button(frm);
-	custom_disable_save_button(frm);
+	custom.hide_print_button("Sales Invoice", frm);
+	//DISABLED-VER13--custom_disable_save_button(frm);
 });
 
 //ADD MENU ITEM IN MENU DROPDOWN BUTTON
@@ -77,9 +38,11 @@ frappe.ui.form.on("Sales Invoice", "refresh", function(frm) {
 	//}
 
 	//--DEBUG--console.log("Called Referesh Event");
-	custom_hide_print_button(frm);
-	custom_disable_save_button(frm);
+	custom.hide_print_button("Sales Invoice", frm);
+	//DISABLED-VER13--custom_disable_save_button(frm);
 	$('.frappe-control.input-max-width[data-fieldname="grand_total"]').find('.control-value.like-disabled-input.bold').css('background','lightblue')
+	$('div').find("[data-label='Fetch%20Timesheet']").hide();
+	$('div').find("[data-label='Get%20Items%20From']").hide();
 });
 
 cur_frm.add_fetch('item_code','is_vehicle','is_vehicle');
@@ -88,6 +51,9 @@ cur_frm.add_fetch('customer','tax_id','test_vat');
 cur_frm.add_fetch('customer','vehicle_no','customer_vehicle_no');
 
 frappe.ui.form.on("Sales Invoice","onload_post_render", function(frm) {
+	$('div').find("[data-label='Fetch%20Timesheet']").hide();
+	$('div').find("[data-label='Get%20Items%20From']").hide();
+
 	frm.set_query("customer", function(doc) {
 	   	return{
 			query: "mapl_customization.customizations_for_mapl.queries.mapl_customer_query"

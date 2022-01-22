@@ -125,6 +125,14 @@ def get_stock_ledger_entries(self, serial_no=None):
 
 	return sle_dict
 
+# Dont Create Repayment Entry while Importing from Older DB
+def make_loan_repayment_entry(self):
+	pass
+
+def monkey_patch_salary_slip_temporarily():
+	from erpnext.payroll.doctype.salary_slip.salary_slip import SalarySlip
+	SalarySlip.make_loan_repayment_entry = make_loan_repayment_entry
+
 def monkey_patch_journal_entry_temporarily():
     from erpnext.accounts.doctype.journal_entry.journal_entry import JournalEntry
     JournalEntry.make_gl_entries = jv_make_gl_entries            

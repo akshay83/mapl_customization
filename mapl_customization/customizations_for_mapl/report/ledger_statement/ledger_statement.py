@@ -76,10 +76,6 @@ def execute(filters=None):
 
 	data = get_individual_statement(filters)
 
-	#if ((filters.get("party") and filters.get("party_type")) or filters.get("account") \
-	#	and filters.get("from_date") and filters.get("to_date")):
-	#	data = get_individual_statement(filters)
-
 	return columns, data
 
 
@@ -108,18 +104,22 @@ def get_account_filters(filters):
 	if filters.get("party"):
 		conditions += " and party = '%s'" % filters["party"]
 
+	if not cint(filters.get("include_cancelled")):
+		conditions += " and is_cancelled = 0"
 
 	return conditions
 
 
 def get_opening(filters):
-	query = """select
+	query = """
+			select
 			  ifnull(sum(debit-credit),0) as opening_balance
 			from
 			  `tabGL Entry`
 			where
 			  posting_date < {start_date}
-			  {condition}"""
+			  {condition}
+		"""
 	build_row = {}
 
 	query = query.format(**{
@@ -148,41 +148,36 @@ def get_individual_statement(filters):
 	rows = []
 	rows.append(opening)
 
-	query = """select
-			  posting_date,
-			  voucher_type,
-			  voucher_no,
-			  remarks,
-			  if((voucher_type like 'Journal %'),
-			    (select cheque_no from `tabJournal Entry` where name=voucher_no),
-			    if((voucher_type like 'Payment %'),
-			      (select reference_no from `tabPayment Entry` where name=voucher_no),
-			      null
-			    )
-			  ) as chq_no,
-			  against,
-			  sum(debit) as debit,
-			  sum(credit) as credit,
-			   if(against is not null and length(against)<=10,
-				        if(against like 'Cust-%',
-				          (select customer_name from `tabCustomer` where name = gl.against),
-				          if (against like 'Supp-%',
-				            (select supplier_name from `tabSupplier` where name = gl.against),
-				            if (against like 'EMP/%',
-						(select employee_name from `tabEmployee` where name = gl.against),
-						null
-					    )
-				          )
-				        ),
-				        null
-			  ) as `against_name`
-			from
-			  `tabGL Entry` gl
-			where
-			  {date_range}
-			  {condition}
-			group by voucher_no
-			order by posting_date"""
+	query = """
+			select
+        		posting_date,
+        		voucher_type,
+        		voucher_no,
+        		remarks,
+        		if((voucher_type like 'Journal %'),
+          		(select cheque_no from `tabJournal Entry` where name=voucher_no),
+          		if((voucher_type like 'Payment %'),
+            		(select reference_no from `tabPayment Entry` where name=voucher_no),null)
+        		) as chq_no,
+        		against,
+        		sum(debit) as debit,
+        		sum(credit) as credit,
+        		if(against is not null and length(against)<=10,
+		                if(against like 'Cust-%',
+                  		(select customer_name from `tabCustomer` where name = gl.against),
+                  		if (against like 'Supp-%',
+                     		(select supplier_name from `tabSupplier` where name = gl.against),
+                    		if (against like 'EMP/%',
+                       		(select employee_name from `tabEmployee` where name = gl.against),
+        		null))),null) as `against_name`
+      		from
+        		`tabGL Entry` gl
+      		where
+        		{date_range}
+        		{condition}
+      		group by voucher_no
+      		order by posting_date
+		"""
 
 	build_row = {}
 
@@ -219,9 +214,5 @@ def get_individual_statement(filters):
 			"debit": (total_debit-total_credit) if (total_debit>total_credit) else 0,
 			"credit": (total_credit-total_debit) if (total_credit>total_debit) else 0
 		    })
-
-	print ('-'*40)
-	print (rows)
-	print ('-'*40)
 
 	return rows

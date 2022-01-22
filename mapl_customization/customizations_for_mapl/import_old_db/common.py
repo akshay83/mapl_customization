@@ -4,6 +4,43 @@ import difflib
 from frappe.utils import cint, cstr, getdate, get_time
 from erpnext import get_default_company
 
+def set_loans_accured():
+    query = """
+            select 
+                loan.name,
+                loan.loan_amount,
+                ifnull((select sum(total_payment) from `tabSalary Slip Loan` where parenttype='Salary Slip' and docstatus = 1 and loan=loan.name),0) as deducted
+            from
+                `tabLoan` loan,
+                `tabRepayment Schedule` sch
+            where
+                sch.parent = loan.name
+                and loan.docstatus = 1
+                and loan.name = '{0}'
+            group by
+                loan.name
+            """
+        
+    loan_list = frappe.get_all("Loan", filters={"docstatus":1}, fields=["name"])
+    for loan in loan_list:
+        check_loan = frappe.db.sql(query.format(loan.name), as_dict=1)
+        if (check_loan[0].loan_amount - check_loan[0].deducted) <= 0:
+            frappe.db.sql("""update `tabRepayment Schedule` set is_accrued=1 where parent = '{0}'""".format(loan.name))
+            frappe.db.sql("""update `tabLoan` set status = 'Closed' where name = '{0}'""".format(loan.name))
+        else:
+            reschedule_list = frappe.get_all("Repayment Schedule", filters={"docstatus":1,"is_accrued":0,"parent":loan.name},\
+                    fields=["parent","total_payment","payment_date", "name"], order_by="parent, payment_date")
+            total_deducted = check_loan[0].deducted
+            for l in reschedule_list:
+                total_deducted = total_deducted - l.total_payment
+                if total_deducted >= 0:
+                    frappe.db.sql("""update `tabRepayment Schedule` set is_accrued=1 where name = '{0}'""".format(l.name))
+
+    #Close Loans where Employee has 0 Ledger Balance
+    frappe.db.sql("""update `tabLoan` loan set status = 'Closed' where ifnull((select sum(debit)-sum(credit) from `tabGL Entry` 
+                where party_type='Employee' and party=loan.applicant and is_cancelled=0),0) > 0""")
+    frappe.db.commit()
+
 def find_closest_match(self, str, in_list):
     uncase_list = [x.lower() for x in in_list]
     match = difflib.get_close_matches(str.lower(), uncase_list, n=1)

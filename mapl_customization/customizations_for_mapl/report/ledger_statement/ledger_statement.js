@@ -69,6 +69,12 @@ frappe.query_reports["Ledger Statement"] = {
 			"label": "Show Running Balance",
 			"fieldtype":"Check",
 			"default": "1"
+		},
+		{
+			"fieldname":"include_cancelled",
+			"label": "Include Cancelled Entries",
+			"fieldtype":"Check",
+			"default": "0"
 		}
 	],
         "formatter":function (value, row, column, data, default_formatter) {

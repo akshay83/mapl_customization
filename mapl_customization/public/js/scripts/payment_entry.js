@@ -26,6 +26,7 @@ frappe.ui.form.on("Payment Entry", "refresh", function (frm) {
 	} else {
 		frm.fields_dict.payment_type_section.wrapper.show();
 	}
+	custom.hide_print_button("Payment Entry", frm);
 });
 frappe.ui.form.on("Payment Entry", "mode_of_payment", function (frm) {
 	if (frm.doc.mode_of_payment !== undefined && frm.doc.mode_of_payment != '') {
@@ -134,17 +135,15 @@ frappe.ui.form.on("Payment Entry", "party_address", function (frm) {
 		frm.set_value("address", null);
 	}
 });
-//cur_frm.fields_dict['party_address'].get_query = function(doc, cdt, cdn) {
-//	if (doc.party_type=="Customer") {
-//		return {
-//			filters:{'customer': doc.party}
-//		}
-//	} else {
-//		return {
-//			filters:{'supplier': doc.party}
-//		}
-//	}
-//};
+
+frappe.ui.form.on("Payment Entry", "*", function(frm) {
+	custom.hide_print_button("Payment Entry", frm);
+});
+
+frappe.ui.form.on("Sales Invoice", "onload", function(frm) {
+	//--DEBUG--console.log("Called Onload Event");
+	custom.hide_print_button("Payment Entry", frm);
+});
 
 frappe.ui.form.on("Payment Entry", "payments", function (frm) {
 	frm.set_value('payment_type', 'Pay');

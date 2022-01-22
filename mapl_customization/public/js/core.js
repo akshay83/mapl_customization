@@ -139,3 +139,46 @@ custom.update_address = function(frm) {
 		});
 	});
 };
+
+custom.hide_show_print_buttons = function(show) {
+	if (show) {
+		$('.dropdown-item:contains("Print")').show(); //HIDE MENU ENTRY - FIND BASED ON TEXT AND <A> //
+		$('.text-muted.btn.btn-default.icon-btn[data-original-title="Print"]').show();
+	} else {
+		$('.dropdown-item:contains("Print")').hide(); //HIDE MENU ENTRY - FIND BASED ON TEXT AND <A> //
+		$('.text-muted.btn.btn-default.icon-btn[data-original-title="Print"]').hide();
+	}
+};
+
+custom.hide_print_button = function (doctype, frm) {
+	//TO HIDE PRINT ICON & PRINT MENU FROM A DOCUMENT IN VERSION 6 USE
+
+	//--DEBUG--console.log("Calling Hide Print Button");
+	//--DEBUG--console.log(cur_frm.doc.workflow_state);
+	//--DEBUG--console.log(cur_frm.doc.__unsaved);
+	//--DEBUG--console.log("Cancel Button:"+$('.grey-link:contains(Cancel)').length);
+	if (typeof frm.doc.workflow_state !== "undefined") {
+		frappe.db.get_value('Workflow', {"document_type":doctype, "is_active":1}, "name", function(val) {
+			if (Object.keys(val).length > 0) {
+				if (frm.doc.workflow_state!="Pending" && frm.doc.workflow_state!="Rejected" && frm.doc.workflow_state!="Cancelled" && !frm.is_dirty()) {
+					custom.hide_show_print_buttons(true);
+				} else {
+					custom.hide_show_print_buttons(false);
+				}
+			} else {
+				custom.handle_default_print_action(doctype, frm);
+			}
+		});
+	} else {
+		custom.handle_default_print_action(doctype, frm);
+	}
+	//--DEBUG--console.log("Cancel Button:"+$('.grey-link:contains(Cancel)').length);
+};
+
+custom.handle_default_print_action = function(doctype, frm) {
+	if (!frm.is_dirty() && !(doctype == "Payment Entry" && frm.doc.docstatus != 1)) {
+		custom.hide_show_print_buttons(true);
+	} else {
+		custom.hide_show_print_buttons(false);
+	}
+}

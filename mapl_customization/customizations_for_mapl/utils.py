@@ -4,7 +4,6 @@ import datetime
 from frappe.utils import cint, getdate, today
 from six import string_types
 
-
 def update_state_code(doctype='Customer', verbose=True):
 	address_filters = [
                 ["Dynamic Link", "link_doctype", "=", doctype],
@@ -113,6 +112,7 @@ def get_average_purchase_rate_for_item(item,as_value=0):
 				 it.parent = sle.item_code
 				 and it.valid_from <= cast(now() as Date)
 				 and sle.item_code = %s
+				 and sle.is_cancelled = 0
 				order by
 				  it.valid_from desc
 				limit 1
@@ -136,7 +136,7 @@ def check_average_purchase(doc):
 @frappe.whitelist()
 def get_party_balance(party, party_type, company):
 	outstanding_amount = frappe.db.sql("""select sum(debit) - sum(credit)
-			from `tabGL Entry` where party_type = %s and company=%s
+			from `tabGL Entry` where party_type = %s and company=%s and is_cancelled=0
 			and party = %s""", (party_type, company, party))
 	return outstanding_amount
 
@@ -156,13 +156,13 @@ def get_effective_stock_at_all_warehouse(item_code, date=None):
 			FROM (
 			    SELECT OUTSTK.NAME,
 			      IFNULL((SELECT SUM(ACTUAL_QTY) FROM `tabStock Ledger Entry` Stk WHERE
-			        ITEM_CODE=%(item_code)s AND WAREHOUSE=OUTSTK.NAME AND POSTING_DATE < %(date)s),0) AS `OPENING STOCK`,
+			        ITEM_CODE=%(item_code)s AND IS_CANCELLED=0 AND WAREHOUSE=OUTSTK.NAME AND POSTING_DATE < %(date)s),0) AS `OPENING STOCK`,
 
 			      IFNULL((SELECT SUM(ACTUAL_QTY) FROM `tabStock Ledger Entry` Stk WHERE
-			        ITEM_CODE=%(item_code)s AND ACTUAL_QTY > 0 AND WAREHOUSE=OUTSTK.NAME AND POSTING_DATE=%(date)s),0) AS `IN QTY`,
+			        ITEM_CODE=%(item_code)s AND IS_CANCELLED=0 AND ACTUAL_QTY > 0 AND WAREHOUSE=OUTSTK.NAME AND POSTING_DATE=%(date)s),0) AS `IN QTY`,
 
 			      IFNULL((SELECT SUM(ABS(ACTUAL_QTY)) FROM `tabStock Ledger Entry` Stk WHERE
-			        ITEM_CODE=%(item_code)s AND ACTUAL_QTY < 0 AND WAREHOUSE=OUTSTK.NAME AND POSTING_DATE=%(date)s),0) AS `OUT QTY`,
+			        ITEM_CODE=%(item_code)s AND IS_CANCELLED=0 AND ACTUAL_QTY < 0 AND WAREHOUSE=OUTSTK.NAME AND POSTING_DATE=%(date)s),0) AS `OUT QTY`,
 
 			      IFNULL((SELECT SUM(INV_ITEM.QTY) FROM `tabSales Invoice` INV, `tabSales Invoice Item` INV_ITEM WHERE
 			        INV_ITEM.WAREHOUSE=OUTSTK.NAME AND INV_ITEM.PARENT=INV.NAME AND INV.DOCSTATUS<1 AND INV_ITEM.ITEM_CODE=%(item_code)s
@@ -196,8 +196,13 @@ def get_non_stock_sales_purchase(from_date, to_date):
 				select distinct voucher_no,voucher_type from `tabGL Entry` where voucher_type in ('Sales Invoice', 'Purchase Invoice') 
 				and voucher_no not in (select distinct voucher_no from `tabStock Ledger Entry` 
 				where voucher_type in ('Sales Invoice', 'Purchase Invoice')) and posting_date between '{0}' and '{1}'
-			""".format(getdate(from_date),getdate(to_date))
-	return frappe.db.sql(query, as_dict=1)
+			"""
+	try:
+		if frappe.db.has_column("GL Entry", "is_cancelled"):
+			query = query + " and is_cancelled=0"
+	except Exception:
+		pass
+	return frappe.db.sql(query.format(getdate(from_date),getdate(to_date)), as_dict=1)
 
 @frappe.whitelist()
 def get_non_stock_sales_purchase_count(from_date, to_date):
@@ -205,5 +210,10 @@ def get_non_stock_sales_purchase_count(from_date, to_date):
 				select count(distinct voucher_no,voucher_type) from `tabGL Entry` where voucher_type in ('Sales Invoice', 'Purchase Invoice') 
 				and voucher_no not in (select distinct voucher_no from `tabStock Ledger Entry` 
 				where voucher_type in ('Sales Invoice', 'Purchase Invoice')) and posting_date between '{0}' and '{1}'
-			""".format(getdate(from_date),getdate(to_date))
-	return frappe.db.sql(query, as_list=1)	
+			"""
+	try:
+		if frappe.db.has_column("GL Entry", "is_cancelled"):
+			query = query + " and is_cancelled=0"
+	except Exception:
+		pass
+	return frappe.db.sql(query.format(getdate(from_date),getdate(to_date)), as_list=1)	
