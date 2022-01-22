@@ -241,7 +241,7 @@ ps_fields = [
 
 wf_names = [
 	"Sales Invoice Workflow",
-	"Payment Entry Worklfow"
+	"Payment Entry Workflow"
 ]
 
 fixtures = [	{
