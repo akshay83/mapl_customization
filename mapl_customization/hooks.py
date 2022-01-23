@@ -373,6 +373,8 @@ workflow_safe_globals = {
 	"mapl_customization.utils.check_average_purchase" : "mapl_customization.customizations_for_mapl.utils.check_average_purchase"
 }
 
+on_login = "mapl_customization.customizations_for_mapl.install.on_login"
+
 # Includes in <head>
 # ------------------
 

@@ -140,7 +140,7 @@ frappe.ui.form.on("Payment Entry", "*", function(frm) {
 	custom.hide_print_button("Payment Entry", frm);
 });
 
-frappe.ui.form.on("Sales Invoice", "onload", function(frm) {
+frappe.ui.form.on("Payment Entry", "onload", function(frm) {
 	//--DEBUG--console.log("Called Onload Event");
 	custom.hide_print_button("Payment Entry", frm);
 });

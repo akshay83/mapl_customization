@@ -52,6 +52,7 @@ class ImportDB(object):
         self.import_price_list()
         self.import_user_groups()
         self.import_employee_branches()
+        self.import_departments()
         self.import_employee_designation()        
         self.import_brands()
         self.import_warehouses()
@@ -153,10 +154,13 @@ class ImportDB(object):
         if not import_modules or "period_closing" in import_modules:                
             self.import_period_closing_vouchers()
         self.update_naming_series()
-        #self.import_draft_documents()
-        #set_loans_accured()
         print ("Completed Process at",datetime.datetime.utcnow())
         log_info(logging,'Completed Process at {0}'.format(datetime.datetime.utcnow()))
+
+    def post_process(self):
+        self.import_draft_documents()
+        set_loans_accured()
+        self.import_biometric_details()
 
     def import_accounts(self, overwrite=False):
         def before_inserting(new_doc, old_doc):
@@ -209,6 +213,9 @@ class ImportDB(object):
 
     def import_employee_branches(self):
         self.import_documents_having_childtables('Branch')
+
+    def import_departments(self):
+        self.import_documents_having_childtables('Department')
 
     def import_employee_designation(self):
         self.import_documents_having_childtables('Designation')
@@ -918,3 +925,19 @@ class ImportDB(object):
     def commit(self):
         if not self.log_test:
             frappe.db.commit()
+
+    def import_biometric_details(self):
+        try:
+            if not self.remoteDBClient.get_doc("Biometric Machine"):
+                return
+        except Exception:
+            return
+
+        if not frappe.db.table_exists("Biometric Machine"):
+            return
+        
+        self.import_documents_having_childtables('Biometric Users')
+        self.import_documents_having_childtables('Branch Settings')
+        self.import_documents_having_childtables('Biometric Machine')
+        self.import_documents_having_childtables('Biometric Attendance')
+        
