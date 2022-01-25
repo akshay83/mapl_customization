@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 with open('requirements.txt') as f:
         install_requires = f.read().strip().split('\n')
 
-version = '0.1.0'
+from mapl_customization import __version__ as version
 
 setup(
     name='mapl_customization',

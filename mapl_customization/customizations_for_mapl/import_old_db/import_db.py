@@ -112,7 +112,8 @@ class ImportDB(object):
             ["01-10-2021", "06-11-2021"],
             ["07-11-2021", "17-11-2021", 15], # To Avoid a Serial No Purchase on 15.11, Sold on 07.11 
             ["18-11-2021", "30-11-2021"],
-            ["01-12-2021", "31-12-2021"]
+            ["01-12-2021", "31-12-2021"],
+            ["01-01-2022", "31-01-2022"]
         ]
         print ("Staring Process at",datetime.datetime.utcnow())
         log_info(logging, 'Started Process at {0}'.format(datetime.datetime.utcnow()))
@@ -464,6 +465,8 @@ class ImportDB(object):
                     new_doc.vehicle_no = new_doc.vehicle_no.replace(" ","")
                     if len(new_doc.vehicle_no) > 10:
                         new_doc.vehicle_no = new_doc.vehicle_no[:10]
+                if new_doc.get('workflow_state') and new_doc.workflow_state == 'Draft':
+                    new_doc.workflow_state = 'Pending'
                 #new_doc.update_current_stock()
             common_functions(new_doc, old_doc)                
             #--DEBUG-- print ("Old Doc:", old_doc.doctype, old_doc.name, old_doc.posting_date, old_doc.posting_time)                
@@ -804,7 +807,8 @@ class ImportDB(object):
             if not new_doc:
                 log_info(logging, 'Skipping Doctype {0} with Name {1}, Already Exists and Overwrite Not Allowed'.format(doctype, doc.name))
                 return
-            if not new_doc.is_new() and new_doc.docstatus == 1: # Dont Touch Submitted Documents
+            is_doc_new = new_doc.is_new()                
+            if not is_doc_new and new_doc.docstatus == 1: # Dont Touch Submitted Documents
                 log_info(logging, 'Skipping Doctype {0} with Name {1}, Already Submitted'.format(doctype, doc.name))
                 return
             log_info(logging, 'Importing Doctype {0} with Name {1}'.format(doctype, doc.name))                
@@ -815,13 +819,15 @@ class ImportDB(object):
                     before_insert(new_doc, doc)
                 except SkipRecordException:
                     return
-            if new_doc.is_new():
+            if is_doc_new:
                 if get_new_name:
                     new_name = get_new_name(doc)
                 self.insert_doc(new_doc, new_name=doc.name, continue_on_error=continue_on_error, submit=submit)
             elif overwrite:
                 self.save_doc(new_doc)
-            if after_insert and ((overwrite and not new_doc.is_new()) or (not overwrite and new_doc.is_new())):
+            if (not overwrite and not is_doc_new):
+                return
+            if after_insert:
                 after_insert(new_doc, doc)
 
     def import_documents_having_childtables(self, doctype, new_doctype=None, id=None, old_doc_dict=None, overwrite=False, \

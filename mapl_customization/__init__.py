@@ -1,6 +1,8 @@
 import frappe
 from mapl_customization.customizations_for_mapl.monkey_patch import do_monkey_patch
 
+__version__ = '0.1.13'
+
 #Monkey Patch
 def check_and_patch():
     try:
