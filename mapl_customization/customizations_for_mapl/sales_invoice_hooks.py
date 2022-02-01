@@ -4,6 +4,10 @@ import time
 from frappe.utils import today, getdate, date_diff
 from frappe.utils import cstr, cint
 
+def on_submit(doc, method):
+	from mapl_customization.customizations_for_mapl.utils import make_jv_for_connected_accounts
+	make_jv_for_connected_accounts(doc, method)
+
 def month_diff(string_ed_date, string_st_date):
 	ed_date = getdate(string_ed_date)
 	st_date = getdate(string_st_date)
@@ -16,3 +20,7 @@ def before_cancel(doc, method):
 	if getdate().day >= 10 and abs(month_diff(docdate, getdate())) > 0:
 		if not (frappe.session.user == "Administrator" or "System Manager" in frappe.get_roles()):
 			frappe.throw("""Bill Cancellation Not Allowed as Taxes Might Have Been Filed""")
+
+def on_cancel(doc, method):
+	from mapl_customization.customizations_for_mapl.utils import cancel_jv_for_connected_accounts
+	cancel_jv_for_connected_accounts(doc, method)

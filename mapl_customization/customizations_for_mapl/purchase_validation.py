@@ -5,8 +5,17 @@ from frappe.utils import cint, getdate, today
 from six import string_types
 import html
 
+def purchase_receipt_on_cancel(doc, method):
+	from mapl_customization.customizations_for_mapl.utils import cancel_jv_for_connected_accounts
+	cancel_jv_for_connected_accounts(doc, method)	
+
 def purchase_receipt_on_submit(doc,method):
 	validate_hsn_code(doc, method)
+	save_serial_no(doc, method)
+	from mapl_customization.customizations_for_mapl.utils import make_jv_for_connected_accounts
+	make_jv_for_connected_accounts(doc, method)
+
+def save_serial_no(doc, method):
 	for i in doc.items:
 		if cint(i.is_vehicle):
 			chassis_nos = i.serial_no.split("\n")

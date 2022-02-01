@@ -214,7 +214,11 @@ cf_fields = [
 		"Salary Slip-column_break_87",
 		"Salary Slip-salary_payable_account",
 		"Salary Slip-accounting_details",
-		"Accounts Settings-verify_party_balance"
+		"Accounts Settings-verify_party_balance",
+		"Supplier-connected_accounts_list",
+		"Supplier-connected_accounts",
+		"Customer-connected_accounts_list",
+		"Customer-connected_accounts"
 ]
 
 print_fs = [
@@ -236,7 +240,10 @@ ps_fields = [
 	"Sales Invoice-update_stock-default",
 	"Sales Invoice-set_posting_time-default",
 	"Customer-main-allow_rename",
-	"Payment Entry-party_name-allow_on_submit"
+	"Payment Entry-party_name-allow_on_submit",
+	"Purchase Invoice-update_stock-default",
+	"Sales Invoice-update_stock-default",
+	"Customer-main-quick_entry"
 ]
 
 wf_names = [
@@ -293,12 +300,15 @@ doc_events = {
 	"Purchase Invoice" : {
 		"on_submit" : "mapl_customization.customizations_for_mapl.purchase_validation.purchase_receipt_on_submit",
 		"validate" : "mapl_customization.customizations_for_mapl.purchase_validation.purchase_receipt_validate",
-		"before_submit": "mapl_customization.customizations_for_mapl.purchase_validation.purchase_receipt_before_submit"
+		"before_submit": "mapl_customization.customizations_for_mapl.purchase_validation.purchase_receipt_before_submit",
+		"on_cancel": "mapl_customization.customizations_for_mapl.purchase_validation.purchase_receipt_on_cancel"
 	},
 	"Sales Invoice" : {
+		"on_submit": "mapl_customization.customizations_for_mapl.sales_invoice_hooks.on_submit",
 		"validate" : "mapl_customization.customizations_for_mapl.sales_invoice_validation.sales_invoice_validate",
 		"before_submit" : "mapl_customization.customizations_for_mapl.sales_invoice_validation.sales_on_submit_validation",
-		"before_cancel":"mapl_customization.customizations_for_mapl.sales_invoice_hooks.before_cancel"
+		"before_cancel":"mapl_customization.customizations_for_mapl.sales_invoice_hooks.before_cancel",
+		"on_cancel": "mapl_customization.customizations_for_mapl.sales_invoice_hooks.on_cancel"
 	},
         "Stock Entry" : {
                 "validate": "mapl_customization.customizations_for_mapl.sales_invoice_validation.validate_stock_entry_serial_no"

@@ -1,8 +1,53 @@
 import frappe
+from frappe.utils import cint, cstr
+
+def set_default_series():
+	def scrub_options_list(ol):
+		options = list(filter(lambda x: x, [cstr(n).strip() for n in ol]))
+		return options
+
+	def set_series_for(doctype, ol):
+		options = scrub_options_list(ol)
+		default = options[0] if options else ''
+
+		# update in property setter
+		prop_dict = {'options': "\n".join(options), 'default': default}
+
+		for prop in prop_dict:
+			ps_exists = frappe.db.get_value("Property Setter",
+				{"field_name": 'naming_series', 'doc_type': doctype, 'property': prop})
+
+			if ps_exists:
+				ps = frappe.get_doc('Property Setter', ps_exists)
+				ps.value = prop_dict[prop]
+				ps.save()
+			else:
+				ps = frappe.get_doc({
+					'doctype': 'Property Setter',
+					'doctype_or_field': 'DocField',
+					'doc_type': doctype,
+					'field_name': 'naming_series',
+					'property': prop,
+					'value': prop_dict[prop],
+					'property_type': 'Text',
+					'__islocal': 1
+				})
+				ps.save()
+	#Backward Compatibility
+	set_series_for('Customer', ['CUST-'])
+	set_series_for('Employee', ['EMP/'])
+	set_series_for('Supplier', ['SUPP-'])
 
 def set_default_options():
+	from erpnext.setup.doctype.naming_series.naming_series import set_by_naming_series	
 	frappe.db.set_value("Selling Settings", None, "cust_master_name", "Naming Series")
+	frappe.db.set_default("cust_master_name", "Naming Series")	
+	set_by_naming_series("Customer", "customer_name", True, hide_name_field=False)	
+
 	frappe.db.set_value("Buying Settings", None, "supp_master_name", "Naming Series")
+	frappe.db.set_default("supp_master_name", "Naming Series")	
+	set_by_naming_series("Supplier", "supplier_name", True, hide_name_field=False)
+
 	frappe.db.set_value("Accounts Settings", None, "add_taxes_from_item_tax_template", 0)
 	frappe.db.set_value("Accounts Settings", None, "suppress_advance_warning", 1)
 	frappe.db.set_value("Stock Settings", None, "no_repost_item_valuation_document", 1)
@@ -54,6 +99,7 @@ def create_index_on_address_title():
 		pass
 
 def after_install():
+	set_default_series()	
 	create_index_on_address_title()
 	set_default_options()
 	rebuild_regional_custom_fields()

@@ -4,6 +4,58 @@ import datetime
 from frappe.utils import cint, getdate, today
 from six import string_types
 
+def make_jv_for_connected_accounts(doc, method):
+	def assign_record(jv_record, connected_account, debit=0, credit=0):
+		jv_record.account = connected_account.get("account")
+		jv_record.party_type = connected_account.get("party_type")
+		jv_record.party = connected_account.get("party")
+		jv_record.party_name = connected_account.get("party_name")
+		jv_record.debit = debit
+		jv_record.credit = credit
+		jv_record.debit_in_account_currency = debit
+		jv_record.credit_in_account_currency = credit
+
+	from erpnext.accounts.doctype.journal_entry.journal_entry import get_party_account_and_balance
+	if doc.get('ignore_validate_hook'):
+		return	
+	if doc.doctype not in ("Sales Invoice", "Purchase Invoice"):
+		return
+	root_party_type = "Customer" if doc.doctype == "Sales Invoice" else "Supplier"
+	connected_accounts = frappe.get_doc(root_party_type, doc.get("customer") or doc.get("supplier")).get("connected_accounts_list")
+	if not connected_accounts:
+		return
+	for ca in connected_accounts:
+		jv = frappe.new_doc("Journal Entry")
+		jv.posting_date = doc.posting_date
+		ac1 = jv.append("accounts")
+		assign_record(ac1, ca, 
+				debit=doc.grand_total if doc.doctype=="Sales Invoice" else 0,
+				credit=doc.grand_total if doc.doctype=="Purchase Invoice" else 0)
+		ac2 = jv.append("accounts")
+		account = get_party_account_and_balance(doc.company, root_party_type, doc.get("customer") or doc.get("supplier"))
+		assign_record(ac2, {
+							"account":account.get("account"),
+							"party_type":root_party_type,
+							"party":doc.get("customer") or doc.get("supplier"),
+							"party_name":doc.get("customer_name") or doc.get("supplier_name")
+							}, 
+				credit=doc.grand_total if doc.doctype=="Sales Invoice" else 0,
+				debit=doc.grand_total if doc.doctype=="Purchase Invoice" else 0)
+		jv.user_remark = "Automated Entry \n\n"+(ca.get("default_message") or "")+"\nAgainst "+doc.doctype+" No: "+doc.name
+		jv.save()
+		jv.submit()
+
+def cancel_jv_for_connected_accounts(doc, method):
+	query = """
+				select name from `tabJournal Entry` where docstatus=1 and user_remark like 'Automated Entry %Against {0} No: {1}%' limit 1
+			"""
+	try:
+		old_doc_name = doc.name[:doc.name.find('-CANC-')]
+		name = frappe.db.sql(query.format(doc.doctype, old_doc_name))[0][0]
+		frappe.get_doc("Journal Entry", name).cancel()
+	except Exception:
+		pass
+
 def update_state_code(doctype='Customer', verbose=True):
 	address_filters = [
                 ["Dynamic Link", "link_doctype", "=", doctype],
