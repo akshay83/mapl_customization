@@ -5,6 +5,7 @@ from frappe import _
 from frappe.core.doctype.doctype.doctype import validate_fields_for_doctype
 from frappe.utils import flt
 
+#As if 1st Feb 2022 this Method is Same in both Version-13 Branches and Develop Branch
 def add_party_gl_entries(self, gl_entries):
 	if self.party_account:
 		if self.payment_type=="Receive":

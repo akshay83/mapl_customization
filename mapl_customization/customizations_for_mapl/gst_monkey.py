@@ -3,7 +3,7 @@ import re
 from frappe.utils import getdate
 from erpnext.regional.india.utils import GST_INVOICE_NUMBER_FORMAT,get_transport_details, get_item_list, get_address_details, validate_doc
 
-
+#As if 1st Feb 2022 this Method is Same in both Version-13 Branches and Develop Branch
 def validate_document_name(doc, method=None):
 	"""Validate GST invoice number requirements."""
 
@@ -20,6 +20,7 @@ def validate_document_name(doc, method=None):
 	if not GST_INVOICE_NUMBER_FORMAT.match(doc.name):
 		frappe.throw(_("Document name should only contain alphanumeric values, dash(-) and slash(/) characters as per GST rules. Please change the naming series."))
 
+#As of 1st Feb 2022 This method is different in Vesion-13 Branch and Develop Branch
 def get_ewb_data(dt, dn):
 
 	ewaybills = []

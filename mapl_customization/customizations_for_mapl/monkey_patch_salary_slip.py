@@ -7,6 +7,7 @@ from frappe.utils import add_days, cint, cstr, flt, getdate, rounded, date_diff,
 from frappe import _
 
 #Apply Custom Rounding
+#As if 1st Feb 2022 this Method is Same in both Version-13 Branches and Develop Branch
 def get_amount_based_on_payment_days(self, row, joining_date, relieving_date):
 	amount, additional_amount = row.amount, row.additional_amount
 	if (self.salary_structure and
