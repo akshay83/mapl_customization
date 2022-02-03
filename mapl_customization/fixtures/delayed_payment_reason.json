@@ -1,0 +1,42 @@
+[
+ {
+  "docstatus": 0,
+  "doctype": "Delayed Payment Reason",
+  "modified": "2022-02-03 14:27:22.224302",
+  "name": "Warranty",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "reason": "Warranty"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Delayed Payment Reason",
+  "modified": "2022-02-03 14:27:50.893427",
+  "name": "Free Service Coupon",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "reason": "Free Service Coupon"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Delayed Payment Reason",
+  "modified": "2022-02-03 14:27:56.822782",
+  "name": "Other",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "reason": "Other"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Delayed Payment Reason",
+  "modified": "2022-02-03 14:28:24.644639",
+  "name": "Reference",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "reason": "Reference"
+ }
+]

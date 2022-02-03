@@ -70,6 +70,7 @@ def set_view_permissions():
 	from frappe.permissions import add_permission
 	add_permission("Workflow", "Accounts User")
 	add_permission("Workflow", "Stock User")
+	add_permission("Sales Invoice", "Accounts User", ptype="cancel")
 
 def set_report_permissions():
 	from unrestrict.unrestrict.utils import set_report_allowed_roles

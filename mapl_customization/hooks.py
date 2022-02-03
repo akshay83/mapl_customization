@@ -218,7 +218,8 @@ cf_fields = [
 		"Supplier-connected_accounts_list",
 		"Supplier-connected_accounts",
 		"Customer-connected_accounts_list",
-		"Customer-connected_accounts"
+		"Customer-connected_accounts",
+		"Sales Invoice-delayed_payment_reason"
 ]
 
 print_fs = [
@@ -243,7 +244,10 @@ ps_fields = [
 	"Payment Entry-party_name-allow_on_submit",
 	"Purchase Invoice-update_stock-default",
 	"Sales Invoice-update_stock-default",
-	"Customer-main-quick_entry"
+	"Customer-main-quick_entry",
+	"Payment Entry-main-title_field",
+	"Payment Entry-main-default_print_format",
+	"Sales Invoice-main-default_print_format"
 ]
 
 wf_names = [
@@ -275,6 +279,7 @@ fixtures = [	{
 			"dt": "Workflow State",
 			"filters": [["name", "in", ["Cancelled", "Submitted"]]]
 		},
+		"Delayed Payment Reason",
 		"Letter Head", 
 		"Custom SQL Queries"
 ]

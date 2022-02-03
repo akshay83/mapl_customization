@@ -108,7 +108,14 @@ frappe.ui.form.on("Sales Invoice", "service_invoice", function (frm) {
 });
 
 frappe.ui.form.on("Sales Invoice", "delayed_payment", function (frm) {
-	frm.set_df_property("referred_by", "reqd", frm.doc.delayed_payment==1);
+	frm.set_df_property("delayed_payment_reason", "reqd", frm.doc.delayed_payment==1);
+	frm.refresh_field("delayed_payment_reason");
+});
+
+frappe.ui.form.on("Sales Invoice", "delayed_payment_reason", function (frm) {
+	frm.set_df_property("referred_by", "reqd", frm.doc.delayed_payment_reason.toLowerCase() == "reference");
+	frm.set_df_property("delayed_payment_remarks", "reqd", frm.doc.delayed_payment_reason.toLowerCase() == "other");
+	frm.refresh_field("delayed_payment_remarks");
 	frm.refresh_field("referred_by");
 });
 frappe.ui.form.on("Sales Invoice", "customer", function (frm) {

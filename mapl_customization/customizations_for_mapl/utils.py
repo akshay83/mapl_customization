@@ -162,7 +162,7 @@ def get_average_purchase_rate_for_item(item,as_value=0):
 				 `tabItem Tax` it
 				where
 				 it.parent = sle.item_code
-				 and it.valid_from <= cast(now() as Date)
+				 and (it.valid_from <= cast(now() as Date) or it.valid_from is null)
 				 and sle.item_code = %s
 				 and sle.is_cancelled = 0
 				order by
