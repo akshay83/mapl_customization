@@ -49,6 +49,7 @@ def set_default_options():
 	set_by_naming_series("Supplier", "supplier_name", True, hide_name_field=False)
 
 	frappe.db.set_value("Accounts Settings", None, "add_taxes_from_item_tax_template", 0)
+	frappe.db.set_value("Accounts Settings", None, "enable_common_party_accounting", 1)
 	frappe.db.set_value("Accounts Settings", None, "suppress_advance_warning", 1)
 	frappe.db.set_value("Stock Settings", None, "no_repost_item_valuation_document", 1)
 	frappe.db.set_value("Global Defaults", None, "disable_rounded_total", 1)
