@@ -595,6 +595,10 @@ class ImportDB(object):
         self.import_documents_having_childtables('Period Closing Voucher', order_by='transaction_date')
 
     def update_naming_series(self):
+        self.update_naming_series_transactions()
+        self.update_naming_series_entities()
+
+    def update_naming_series_transactions(self):
         docs = [
             "Sales Invoice",
             "Purchase Invoice",
@@ -604,18 +608,39 @@ class ImportDB(object):
             "Salary Slip"            
         ]
         for d in docs:
-            series_list = self.get_series_list(d)
+            series_list = self.get_transactions_series_list(d)
             for s in series_list:
                 self.update_series(s.series_key, s.series_value)
         self.commit()
 
-    def get_series_list(self, doctype):
+    def update_naming_series_entities(self):
+        docs = [
+            "Customer",
+            "Supplier",
+            "Employee"
+        ]
+        for d in docs:
+            series_list = self.get_entities_series_list(d)
+            for s in series_list:
+                if (s.get('series_key') and s.series_key != ""):
+                    self.update_series(s.series_key, s.series_value)
+        self.commit()
+
+    def get_transactions_series_list(self, doctype):
         query = """
                 select  distinct substring(name, 1, length(name)-length(substring_index(name,'/',-1))) as series_key, 
                         max(substring_index(name,'/',-1)) as series_value from `tab{0}` 
                         group by substring(name, 1, length(name)-length(substring_index(name,'/',-1)))
                 """
         return frappe.db.sql(query.format(doctype), as_dict=1)
+
+    def get_entities_series_list(self, doc):
+        query = """
+                select  distinct substring(name, 1, length(name)-length(substring_index(name,'-',-1))) as series_key,
+                        max(substring_index(name,'-',-1)) as series_value from `tab{0}`
+                        group by substring(name, 1, length(name)-length(substring_index(name,'-',-1)))        
+                """
+        return frappe.db.sql(query.format(doc), as_dict=1)
 
     def update_series(self, key, value):
         check = frappe.db.sql("select * from `tabSeries` where name='{0}'".format(key), as_list=1)

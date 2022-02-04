@@ -219,7 +219,9 @@ cf_fields = [
 		"Supplier-connected_accounts",
 		"Customer-connected_accounts_list",
 		"Customer-connected_accounts",
-		"Sales Invoice-delayed_payment_reason"
+		"Sales Invoice-delayed_payment_reason",
+		"Accounts Settings-rate_check_threshold",
+		"Accounts Settings-check_rate_cumulatively"
 ]
 
 print_fs = [
@@ -377,7 +379,8 @@ doctype_js = {
 		"Payment Entry": "/public/js/scripts/payment_entry.js",
 		"Quotation": "/public/js/scripts/quotation.js",
 		"Supplier": "/public/js/scripts/supplier.js",
-		"Salary Slip": "/public/js/scripts/salary_slip.js"
+		"Salary Slip": "/public/js/scripts/salary_slip.js",
+		"Accounts Settings": "/public/js/scripts/accounts_settings.js"
 }
 
 standard_queries = {
@@ -389,6 +392,10 @@ workflow_safe_globals = {
 }
 
 on_login = "mapl_customization.customizations_for_mapl.install.on_login"
+
+#RUN Monkey Patch Again
+from mapl_customization import check_and_patch
+check_and_patch()
 
 # Includes in <head>
 # ------------------

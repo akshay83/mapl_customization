@@ -178,9 +178,22 @@ def get_average_purchase_rate_for_item(item,as_value=0):
 	return 0
 
 def check_average_purchase(doc):
+	total_sale_rate = 0
+	total_purchase_rate = 0
+	cumulative_check = False
+	if cint(frappe.db.get_single_value("Accounts Settings", "check_rate_cumulatively")):
+		cumulative_check = True
+	threshold = frappe.db.get_single_value("Accounts Settings", "rate_check_threshold")
 	for i in doc.get("items"):
 		ar = get_average_purchase_rate_for_item(i.item_code, as_value=1)
-		if i.net_rate < ar:
+		if not cumulative_check:
+			if i.net_rate < (ar-(ar*threshold/100)):
+				return 0
+		else:
+			total_sale_rate += i.net_rate
+			total_purchase_rate += ar
+	if cumulative_check:
+		if total_sale_rate < (total_purchase_rate-(total_purchase_rate*threshold/100)):
 			return 0
 	return 1
 
