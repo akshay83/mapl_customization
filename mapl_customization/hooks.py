@@ -215,10 +215,6 @@ cf_fields = [
 		"Salary Slip-salary_payable_account",
 		"Salary Slip-accounting_details",
 		"Accounts Settings-verify_party_balance",
-		"Supplier-connected_accounts_list",
-		"Supplier-connected_accounts",
-		"Customer-connected_accounts_list",
-		"Customer-connected_accounts",
 		"Sales Invoice-delayed_payment_reason",
 		"Accounts Settings-rate_check_threshold",
 		"Accounts Settings-check_rate_cumulatively"

@@ -5,8 +5,7 @@ from frappe.utils import today, getdate, date_diff
 from frappe.utils import cstr, cint
 
 def on_submit(doc, method):
-	from mapl_customization.customizations_for_mapl.utils import make_jv_for_connected_accounts
-	make_jv_for_connected_accounts(doc, method)
+	pass 
 
 def month_diff(string_ed_date, string_st_date):
 	ed_date = getdate(string_ed_date)
@@ -22,5 +21,4 @@ def before_cancel(doc, method):
 			frappe.throw("""Bill Cancellation Not Allowed as Taxes Might Have Been Filed""")
 
 def on_cancel(doc, method):
-	from mapl_customization.customizations_for_mapl.utils import cancel_jv_for_connected_accounts
-	cancel_jv_for_connected_accounts(doc, method)
+	pass

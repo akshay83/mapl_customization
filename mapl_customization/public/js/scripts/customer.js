@@ -76,22 +76,6 @@ frappe.ui.form.on("Customer", "relation_to", function (frm) {
 	cur_frm.refresh_field("relation_name");
 });
 
-frappe.ui.form.on("Customer", "onload_post_render", function (frm) {
-	frm.set_query("party_type", "connected_accounts_list", function (doc, cdt, cdn) {
-		const row = locals[cdt][cdn];
-		return {
-			query: "erpnext.setup.doctype.party_type.party_type.get_party_type",
-			filters: {
-				'account': row.account
-			}
-		}
-	});
-});
-
-frappe.ui.form.on("Connected Account", "party", function (frm, cdt, cdn) {
-	custom.fetch_details_connected_accounts(frm, cdt, cdn);
-});
-
 function custom_update_button(frm) {
 
 };
