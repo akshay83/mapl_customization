@@ -113,7 +113,8 @@ class ImportDB(object):
             ["07-11-2021", "17-11-2021", 15], # To Avoid a Serial No Purchase on 15.11, Sold on 07.11 
             ["18-11-2021", "30-11-2021"],
             ["01-12-2021", "31-12-2021"],
-            ["01-01-2022", "31-01-2022"]
+            ["01-01-2022", "31-01-2022"],
+            ["01-02-2022", "10-02-2022"]
         ]
         print ("Staring Process at",datetime.datetime.utcnow())
         log_info(logging, 'Started Process at {0}'.format(datetime.datetime.utcnow()))
@@ -162,6 +163,7 @@ class ImportDB(object):
         self.import_draft_documents()
         set_loans_accured()
         self.import_biometric_details()
+        self.update_naming_series()
 
     def import_accounts(self, overwrite=False):
         def before_inserting(new_doc, old_doc):

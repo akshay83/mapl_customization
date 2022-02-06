@@ -38,3 +38,7 @@ def date_to_code(dt):
 	code = code + int_to_Roman(dt.month)
 	code = code + str(dt.year%2000)
 	return code
+
+@frappe.whitelist()
+def render_template(content, doc):
+	return frappe.utils.jinja.render_template(content, {"doc":doc})

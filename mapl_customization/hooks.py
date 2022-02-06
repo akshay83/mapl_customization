@@ -217,7 +217,11 @@ cf_fields = [
 		"Accounts Settings-verify_party_balance",
 		"Sales Invoice-delayed_payment_reason",
 		"Accounts Settings-rate_check_threshold",
-		"Accounts Settings-check_rate_cumulatively"
+		"Accounts Settings-check_rate_cumulatively",
+		"Accounts Settings-column_break_9",
+		"Accounts Settings-check_negative_stock",
+		"Accounts Settings-check_purchase_rate_against_sale_rate",
+		"Accounts Settings-standard_sales_invoice_workflow_options"
 ]
 
 print_fs = [
@@ -245,7 +249,9 @@ ps_fields = [
 	"Customer-main-quick_entry",
 	"Payment Entry-main-title_field",
 	"Payment Entry-main-default_print_format",
-	"Sales Invoice-main-default_print_format"
+	"Sales Invoice-main-default_print_format",
+	"Delivery Note-set_posting_time-default",
+	"Purchase Invoice-set_posting_time-default"
 ]
 
 wf_names = [
@@ -331,6 +337,10 @@ doc_events = {
 	},
 	"Address": {
 		"validate": "mapl_customization.customizations_for_mapl.quick_customer.validate_address"
+	},
+	"Journal Entry": {
+		"on_submit": "mapl_customization.customizations_for_mapl.journal_entry_hooks.on_submit",
+		"on_cancel": "mapl_customization.customizations_for_mapl.journal_entry_hooks.on_cancel"
 	}
 }
 
@@ -346,19 +356,21 @@ app_include_js = ["/assets/mapl_customization/js/core.js",
 
 #version-13 branch supports this
 jenv = {
-	"methods" : [],
+	"methods" : ["render_template:mapl_customization.customizations_for_mapl.jinja.render_template"],
 	"filters": [
 		"date_to_code:mapl_customization.customizations_for_mapl.jinja.date_to_code",
-		"json_load:mapl_customization.customizations_for_mapl.jinja.json_load"
+		"json_load:mapl_customization.customizations_for_mapl.jinja.json_load",
+		"render_template:mapl_customization.customizations_for_mapl.jinja.render_template"
 		]
 }
 
 #delevop branch supports this
 jinja = {
-	"methods" : [],
+	"methods" : ["mapl_customization.customizations_for_mapl.jinja.render_template"],
 	"filters": [
 		"mapl_customization.customizations_for_mapl.jinja.date_to_code",
-		"mapl_customization.customizations_for_mapl.jinja.json_load"
+		"mapl_customization.customizations_for_mapl.jinja.json_load",
+		"mapl_customization.customizations_for_mapl.jinja.render_template"
 		]
 }
 
@@ -376,7 +388,8 @@ doctype_js = {
 		"Quotation": "/public/js/scripts/quotation.js",
 		"Supplier": "/public/js/scripts/supplier.js",
 		"Salary Slip": "/public/js/scripts/salary_slip.js",
-		"Accounts Settings": "/public/js/scripts/accounts_settings.js"
+		"Accounts Settings": "/public/js/scripts/accounts_settings.js",
+		"Loan": "/public/js/scripts/loan.js"
 }
 
 standard_queries = {
@@ -384,7 +397,7 @@ standard_queries = {
 }
 
 workflow_safe_globals = {
-	"mapl_customization.utils.check_average_purchase" : "mapl_customization.customizations_for_mapl.utils.check_average_purchase"
+	"mapl_customization.utils.check_for_workflow_approval" : "mapl_customization.customizations_for_mapl.utils.check_for_workflow_approval"
 }
 
 on_login = "mapl_customization.customizations_for_mapl.install.on_login"

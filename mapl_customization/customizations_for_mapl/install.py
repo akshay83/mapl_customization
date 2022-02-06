@@ -49,7 +49,11 @@ def set_default_options():
 	set_by_naming_series("Supplier", "supplier_name", True, hide_name_field=False)
 
 	frappe.db.set_value("Accounts Settings", None, "add_taxes_from_item_tax_template", 0)
+	frappe.db.set_default("add_taxes_from_item_tax_template",0)	
+
 	frappe.db.set_value("Accounts Settings", None, "enable_common_party_accounting", 1)
+	frappe.db.set_default("enable_common_party_accounting", 1)
+
 	frappe.db.set_value("Accounts Settings", None, "suppress_advance_warning", 1)
 	frappe.db.set_value("Stock Settings", None, "no_repost_item_valuation_document", 1)
 	frappe.db.set_value("Global Defaults", None, "disable_rounded_total", 1)
@@ -68,10 +72,10 @@ def set_view_permissions():
 	frappe.db.set_value("Role","Stock User", "list_sidebar", 1)
 	frappe.db.set_value("Role","Accounts User", "form_sidebar", 1)
 	frappe.db.set_value("Role","Accounts User", "list_sidebar", 1)
-	from frappe.permissions import add_permission
+	from frappe.permissions import add_permission, update_permission_property
 	add_permission("Workflow", "Accounts User")
 	add_permission("Workflow", "Stock User")
-	add_permission("Sales Invoice", "Accounts User", ptype="cancel")
+	update_permission_property("Sales Invoice", "Accounts User", 0, ptype="cancel", value=1)
 
 def set_report_permissions():
 	from unrestrict.unrestrict.utils import set_report_allowed_roles
@@ -101,10 +105,10 @@ def create_index_on_address_title():
 		pass
 
 def after_install():
+	rebuild_regional_custom_fields()	
 	set_default_series()	
 	create_index_on_address_title()
 	set_default_options()
-	rebuild_regional_custom_fields()
 	set_view_permissions()
 	set_report_permissions()
 

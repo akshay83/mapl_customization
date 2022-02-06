@@ -4,57 +4,30 @@ import datetime
 from frappe.utils import cint, getdate, today
 from six import string_types
 
-def make_jv_for_connected_accounts(doc, method):
-	def assign_record(jv_record, connected_account, debit=0, credit=0):
-		jv_record.account = connected_account.get("account")
-		jv_record.party_type = connected_account.get("party_type")
-		jv_record.party = connected_account.get("party")
-		jv_record.party_name = connected_account.get("party_name")
-		jv_record.debit = debit
-		jv_record.credit = credit
-		jv_record.debit_in_account_currency = debit
-		jv_record.credit_in_account_currency = credit
 
-	from erpnext.accounts.doctype.journal_entry.journal_entry import get_party_account_and_balance
-	if doc.get('ignore_validate_hook'):
-		return	
-	if doc.doctype not in ("Sales Invoice", "Purchase Invoice"):
-		return
-	root_party_type = "Customer" if doc.doctype == "Sales Invoice" else "Supplier"
-	connected_accounts = frappe.get_doc(root_party_type, doc.get("customer") or doc.get("supplier")).get("connected_accounts_list")
-	if not connected_accounts:
-		return
-	for ca in connected_accounts:
-		jv = frappe.new_doc("Journal Entry")
-		jv.posting_date = doc.posting_date
-		ac1 = jv.append("accounts")
-		assign_record(ac1, ca, 
-				debit=doc.grand_total if doc.doctype=="Sales Invoice" else 0,
-				credit=doc.grand_total if doc.doctype=="Purchase Invoice" else 0)
-		ac2 = jv.append("accounts")
-		account = get_party_account_and_balance(doc.company, root_party_type, doc.get("customer") or doc.get("supplier"))
-		assign_record(ac2, {
-							"account":account.get("account"),
-							"party_type":root_party_type,
-							"party":doc.get("customer") or doc.get("supplier"),
-							"party_name":doc.get("customer_name") or doc.get("supplier_name")
-							}, 
-				credit=doc.grand_total if doc.doctype=="Sales Invoice" else 0,
-				debit=doc.grand_total if doc.doctype=="Purchase Invoice" else 0)
-		jv.user_remark = "Automated Entry \n\n"+(ca.get("default_message") or "")+"\nAgainst "+doc.doctype+" No: "+doc.name
-		jv.save()
-		jv.submit()
+@frappe.whitelist()
+def create_loan_disbursal_jv(doc):
+	doc = json.loads(doc)
+	doc = frappe._dict(doc)
 
-def cancel_jv_for_connected_accounts(doc, method):
-	query = """
-				select name from `tabJournal Entry` where docstatus=1 and user_remark like 'Automated Entry %Against {0} No: {1}%' limit 1
-			"""
-	try:
-		old_doc_name = doc.name[:doc.name.find('-CANC-')]
-		name = frappe.db.sql(query.format(doc.doctype, old_doc_name))[0][0]
-		frappe.get_doc("Journal Entry", name).cancel()
-	except Exception:
-		pass
+	jv = frappe.new_doc("Journal Entry")
+	jv.posting_date = doc.posting_date
+	jv.company = doc.company
+	employee_account = jv.append("accounts")
+	employee_account.party_type = doc.applicant_type
+	employee_account.party = doc.applicant
+	employee_account.account = doc.loan_account
+	employee_account.debit = (doc.loan_amount-doc.disbursed_amount)
+	employee_account.debit_in_account_currency = (doc.loan_amount-doc.disbursed_amount)
+	employee_account.reference_type = 'Loan'
+	employee_account.reference_name = doc.name
+	employee_account.party_name = doc.applicant_name
+	payment_account = jv.append("accounts")
+	payment_account.account = doc.payment_account
+	payment_account.credit = (doc.loan_amount-doc.disbursed_amount)
+	payment_account.credit_in_account_currency = (doc.loan_amount-doc.disbursed_amount)
+	jv.user_remark = "Loan Against Loan No: " + doc.name
+	return jv
 
 def update_state_code(doctype='Customer', verbose=True):
 	address_filters = [
@@ -150,12 +123,11 @@ def get_money_in_words(number):
 	return money_in_words(number)
 
 @frappe.whitelist()
-def get_average_purchase_rate_for_item(item,as_value=0):
+def get_average_purchase_rate_for_item(item,with_tax=True,as_value=0):
 	query = """
 				select
 				   round(
-				     avg(sle.valuation_rate)*
-				     (1+((select max(tax_rate) from `tabItem Tax Template Detail` detail where detail.parent = it.item_tax_template))/100)
+				     avg(sle.valuation_rate){0}
 				   ,2) as avg_rate
 				from
 				 `tabStock Ledger Entry` sle,
@@ -168,7 +140,7 @@ def get_average_purchase_rate_for_item(item,as_value=0):
 				order by
 				  it.valid_from desc
 				limit 1
-		"""
+		""".format("*(1+((select max(tax_rate) from `tabItem Tax Template Detail` detail where detail.parent = it.item_tax_template))/100)" if with_tax else "")
 	if not as_value:
 		return frappe.db.sql(query, item)
 	else:
@@ -178,6 +150,7 @@ def get_average_purchase_rate_for_item(item,as_value=0):
 	return 0
 
 def check_average_purchase(doc):
+	"""Returns 1 if CHECK is OK else 0"""
 	total_sale_rate = 0
 	total_purchase_rate = 0
 	cumulative_check = False
@@ -185,8 +158,9 @@ def check_average_purchase(doc):
 		cumulative_check = True
 	threshold = frappe.db.get_single_value("Accounts Settings", "rate_check_threshold")
 	for i in doc.get("items"):
-		ar = get_average_purchase_rate_for_item(i.item_code, as_value=1)
+		ar = get_average_purchase_rate_for_item(i.item_code, with_tax=False, as_value=1)
 		if not cumulative_check:
+			#--DEBUG--print ("Purchase:",(ar-(ar*threshold/100))," Sale:",i.net_rate)
 			if i.net_rate < (ar-(ar*threshold/100)):
 				return 0
 		else:
@@ -195,8 +169,19 @@ def check_average_purchase(doc):
 	if cumulative_check:
 		if total_sale_rate < (total_purchase_rate-(total_purchase_rate*threshold/100)):
 			return 0
-	return 1
+	return 1	
 
+def check_for_workflow_approval(doc):
+	if (doc.doctype != "Sales Invoice"):
+		return
+	from mapl_customization.customizations_for_mapl.sales_invoice_validation import negative_stock_validation
+	#--DEBUG--print (check_average_purchase(doc))
+	#--DEBUG--print (negative_stock_validation(doc, None, show_message=False))
+	if cint(frappe.db.get_single_value("Accounts Settings", "check_purchase_rate_against_sale_rate")) and not check_average_purchase(doc):		
+		return 0
+	if cint(frappe.db.get_single_value("Accounts Settings", "check_negative_stock")) and not negative_stock_validation(doc, None, show_message=False):
+		return 0
+	return 1
 
 @frappe.whitelist()
 def get_party_balance(party, party_type, company):

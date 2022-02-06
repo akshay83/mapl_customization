@@ -125,10 +125,15 @@ def vehicle_validation(doc, method):
 		if cint(i.is_vehicle) and len(i.serial_no.strip(' \n').split('\n'))>1:
 			frappe.throw("A Sales Invoice can have only ONE Vehicle")
 
-def negative_stock_validation(doc, method):
-	for i in doc.items:
-		if (i.actual_qty <= 0 and (i.item_code and frappe.db.get_value("Item", i.item_code, "is_stock_item"))):
-			frappe.msgprint("Negative Stock for {0}, Please verify before Submitting".format(i.item_code))
+def negative_stock_validation(doc, method, show_message=True):
+	for i in doc.get("items"):
+		if ((i.item_code and frappe.db.get_value("Item", i.item_code, "is_stock_item"))):
+			if (i.actual_qty <= 0 or i.actual_qty < i.qty):
+				if show_message:
+					frappe.msgprint("Negative Stock for {0}, Please verify before Submitting".format(i.item_code))
+				else:
+					return 0
+	return 1
 
 def taxes_and_charges_validation(doc, method):
 	if not (frappe.session.user == "Administrator" or "System Manager" in frappe.get_roles()):
