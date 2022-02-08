@@ -60,6 +60,8 @@ def set_default_options():
 	frappe.db.set_value("Dashboard Chart", "Profit and Loss", "is_public", 0)
 	frappe.db.set_value("Dashboard Chart", "Outgoing Salary", "is_public", 0)
 	frappe.db.set_value("Payroll Settings", None, "simplify_employee_loan_repayment", 1)
+	frappe.db.set_value("Scheduled Job Type", "process_loan_interest_accrual.process_loan_interest_accrual_for_term_loans", \
+						"stopped", 1)	
 	session_defaults = frappe.get_single("Session Default Settings")
 	sd = session_defaults.append("session_defaults")
 	sd.ref_doctype = "Letter Head"

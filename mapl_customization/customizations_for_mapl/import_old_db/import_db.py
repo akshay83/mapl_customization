@@ -173,6 +173,8 @@ class ImportDB(object):
                 new_doc.flags.ignore_mandatory = True
             if not new_doc.is_new() and not new_doc.get('parent_account'):
                 raise SkipRecordException("Skiped Record {0}".format(new_doc.name))
+            if not new_doc.is_new():
+                frappe.local.flags.ignore_update_nsm = True
 
         self.import_documents_having_childtables('Account', order_by="lft", before_insert=before_inserting, overwrite=overwrite)                
 
@@ -380,7 +382,7 @@ class ImportDB(object):
         monkey_patch_salary_slip_temporarily()
         self.import_documents_having_childtables('Salary Slip', child_table_name_map={'loan_deduction_detail':'loans'}, before_insert=before_inserting)
 
-    def import_stock_transactions(self,from_date=None, to_date=None, non_sle_entries=False, day_interval=5, id=None):
+    def import_stock_transactions(self,from_date=None, to_date=None, non_sle_entries=False, day_interval=5, id=None, overwrite=True):
         if id and (not isinstance(id, dict) or (not id.get('name') or not id.get('doctype'))):
             print ("ID Format Error")
             print ("Should be a Dictionary with name and doctype")
@@ -390,11 +392,11 @@ class ImportDB(object):
         monkey_patch_serial_no_temporarily()
         negative_stock = frappe.db.get_value("Stock Settings", None, "allow_negative_stock")
         frappe.db.set_value("Stock Settings", None, "allow_negative_stock", 1)
-        self._import_stock_transactions(from_date=from_date, to_date=to_date, non_sle_entries=non_sle_entries, day_interval=day_interval, id=id)
+        self._import_stock_transactions(from_date=from_date, to_date=to_date, non_sle_entries=non_sle_entries, day_interval=day_interval, id=id, overwrite=overwrite)
         frappe.db.set_value("Stock Settings", None, "allow_negative_stock", negative_stock)
         self.commit()
 
-    def _import_stock_transactions(self,from_date=None, to_date=None, non_sle_entries=False, day_interval=5, id=None):
+    def _import_stock_transactions(self,from_date=None, to_date=None, non_sle_entries=False, day_interval=5, id=None, overwrite=True):
         def import_single_entry():
             entries = [frappe._dict(self.remoteDBClient.get_doc(doctype=id.get('doctype'), name=id.get('name')))]
             id_filters = {
@@ -408,7 +410,7 @@ class ImportDB(object):
             if not entries or len(entries)<=0:
                 print ('No Record Found')
                 return
-            self.import_transactions(entries, non_sle_entries=non_sle_entries)
+            self.import_transactions(entries, non_sle_entries=non_sle_entries, overwrite=overwrite)
 
         if id:
             import_single_entry()
@@ -423,9 +425,9 @@ class ImportDB(object):
             if not entries or len(entries)<=0:
                 break
             #--DEBUG-- print ("Testing", len(entries))    
-            self.import_transactions(entries, non_sle_entries=non_sle_entries)
+            self.import_transactions(entries, non_sle_entries=non_sle_entries, overwrite=overwrite)
 
-    def import_transactions(self, entries, non_sle_entries=False):
+    def import_transactions(self, entries, non_sle_entries=False, overwrite=True):
         from erpnext.stock.doctype.serial_no.serial_no import SerialNoNotExistsError, SerialNoWarehouseError
         from erpnext.stock.stock_ledger import NegativeStockError, SerialNoExistsInFutureTransaction
 
@@ -510,7 +512,7 @@ class ImportDB(object):
                     try:
                         save_point('QUEUED_IMPORT')
                         self.import_documents_having_childtables(d.doctype, old_doc_dict=d, before_insert=before_inserting, suppress_msg=True, \
-                                        in_batches=False, reset_batch=False, auto_commit=False, after_insert=after_inserting)
+                                        in_batches=False, reset_batch=False, auto_commit=False, after_insert=after_inserting, overwrite=overwrite)
                         retry = 0
                         release_savepoint('QUEUED_IMPORT')
                         break
@@ -540,7 +542,7 @@ class ImportDB(object):
             try:
                 save_point('DOC_IMPORT')
                 self.import_documents_having_childtables(s.doctype, old_doc_dict=s, before_insert=before_inserting, suppress_msg=True, \
-                                        in_batches=False, reset_batch=False, auto_commit=False, after_insert=after_inserting)
+                                        in_batches=False, reset_batch=False, auto_commit=False, after_insert=after_inserting, overwrite=overwrite)
                 release_savepoint('DOC_IMPORT')
             except (SerialNoNotExistsError, SerialNoWarehouseError) as n:
                 log_info(logging, n, s)                
@@ -552,7 +554,7 @@ class ImportDB(object):
                 rollback_to_savepoint('DOC_IMPORT')
                 self.repost(s, n)
                 self.import_documents_having_childtables(s.doctype, old_doc_dict=s, before_insert=before_inserting, suppress_msg=True, \
-                                        in_batches=False, reset_batch=False, auto_commit=False, after_insert=after_inserting)
+                                        in_batches=False, reset_batch=False, auto_commit=False, after_insert=after_inserting, overwrite=overwrite)
         do_queued(do_later)
         self.commit()
     
@@ -564,7 +566,7 @@ class ImportDB(object):
         for i in doc.get('items'):
             repost_entries(i['item_code'], warehouse)
         
-    def import_payment_entries(self, from_date=None, to_date=None):
+    def import_payment_entries(self, from_date=None, to_date=None, overwrite=True):
         def before_inserting(new_doc, old_doc):
             #if e['docstatus'] == 2:
             #    raise SkipRecordException('Skip Cancelled Record')
@@ -578,9 +580,9 @@ class ImportDB(object):
             new_doc.unallocated_amount = new_doc.paid_amount
 
         monkey_patch_payment_entry_temporarily()
-        self.do_batch_import('Payment Entry', from_date=from_date, to_date=to_date, before_insert=before_inserting)
+        self.do_batch_import('Payment Entry', from_date=from_date, to_date=to_date, before_insert=before_inserting, overwrite=overwrite)
 
-    def import_journal_entries(self, from_date=None, to_date=None, id=None):
+    def import_journal_entries(self, from_date=None, to_date=None, id=None, overwrite=True):
         def before_inserting(new_doc, old_doc):
             if old_doc['docstatus'] == 2:
                 raise SkipRecordException('Skip Cancelled Record')
@@ -591,7 +593,7 @@ class ImportDB(object):
             new_doc.amended_from = None
 
         monkey_patch_journal_entry_temporarily()        
-        self.do_batch_import('Journal Entry', from_date=from_date, to_date=to_date, before_insert=before_inserting)
+        self.do_batch_import('Journal Entry', from_date=from_date, to_date=to_date, before_insert=before_inserting, overwrite=overwrite)
 
     def import_period_closing_vouchers(self):
         self.import_documents_having_childtables('Period Closing Voucher', order_by='transaction_date')
@@ -737,7 +739,7 @@ class ImportDB(object):
         contact_name = contact_name + '-' + old_customer_name.strip()
         return contact_name
 
-    def do_batch_import(self, doctype, from_date=None, to_date=None, before_insert=None, after_insert=None):
+    def do_batch_import(self, doctype, from_date=None, to_date=None, before_insert=None, after_insert=None, overwrite=True):
         batchdata = FetchData(self.remoteDBClient, self.parent_module, day_interval=5)
         batchdata.init_transactional_entries(doctype, from_date=from_date, to_date=to_date)
         entries = []
@@ -746,7 +748,7 @@ class ImportDB(object):
             if not entries or len(entries)<=0:
                 break
             #--DEBUG--print ("Testing", len(entries))        
-            self.import_documents_having_childtables(doctype, before_insert=before_insert, doc_list=entries, reset_batch=False) 
+            self.import_documents_having_childtables(doctype, before_insert=before_insert, doc_list=entries, reset_batch=False, overwrite=overwrite) 
         self.commit()
 
     def import_draft_documents(self):
@@ -765,10 +767,10 @@ class ImportDB(object):
                 remove_rows.append(row)
             for row in remove_rows:            
                 new_doc.remove(row)
-            flag = new_doc.flags.ignore_mandatory
-            new_doc.flags.ignore_mandatory = True
-            new_doc.save()
-            new_doc.flags.ignore_mandatory = flag
+            #flag = new_doc.flags.ignore_mandatory
+            #new_doc.flags.ignore_mandatory = True
+            #new_doc.save()
+            #new_doc.flags.ignore_mandatory = flag
     
     def copy_attr(self, old_doc, new_doc, copy_child_table=False, doctype_different=False, child_table_name_map=None, overwrite=False):
         for k in old_doc.keys():
@@ -835,10 +837,12 @@ class ImportDB(object):
                 log_info(logging, 'Skipping Doctype {0} with Name {1}, Already Exists and Overwrite Not Allowed'.format(doctype, doc.name))
                 return
             is_doc_new = new_doc.is_new()                
-            if not is_doc_new and new_doc.docstatus == 1: # Dont Touch Submitted Documents
+            if not is_doc_new and new_doc.docstatus != 0: # Dont Touch Submitted Documents
                 log_info(logging, 'Skipping Doctype {0} with Name {1}, Already Submitted'.format(doctype, doc.name))
                 return
-            log_info(logging, 'Importing Doctype {0} with Name {1}'.format(doctype, doc.name))                
+            log_info(logging, 'Importing Doctype {0} with Name {1}'.format(doctype, doc.name))
+            if overwrite and not is_doc_new:
+                frappe.flags.in_import = True
             self.copy_attr(doc, new_doc, copy_child_table=copy_child_table, doctype_different=different_doctype, \
                             child_table_name_map=child_table_name_map, overwrite=overwrite)
             if before_insert:
