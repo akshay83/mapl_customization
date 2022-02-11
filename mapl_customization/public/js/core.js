@@ -157,6 +157,7 @@ custom.hide_print_button = function (doctype, frm) {
 	//--DEBUG--console.log(cur_frm.doc.workflow_state);
 	//--DEBUG--console.log(cur_frm.doc.__unsaved);
 	//--DEBUG--console.log("Cancel Button:"+$('.grey-link:contains(Cancel)').length);
+	if (frappe.user_roles.includes("System Manager") || frappe.user_roles.includes("Administrator")) return;
 	if (typeof frm.doc.workflow_state !== "undefined") {
 		frappe.db.get_value('Workflow', { "document_type": doctype, "is_active": 1 }, "name", function (val) {
 			if (Object.keys(val).length > 0) {

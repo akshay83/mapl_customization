@@ -221,7 +221,13 @@ cf_fields = [
 		"Accounts Settings-column_break_9",
 		"Accounts Settings-check_negative_stock",
 		"Accounts Settings-check_purchase_rate_against_sale_rate",
-		"Accounts Settings-standard_sales_invoice_workflow_options"
+		"Accounts Settings-standard_sales_invoice_workflow_options",
+		"Purchase Receipt Item-is_electric_vehicle",
+		"Print Settings-print_finance_details_in_receipt",
+		"Payment Entry-hypothecation_reference",
+		"Payment Entry-column_break_44",
+		"Payment Entry-hypothecation",
+		"Payment Entry-finance"
 ]
 
 print_fs = [
@@ -348,8 +354,13 @@ after_install = "mapl_customization.customizations_for_mapl.install.after_instal
 
 app_include_css = "/assets/mapl_customization/css/custom_css.css"
 app_include_js = ["/assets/mapl_customization/js/core.js",
-		"/assets/mapl_customization/js/quick_customer.js"
+		"/assets/mapl_customization/js/quick_customer.js",
+		"/assets/mapl_customization/js/insert_serials_dialog.js"
 		]
+
+override_doctype_class = {
+    "Payment Entry": "mapl_customization.customizations_for_mapl.payment_entry_validation.CustomPaymentEntry"
+}
 
 #doctype_list_js = {"Payment Entry" : "/public/js/payment_entry_list.js",
 #			"Sales Invoice" : "/public/js/sales_invoice_list.js"}

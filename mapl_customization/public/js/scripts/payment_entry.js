@@ -4,11 +4,13 @@ function custom_hide_sections(frm, hide) {
 		frm.fields_dict.party_section.wrapper.hide();
 		frm.fields_dict.payment_accounts_section.wrapper.hide();
 		frm.fields_dict.accounting_dimensions_section.wrapper.hide();
+		frm.fields_dict.finance.wrapper.hide();
 	} else {
 		frm.fields_dict.type_of_payment.wrapper.show();
 		frm.fields_dict.party_section.wrapper.show();
 		frm.fields_dict.payment_accounts_section.wrapper.show();
 		frm.fields_dict.accounting_dimensions_section.wrapper.show();
+		frm.fields_dict.finance.wrapper.show();
 	}
 }
 frappe.ui.form.on("Payment Entry", "refresh", function (frm) {
@@ -116,6 +118,9 @@ frappe.ui.form.on("Payment Entry", "party", function (frm) {
 			frm.doc.company, function (result) {
 				show_alert(result, 8);
 			});
+			frm.fields_dict.payment_accounts_section.wrapper.show();
+			frm.fields_dict.accounting_dimensions_section.wrapper.show();
+			frm.fields_dict.finance.wrapper.show();			
 	}
 });
 

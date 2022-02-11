@@ -54,14 +54,11 @@ def mapl_address_query (doctype, txt, searchfield, start, page_len, filters):
 				'supplier': filters.get("supplier","")
 			})
 
-
-
 # searches for customer
 @frappe.whitelist()
 def mapl_customer_query(doctype, txt, searchfield, start, page_len, filters):
-	print ('-'*15,'Customer Query')
 	#Index To Be Created in DB on Column `tabAddress`.address_title - New Query
-	new_query = """
+	old_query = """
 			select
 			  cust.name,
 			  cust.customer_name,
@@ -71,14 +68,11 @@ def mapl_customer_query(doctype, txt, searchfield, start, page_len, filters):
 			from (`tabCustomer` cust left join `tabAddress` addr on addr.address_title = cust.name) left join
 			  (select
 			    link.link_name,
-			    phone.phone,
-			    phone.is_primary_mobile_no
-			   from `tabContact` contact,
-			     `tabContact Phone` phone,
+			    phone.phone
+			   from `tabContact Phone` phone,
 			     `tabDynamic Link` link
-			    where phone.parent = contact.name
-			      and link.link_doctype = 'Customer'
-			      and link.parent = contact.name) phone_numbers on phone_numbers.link_name = cust.name
+			    where phone.parent = link.parent
+			      and link.link_doctype = 'Customer') phone_numbers on phone_numbers.link_name = cust.name
 			where (cust.customer_name like %(txt)s
 			  or phone_numbers.phone like %(txt)s
 			  or cust.name like %(txt)s) and cust.disabled=0
@@ -86,13 +80,30 @@ def mapl_customer_query(doctype, txt, searchfield, start, page_len, filters):
 			order by customer_name, name limit %(start)s, %(page_len)s
 		"""
 
+	new_query = """
+ 					select
+        				cust.name,
+        				cust.customer_name,
+        				addr.address_line1,
+        				addr.address_line2
+      				from (`tabCustomer` cust left join `tabAddress` addr on addr.address_title = cust.name)
+  					where (cust.customer_name like %(txt)s
+        				or cust.name like %(txt)s or addr.address_line1 like %(txt)s or addr.address_line2 like %(txt)s
+  						or cust.name in (select link.link_name
+         					from
+           						`tabContact Phone` phone,
+           						`tabDynamic Link` link
+          					where phone.parent = link.parent
+            					and phone.phone like %(txt)s)) and cust.disabled=0
+  					group by cust.name
+  					order by cust.customer_name, name limit %(start)s, %(page_len)s
+				"""
+
 	return frappe.db.sql(new_query, {
 			'txt': "%%%s%%" % txt,
 			'start': start,
 			'page_len': page_len
 		})
-
-
 
 # searches for supplier
 def supplier_query(doctype, txt, searchfield, start, page_len, filters):
@@ -119,7 +130,6 @@ def supplier_query(doctype, txt, searchfield, start, page_len, filters):
 			'start': start,
 			'page_len': page_len
 		})
-
 
 def employee_query(doctype, txt, searchfield, start, page_len, filters):
 	return frappe.db.sql("""select name, employee_name from `tabEmployee`

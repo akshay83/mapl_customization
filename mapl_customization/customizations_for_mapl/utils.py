@@ -83,40 +83,6 @@ def fetch_address_details_payments_receipts(party_address):
 	from frappe.contacts.doctype.address.address import get_address_display
 	return get_address_display(party_address)
 
-
-@frappe.whitelist()
-def validate_input_serial(args,rows,is_vehicle=1, is_electric_vehicle=0):
-	if isinstance(args, string_types):
-		args = json.loads(args)
-
-	serial_keys = args.keys()
-
-	int_rows = cint(rows)
-	rows = str(int_rows)
-	is_vehicle = cint(is_vehicle)
-	is_electric_vehicle = cint(is_electric_vehicle)
-
-	for i in range(1, int_rows):
-		if is_vehicle==1:
-			if "chassis_no_"+rows not in serial_keys:
-				frappe.throw("Check Chassis No At Row "+rows)
-
-			if "color_"+rows not in serial_keys:
-				frappe.throw("Check Color At Row "+rows)
-
-			if is_electric_vehicle == 0:
-				if "engine_no_"+rows not in serial_keys:
-					frappe.throw("Check Engine No At Row "+rows)
-
-				if "key_no_"+rows not in serial_keys:
-					frappe.throw("Check Key No At Row "+rows)
-
-		if is_vehicle==0:
-			if "chassis_no_"+rows not in serial_keys:
-				frappe.throw("Check Serial No At Row "+rows)
-
-	return True
-
 @frappe.whitelist()
 def get_money_in_words(number):
 	from frappe.utils import money_in_words

@@ -77,6 +77,7 @@ def set_view_permissions():
 	from frappe.permissions import add_permission, update_permission_property
 	add_permission("Workflow", "Accounts User")
 	add_permission("Workflow", "Stock User")
+	add_permission("Stock Settings", "Stock User")
 	update_permission_property("Sales Invoice", "Accounts User", 0, ptype="cancel", value=1)
 
 def set_report_permissions():
@@ -101,6 +102,7 @@ def update_allow_on_submit(custom_fields, doctype):
 	return cf
 
 def create_index_on_address_title():
+	"""This Index is Important"""
 	try:
 		frappe.db.sql("""create index address_title on `tabAddress` (address_title)""")
 	except Exception:
