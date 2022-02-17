@@ -257,7 +257,8 @@ ps_fields = [
 	"Payment Entry-main-default_print_format",
 	"Sales Invoice-main-default_print_format",
 	"Delivery Note-set_posting_time-default",
-	"Purchase Invoice-set_posting_time-default"
+	"Purchase Invoice-set_posting_time-default",
+	"Salary Slip-main-default_print_format"
 ]
 
 wf_names = [
@@ -371,21 +372,25 @@ override_doctype_class = {
 
 #version-13 branch supports this
 jenv = {
-	"methods" : ["render_template:mapl_customization.customizations_for_mapl.jinja.render_template"],
+	"methods" : [
+		"render_template:mapl_customization.customizations_for_mapl.jinja.render_template",
+		"table_exists:mapl_customization.customizations_for_mapl.jinja.table_exists"
+		],
 	"filters": [
 		"date_to_code:mapl_customization.customizations_for_mapl.jinja.date_to_code",
-		"json_load:mapl_customization.customizations_for_mapl.jinja.json_load",
-		"render_template:mapl_customization.customizations_for_mapl.jinja.render_template"
+		"json_load:mapl_customization.customizations_for_mapl.jinja.json_load"
 		]
 }
 
 #delevop branch supports this
 jinja = {
-	"methods" : ["mapl_customization.customizations_for_mapl.jinja.render_template"],
+	"methods" : [
+				"mapl_customization.customizations_for_mapl.jinja.render_template",
+				"mapl_customization.customizations_for_mapl.jinja.table_exists"
+			],
 	"filters": [
 		"mapl_customization.customizations_for_mapl.jinja.date_to_code",
-		"mapl_customization.customizations_for_mapl.jinja.json_load",
-		"mapl_customization.customizations_for_mapl.jinja.render_template"
+		"mapl_customization.customizations_for_mapl.jinja.json_load"
 		]
 }
 

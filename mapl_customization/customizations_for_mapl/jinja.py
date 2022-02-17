@@ -42,3 +42,6 @@ def date_to_code(dt):
 @frappe.whitelist()
 def render_template(content, doc):
 	return frappe.utils.jinja.render_template(content, {"doc":doc})
+
+def table_exists(doctype):
+	return frappe.db.table_exists(doctype)
