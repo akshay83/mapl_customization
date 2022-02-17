@@ -18,32 +18,10 @@ def get_salary_payable_account(employee, salary_structure, on_date, company):
         salary_structure_assignment_payroll_payable = frappe.db.get_value("Company", company, "default_payroll_payable_account")
     return salary_structure_assignment_payroll_payable
 
-def get_repayment_schedule(doc):
-	loan_details = frappe.db.sql("""select
-					  loan.name,
-					  loan.loan_amount,
-					  loan.loan_type,
-					  sch.principal_amount,
-					  sch.interest_amount,
-					  sch.total_payment,
-					  loan.interest_income_account
-					from
-					  `tabRepayment Schedule` sch,
-					  `tabLoan` loan
-					where
-					  loan.name = sch.parent
-					  and sch.payment_date between %s and %s
-					  and loan.applicant = %s
-					  and loan.repay_from_salary = 1
-					  and loan.docstatus = 1
-					  and sch.is_accrued = 0""",
-					(doc.start_date, doc.end_date, doc.employee), as_dict=True)
-	return loan_details
-
-
 def salary_slip_before_save(doc, method):
 	if doc.get('ignore_validate_hook'):
 		return	
+	from unrestrict_erpnext.unrestrict_erpnext.custom_salary_slip import get_repayment_schedule
 	loan_details = get_repayment_schedule(doc)
 
 	if not loan_details:

@@ -15,6 +15,7 @@ def set_loans_accured():
                 `tabRepayment Schedule` sch
             where
                 sch.parent = loan.name
+                and loan.status <> 'Closed'
                 and loan.docstatus = 1
                 and loan.name = '{0}'
             group by

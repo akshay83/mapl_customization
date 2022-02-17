@@ -366,6 +366,8 @@ class ImportDB(object):
             doc.repay_from_salary = 1
             if doc.status == 'Fully Disbursed':
                 doc.status = 'Disbursed'
+            if doc.status == 'Repaid/Closed':
+                doc.status = 'Closed'
             doc.flags.ignore_validate = True
 
         self.import_documents_having_childtables('Employee Loan', new_doctype='Loan', before_insert=before_inserting)

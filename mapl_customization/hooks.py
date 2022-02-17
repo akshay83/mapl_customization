@@ -289,6 +289,10 @@ fixtures = [	{
 			"dt": "Workflow State",
 			"filters": [["name", "in", ["Cancelled", "Submitted"]]]
 		},
+		{
+			"dt": "Workspace",
+			"filters": [["name", "in", ["Tailored Dashboard"]]]
+		},
 		"Delayed Payment Reason",
 		"Letter Head", 
 		"Custom SQL Queries"

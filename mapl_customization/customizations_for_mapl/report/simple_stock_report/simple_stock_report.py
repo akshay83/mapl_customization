@@ -10,11 +10,8 @@ def execute(filters=None):
 	if not filters: filters = {}
 
 	#validate(filters)
-
 	columns = get_columns(filters)
-
 	data = get_data(filters)
-
 	return columns, data
 
 def validate(filters):
@@ -31,51 +28,51 @@ def get_columns(filters):
 	"""return columns based on filters"""
 
 	columns = [
-        {
-            "fieldname":"item",
-            "fieldtype":"Link",
-            "label":"Item",
-	    "options":"Item",
-	    "width":250
-        },
-        {
-            "fieldname":"warehouse",
-            "fieldtype":"Link",
-            "label":"Warehouse",
-	    "options":"Warehouse",
-	    "width":150
-        },
-        {
-            "fieldname":"item_group",
-            "fieldtype":"Link",
-            "label":"Item Group",
-	    "options":"Item Group",
-	    "width":150
-        },
-	{
-	    "fieldname":"open_qty",
-	    "fieldtype":"Float",
-	    "label":"Opening Qty",
-	    "width":150
-	},
-        {
-            "fieldname":"in_qty",
-            "fieldtype":"Float",
-            "label":"In Qty",
-	    "width":150
-        },
-        {
-            "fieldname":"out_qty",
-            "fieldtype":"Float",
-            "label":"Out Qty",
-	    "width":150
-        },
-        {
-            "fieldname":"balance_qty",
-            "fieldtype":"Float",
-            "label":"Balance Qty",
-	    "width":150
-        }
+		{
+			"fieldname":"item",
+			"fieldtype":"Link",
+			"label":"Item",
+			"options":"Item",
+			"width":250
+		},
+		{
+			"fieldname":"warehouse",
+			"fieldtype":"Link",
+			"label":"Warehouse",
+			"options":"Warehouse",
+			"width":150
+		},
+		{
+			"fieldname":"item_group",
+			"fieldtype":"Link",
+			"label":"Item Group",
+			"options":"Item Group",
+			"width":150
+		},
+		{
+			"fieldname":"open_qty",
+			"fieldtype":"Float",
+			"label":"Opening Qty",
+			"width":150
+		},
+		{
+			"fieldname":"in_qty",
+			"fieldtype":"Float",
+			"label":"In Qty",
+			"width":150
+		},
+		{
+			"fieldname":"out_qty",
+			"fieldtype":"Float",
+			"label":"Out Qty",
+			"width":150
+		},
+		{
+			"fieldname":"balance_qty",
+			"fieldtype":"Float",
+			"label":"Balance Qty",
+			"width":150
+		}
 	]
 
 	return columns
@@ -84,46 +81,31 @@ def get_open_conditions(filters):
 	conditions = ""
 
 	if filters.get("warehouse"):
-		conditions += " and warehouse = '%s'" % frappe.db.escape(filters.get("warehouse"), percent=False)
+		conditions += " and warehouse = '{0}'".format(filters.get("warehouse"))
 
 	if filters.get("from_date"):
-		conditions += " and posting_date < '%s'" % frappe.db.escape(filters["from_date"])
-
+		conditions += " and posting_date < '{0}'".format(filters.get("from_date"))
 
 	return conditions
-
 
 def get_conditions(filters):
 	conditions = ""
 
-
 	if filters.get("from_date"):
-		conditions += " and posting_date > '%s'" % frappe.db.escape(filters["from_date"])
-
+		conditions += " and posting_date > '{0}'".format(filters.get("from_date"))
 
 	if filters.get("to_date"):
-		conditions += " and posting_date <= '%s'" % frappe.db.escape(filters["to_date"])
+		conditions += " and posting_date <= '{0}'".format(filters.get("to_date"))
 
 	if filters.get("item_code"):
-		conditions += " and item_code = '%s'" % frappe.db.escape(filters.get("item_code"), percent=False)
-
+		conditions += " and item_code = '{0}'".format(filters.get("item_code"))
 
 	if filters.get("warehouse"):
-		conditions += " and warehouse = '%s'" % frappe.db.escape(filters.get("warehouse"), percent=False)
+		conditions += " and warehouse = '{0}'".format(filters.get("warehouse"))
 
 	if filters.get("remove_material_transfer"):
 		conditions += """ and if(voucher_type='Stock Entry',
 			(select purpose from `tabStock Entry` se where se.name=voucher_no) 
-			not like '%%Transfer%%', True)"""
-
-
-	return conditions
-
-#unsused for now
-def build_for_material_transfer(filters,conditions):
-	if filters.get("remove_material_transfer"):
-		conditions += """ and if (voucher_type='Stock Entry',
-			(select purpose from `tabStock Entry` where name=Stk.voucher_no)
 			not like '%%Transfer%%', True)"""
 
 	return conditions
@@ -131,19 +113,14 @@ def build_for_material_transfer(filters,conditions):
 def get_global_condition(filters):
 	global_condition = ""
 	if filters.get("brand"):
-		global_condition += """ and item.brand = '{brand}' """.format(**{
-			"brand":filters.get("brand")
-			})
+		global_condition += """ and item.brand = '{0}' """.format(filters.get("brand"))
 
 	if filters.get("item_code"):
-		global_condition += " and OUTSTK.item_code = '%s'" % frappe.db.escape(filters.get("item_code"), percent=False)
-
+		global_condition += " and OUTSTK.item_code = '{0}'".format(filters.get("item_code"))
 
 	return global_condition
 
-
 def get_data(filters):
-
 	query = ""
 	if filters.get("group_by_warehouse") and cint(filters.get("group_by_warehouse")):
 		query = """SELECT *,`OPENING STOCK`+`IN QTY`-`OUT QTY` AS `CLOSING STOCK` FROM (
@@ -173,6 +150,4 @@ def get_data(filters):
 				"open_condition":get_open_conditions(filters),
 				"global_condition":get_global_condition(filters)
 			})
-
-
 	return frappe.db.sql(query, as_list=1)

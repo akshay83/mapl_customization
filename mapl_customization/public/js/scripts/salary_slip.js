@@ -85,6 +85,7 @@ function fetch_payroll_payable_account(frm) {
 		if (new Date(value) > new Date(frm.doc.start_date)) {
 			fetch_dt = value;
 		}
+		if (value === undefined || frm.doc.salary_structure === undefined) return;
 		frappe.call({
 			method: "mapl_customization.customizations_for_mapl.salary_slip_utils.get_salary_payable_account",
 			args: {

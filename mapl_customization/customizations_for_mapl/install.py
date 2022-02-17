@@ -78,6 +78,7 @@ def set_view_permissions():
 	add_permission("Workflow", "Accounts User")
 	add_permission("Workflow", "Stock User")
 	add_permission("Stock Settings", "Stock User")
+	add_permission("Global Defaults", "Accounts User")
 	update_permission_property("Sales Invoice", "Accounts User", 0, ptype="cancel", value=1)
 
 def set_report_permissions():

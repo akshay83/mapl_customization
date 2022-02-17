@@ -26,6 +26,10 @@ frappe.ui.form.on("Sales Invoice", "onload", function(frm) {
 	//--DEBUG--console.log("Called Onload Event");
 	custom.hide_print_button("Sales Invoice", frm);
 	//DISABLED-VER13--custom_disable_save_button(frm);
+	frappe.db.get_single_value("Global Defaults", "disable_rounded_total").then(val => {
+		frm.doc.disable_rounded_total = val;
+		frm.refresh_field('disable_rounded_total');
+	});
 });
 
 //ADD MENU ITEM IN MENU DROPDOWN BUTTON
