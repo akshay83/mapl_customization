@@ -258,7 +258,9 @@ ps_fields = [
 	"Sales Invoice-main-default_print_format",
 	"Delivery Note-set_posting_time-default",
 	"Purchase Invoice-set_posting_time-default",
-	"Salary Slip-main-default_print_format"
+	"Salary Slip-main-default_print_format",
+	"Journal Entry Account-credit_in_account_currency-columns",
+	"Journal Entry Account-debit_in_account_currency-columns"
 ]
 
 wf_names = [

@@ -178,5 +178,35 @@
   "property_type": "Data",
   "row_name": null,
   "value": "Custom Salary Slip"
+ },
+ {
+  "default_value": null,
+  "doc_type": "Journal Entry Account",
+  "docstatus": 0,
+  "doctype": "Property Setter",
+  "doctype_or_field": "DocField",
+  "field_name": "debit_in_account_currency",
+  "modified": "2022-02-18 18:27:45.922140",
+  "module": null,
+  "name": "Journal Entry Account-debit_in_account_currency-columns",
+  "property": "columns",
+  "property_type": "Int",
+  "row_name": null,
+  "value": "1"
+ },
+ {
+  "default_value": null,
+  "doc_type": "Journal Entry Account",
+  "docstatus": 0,
+  "doctype": "Property Setter",
+  "doctype_or_field": "DocField",
+  "field_name": "credit_in_account_currency",
+  "modified": "2022-02-18 18:27:46.108491",
+  "module": null,
+  "name": "Journal Entry Account-credit_in_account_currency-columns",
+  "property": "columns",
+  "property_type": "Int",
+  "row_name": null,
+  "value": "1"
  }
 ]

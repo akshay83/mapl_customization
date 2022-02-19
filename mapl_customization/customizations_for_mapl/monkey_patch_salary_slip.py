@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 import frappe
 import erpnext
 import math
+import mapl_customization
 
 from frappe.utils import add_days, cint, cstr, flt, getdate, rounded, date_diff, money_in_words
 from frappe import _
@@ -30,7 +31,7 @@ def get_amount_based_on_payment_days(self, row, joining_date, relieving_date):
 	if frappe.get_cached_value("Salary Component", row.salary_component, "round_to_the_nearest_integer"):
 		#Monkey Here
 		rounding_type = frappe.get_cached_value("Salary Component", row.salary_component, "rounding")
-		if not rounding_type or rounding_type == '':
+		if not mapl_customization.is_this_app_installed() and (not rounding_type or rounding_type == ''):
 			amount, additional_amount = rounded(amount), rounded(additional_amount)
 		else:
 			amount, additional_amount = custom_round(rounding_type, amount), custom_round(rounding_type, additional_amount)

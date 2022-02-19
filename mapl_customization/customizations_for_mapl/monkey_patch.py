@@ -1,5 +1,6 @@
 import frappe
 import erpnext
+import mapl_customization
 
 from frappe import _
 from frappe.core.doctype.doctype.doctype import validate_fields_for_doctype
@@ -23,8 +24,11 @@ def add_party_gl_entries(self, gl_entries):
 		}, item=self)
 
 		# Monkey Here
-		dr_or_cr = "credit" if self.payment_type == "Receive" else "debit"
-		#dr_or_cr = "credit" if erpnext.get_party_account_type(self.party_type) == 'Receivable' else "debit"
+		dr_or_cr = "credit"
+		if mapl_customization.is_this_app_installed():
+			dr_or_cr = "credit" if self.payment_type == "Receive" else "debit"
+		else:
+			dr_or_cr = "credit" if erpnext.get_party_account_type(self.party_type) == 'Receivable' else "debit"
 
 		for d in self.get("references"):
 			gle = party_gl_dict.copy()

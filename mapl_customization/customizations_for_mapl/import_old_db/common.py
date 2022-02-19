@@ -4,6 +4,36 @@ import difflib
 from frappe.utils import cint, cstr, getdate, get_time
 from erpnext import get_default_company
 
+def take_input(input_text, value_type, accept_none=True, options=None, ignore_case=True):
+    val = None
+    while True:
+        val = input(input_text+":")
+        if not val and accept_none:
+            return None
+        if value_type == bool:
+            if val not in ('False', 'True', 1, 0, '1', '0'):
+                print ("Invalid Value")            
+                continue
+            else:
+                if val in ('False', 0, '0'):
+                    return False
+                elif val in ('True', 1, '1'):
+                    return True
+        try:
+            val = value_type(val)
+        except:
+            print ("Invalid Value")            
+            continue
+        if value_type == str and (options and isinstance(options, list)):
+            if ignore_case:
+                if val.lower() in [x.lower() for x in options]:
+                    return val
+            else:
+                if val in [x for x in options]:
+                    return val
+        else:
+            return val
+
 def set_loans_accured():
     query = """
             select 
