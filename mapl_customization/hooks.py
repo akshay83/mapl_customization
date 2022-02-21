@@ -362,8 +362,7 @@ app_include_js = ["/assets/mapl_customization/js/core.js",
 		]
 
 override_doctype_class = {
-    "Payment Entry": "mapl_customization.customizations_for_mapl.payment_entry_validation.CustomPaymentEntry",
-	"Loan Repayment": "mapl_customization.customizations_for_mapl.custom_loan_repayment.CustomLoanRepayment"
+    "Payment Entry": "mapl_customization.customizations_for_mapl.payment_entry_validation.CustomPaymentEntry"
 }
 
 #doctype_list_js = {"Payment Entry" : "/public/js/payment_entry_list.js",
