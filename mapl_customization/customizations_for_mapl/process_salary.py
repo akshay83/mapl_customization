@@ -1,6 +1,7 @@
 import frappe
 import erpnext
 import json
+import mapl_customization
 from frappe.utils import cint
 from mapl_customization.customizations_for_mapl.report.custom_salary_register.custom_salary_register import get_employee_details
 from erpnext import get_default_cost_center
@@ -46,24 +47,26 @@ def process_staff_jv(jv, record, account, ed):
 	ac1.party = record["employee_id"]
 	ac1.party_name = record["employee_name"]
 	ac1.account = account
-	ac1.credit_in_account_currency = record["net_pay"]
+	if mapl_customization.is_this_app_installed() and cint(frappe.db.get_single_value("Payroll Settings", "simplify_employee_loan_repayment")):
+		ac1.credit_in_account_currency = record["net_pay"]
+	else:
+		ac1.credit_in_account_currency = record["net_pay"]+record.get("total_loan",0)
 
 	process_earnings_deductions(jv, record, account, ed)
 
 def process_earnings_deductions(jv, record, account, ed):
 	sal_slip = frappe.get_doc("Salary Slip", record["salary_slip_id"])
-	for adv in sal_slip.loans:
-		ac1 = jv.append("accounts")
-		ac1.party_type = 'Employee'
-		ac1.party_name = record["employee_name"]
-		ac1.party = record["employee_id"]
-		ac1.account = frappe.db.get_value("Loan", adv.loan , "loan_account")
-		ac1.credit_in_account_currency = adv.principal_amount
+	if mapl_customization.is_this_app_installed() and cint(frappe.db.get_single_value("Payroll Settings", "simplify_employee_loan_repayment")):
+		for adv in sal_slip.loans:
+			ac1 = jv.append("accounts")
+			ac1.party_type = 'Employee'
+			ac1.party_name = record["employee_name"]
+			ac1.party = record["employee_id"]
+			ac1.account = frappe.db.get_value("Loan", adv.loan , "loan_account")
+			ac1.credit_in_account_currency = adv.principal_amount
 
 	for earn in sal_slip.earnings:
 		ed[earn.salary_component] = ed.get(earn.salary_component,0) + earn.amount
 
 	for dedu in sal_slip.deductions:
 		ed[dedu.salary_component] = ed.get(dedu.salary_component,0) + (-1 * dedu.amount)
-
-
