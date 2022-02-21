@@ -328,6 +328,7 @@ class ImportDB(object):
             new_doc.loan_account = frappe.db.get_value("Account", filters=dict(name=("like", "Salary Advance %")))
             new_doc.interest_income_account = frappe.db.get_value("Account", filters=dict(name=("like", "Interest Received %")))
             new_doc.penalty_income_account = frappe.db.get_value("Account", filters=dict(name=("like", "Interest Received %")))
+            new_doc.disbursement_account = frappe.db.get_value("Account", filters=dict(name=("like", "Cash -%")))
 
         self.import_documents_having_childtables('Loan Type', before_insert=before_inserting, submit=True)            
 

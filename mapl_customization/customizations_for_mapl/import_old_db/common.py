@@ -55,6 +55,9 @@ def set_loans_accured():
     loan_list = frappe.get_all("Loan", filters={"docstatus":1}, fields=["name"])
     for loan in loan_list:
         check_loan = frappe.db.sql(query.format(loan.name), as_dict=1)
+        if not check_loan or len(check_loan) <= 0:
+            continue
+        frappe.db.set_value('Loan', loan.name, "total_principal_paid", check_loan[0].deducted)
         if (check_loan[0].loan_amount - check_loan[0].deducted) <= 0:
             frappe.db.sql("""update `tabRepayment Schedule` set is_accrued=1 where parent = '{0}'""".format(loan.name))
             frappe.db.sql("""update `tabLoan` set status = 'Closed' where name = '{0}'""".format(loan.name))
