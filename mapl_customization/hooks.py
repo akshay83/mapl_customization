@@ -227,7 +227,11 @@ cf_fields = [
 		"Payment Entry-hypothecation_reference",
 		"Payment Entry-column_break_44",
 		"Payment Entry-hypothecation",
-		"Payment Entry-finance"
+		"Payment Entry-finance",
+		"Item-manufacturer",
+		"Item-fame_code",
+		"Sales Invoice Item-battery_type",
+		"Sales Invoice Item-battery_manufacturer"		
 ]
 
 print_fs = [

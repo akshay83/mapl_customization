@@ -71,6 +71,8 @@ class ImportDB(object):
         self.import_loan_types()
         self.import_salary_components()
         self.import_holiday_lists()
+        self.import_manufacturers()
+        self.make_battery_details()
 
     def import_entities(self, page_length=None):
         self.import_employees()
@@ -302,6 +304,20 @@ class ImportDB(object):
 
         self.import_documents_having_childtables('Item Taxes Template', new_doctype='Item Tax Template',before_insert=before_inserting, overwrite=True)
 
+    def import_manufacturers(self):
+        self.import_documents_having_childtables("Manufacturer")
+
+    def make_battery_details(self):
+        manufacturer_list = [("Trontek", "Trontek Electronics Pvt Ltd"), ("Akira", "Akira")]
+        for m in manufacturer_list:
+            manufacturer = frappe.new_doc("Manufacturer")
+            manufacturer.short_name = m[0]
+            manufacturer.full_name = m[1]
+            manufacturer.insert(ignore_if_duplicate=True)        
+        battery_type = frappe.new_doc("Battery Type")
+        battery_type.type = "(2.9 KWh) 72V * 40 AH"
+        battery_type.insert(ignore_if_duplicate=True)
+
     def import_items(self, id=None):
         def before_insert(new_doc, old_item_dict):
             if old_item_dict.get('expense_account') or old_item_dict.get('income_account'):
@@ -472,6 +488,13 @@ class ImportDB(object):
                     new_doc.vehicle_no = new_doc.vehicle_no.replace(" ","")
                     if len(new_doc.vehicle_no) > 10:
                         new_doc.vehicle_no = new_doc.vehicle_no[:10]
+                for i in new_doc.items:
+                    if cint(i.is_electric_vehicle) and i.battery_manufacturer:
+                        if "tek" in i.battery_manufacturer.lower():
+                            i.battery_manufacturer = "Trontek"
+                            i.battery_type = "(2.9 KWh) 72V * 40 AH"
+                        elif "akira" in i.battery_manufacturer.lower():
+                            i.manufacturer = "Akira"
                 if new_doc.get('workflow_state') and new_doc.workflow_state == 'Draft':
                     new_doc.workflow_state = 'Pending'
                 #new_doc.update_current_stock()
@@ -754,7 +777,16 @@ class ImportDB(object):
             self.import_documents_having_childtables(doctype, before_insert=before_insert, doc_list=entries, reset_batch=False, overwrite=overwrite) 
         self.commit()
 
-    def import_draft_documents(self):
+    def import_draft_documents(self, document_type=None, id=None):
+        if id and not document_type:
+            return
+        elif id and document_type:
+            doc = get_documents_with_childtables(self.remoteDBClient, self.parent_module, document_type, 
+                                        filters = json.dumps([[document_type, "docstatus","=","0"],[document_type, "name","=",id]]), 
+                                        page_length=100, order_by="name")
+            
+            self.import_transactions(doc, non_sle_entries=True)
+            return
         documents = ["Sales Invoice", "Purchase Invoice", "Delivery Note"]        
         for d in documents:
             d_list = get_documents_with_childtables(self.remoteDBClient, self.parent_module, d, 
