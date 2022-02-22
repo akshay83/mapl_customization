@@ -7,6 +7,9 @@
   "modified": "2022-02-17 12:24:31.723690",
   "name": "Sales Invoice Workflow",
   "override_status": 0,
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
   "send_email_alert": 0,
   "states": [
    {
@@ -187,6 +190,9 @@
   "modified": "2022-02-17 12:24:37.493565",
   "name": "Payment Entry Workflow",
   "override_status": 0,
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
   "send_email_alert": 0,
   "states": [
    {

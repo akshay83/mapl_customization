@@ -5,6 +5,9 @@
   "icon": "",
   "modified": "2022-01-21 19:31:21.436153",
   "name": "Cancelled",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
   "style": "Danger",
   "workflow_state_name": "Cancelled"
  },
@@ -14,6 +17,9 @@
   "icon": "",
   "modified": "2022-01-21 19:31:14.861143",
   "name": "Submitted",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
   "style": "Success",
   "workflow_state_name": "Submitted"
  }
