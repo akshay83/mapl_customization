@@ -47,15 +47,15 @@ class ImportDB(object):
             ["01-04-2019", "30-09-2019"],
             ["01-10-2019", "31-03-2020"],
             ["01-04-2020", "30-09-2020"],
-            ["01-10-2020", "31-03-2021"],
-            ["01-04-2021", "30-06-2021"],
-            ["01-07-2021", "30-09-2021"],
-            ["01-10-2021", "06-11-2021"],
-            ["07-11-2021", "17-11-2021", 15], # To Avoid a Serial No Purchase on 15.11, Sold on 07.11 
-            ["18-11-2021", "30-11-2021"],
-            ["01-12-2021", "31-12-2021"],
-            ["01-01-2022", "31-01-2022"],
-            ["01-02-2022", "10-02-2022"]
+            ["01-10-2020", "31-03-2021"]
+            #["01-04-2021", "30-06-2021"],
+            #["01-07-2021", "30-09-2021"],
+            #["01-10-2021", "06-11-2021"],
+            #["07-11-2021", "17-11-2021", 15], # To Avoid a Serial No Purchase on 15.11, Sold on 07.11 
+            #["18-11-2021", "30-11-2021"],
+            #["01-12-2021", "31-12-2021"],
+            #["01-01-2022", "31-01-2022"],
+            #["01-02-2022", "10-02-2022"]
         ]
 
     def __exit__(self, *args, **kwargs):
@@ -167,7 +167,7 @@ class ImportDB(object):
     def post_process(self, dates_map=None):
         if not dates_map:
             dates_map = self.dates_map
-        self.import_draft_documents()
+        self.import_draft_documents(dates_map=dates_map)
         set_loans_accured()
         self.import_biometric_details(dates_map=dates_map)
         self.update_naming_series()
@@ -782,7 +782,7 @@ class ImportDB(object):
             self.import_documents_having_childtables(doctype, before_insert=before_insert, doc_list=entries, reset_batch=False, overwrite=overwrite) 
         self.commit()
 
-    def import_draft_documents(self, document_type=None, id=None):
+    def import_draft_documents(self, document_type=None, id=None, dates_map=None):
         if id and not document_type:
             return
         elif id and document_type:
@@ -792,11 +792,17 @@ class ImportDB(object):
             
             self.import_transactions(doc, non_sle_entries=True)
             return
-        documents = ["Sales Invoice", "Purchase Invoice", "Delivery Note"]        
+        documents = ["Sales Invoice", "Purchase Invoice", "Delivery Note", "Payment Entry", "Journal Entry"]        
         for d in documents:
+            date_filters = build_date_filter(d, from_date=dates_map[0][0], to_date=dates_map[-1][1])
+            filters = [[d, "docstatus","=","0"]]
+            if date_filters:
+                filters.extend(date_filters)
             d_list = get_documents_with_childtables(self.remoteDBClient, self.parent_module, d, 
-                                        filters = json.dumps([[d, "docstatus","=","0"]]), page_length=100, order_by="name")
+                                        filters = json.dumps(filters), page_length=100, order_by="name")
             
+            if not d_list or len(d_list)<=0:
+                continue
             self.import_transactions(d_list, non_sle_entries=True)
 
     def remove_child_rows(self,new_doc, child_table):
