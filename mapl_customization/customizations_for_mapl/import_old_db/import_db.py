@@ -22,10 +22,11 @@ class InvalidStockEntries(Exception):
     pass
 
 class ImportDB(object):
-    def __init__(self, url, username, password, parent_module=None, log_test=False):
+    def __init__(self, url, username, password, parent_module=None, log_test=False, overwrite_if_modified_after=None):
         self.remoteDBClient = FrappeClient(url, username=username, password=password)
         self.parent_module = parent_module
-        self.log_test = log_test        
+        self.log_test = log_test
+        self.overwrite_if_modified_after = overwrite_if_modified_after        
         logging.basicConfig(filename="/home/frappe/import_log.log",filemode='w',level=logging.INFO)
         logging.info('Initialized Importing Instance at {0}'.format(datetime.datetime.utcnow()))
         self.COMMIT_DELAY = 500
@@ -864,6 +865,8 @@ class ImportDB(object):
                     continue_on_error=False):
             doc = frappe._dict(old_doc_dict)
             new_doc = None
+            if not overwrite and (self.overwrite_if_modified_after and getdate(old_doc_dict.modified)>getdate(self.overwrite_if_modified_after)):
+                overwrite = True
             if not frappe.db.exists(doctype, doc.name):
                 new_doc = frappe.new_doc(doctype)
             elif overwrite:
