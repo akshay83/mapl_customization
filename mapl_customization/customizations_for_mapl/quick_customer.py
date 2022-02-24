@@ -252,6 +252,7 @@ def validate_address_creation(doc, method):
 				return
 
 	check_creation_date(existing, "Address")
+	check_freeze_date(existing, "Address")
 
 def check_creation_date(existing, doc):
 	if abs((getdate(today())-getdate(existing.creation)).days) >= 15:
@@ -354,6 +355,12 @@ def validate_customer_creation(doc, method):
 		return
 
 	check_creation_date(existing, "Name")
+	check_freeze_date(existing, "Customer")
+
+def check_freeze_date(existing, doc):
+	freeze_date = frappe.db.get_single_value("Accounts Settings", "acc_frozen_upto")
+	if freeze_date and getdate(existing.creation)<getdate(freeze_date):
+		throw("Accounts have been freezed till {0}, {1} cannot be Modified as it was created before this date".format(freeze_date, doc))
 
 def validate_customer_before_save(doc, method):
 	if doc.get('ignore_validate_hook'):
