@@ -31,7 +31,32 @@ class ImportDB(object):
         logging.info('Initialized Importing Instance at {0}'.format(datetime.datetime.utcnow()))
         self.COMMIT_DELAY = 500
         if not self.parent_module:
-            self.parent_module = "mapl_customization.customizations_for_mapl"            
+            self.parent_module = "mapl_customization.customizations_for_mapl"
+        self.dates_map = [
+            ["01-04-2017", "30-06-2017"],
+            ["01-07-2017", "30-09-2017"],
+            ["01-10-2017", "15-10-2017"], # 
+            ["16-10-2017", "31-10-2017", 20], # To Avoid a Serial No Purchase on 30.10, Sold on 17.10, Day Interval=20
+            ["01-11-2017", "31-03-2018"],
+            ["01-04-2018", "07-05-2018"],
+            ["08-05-2018", "31-05-2018"], # To Avoid a Serial No Purchase on 10.05, Sold on 08.05
+            ["01-06-2018", "15-09-2018"], # 16.09 There was a problem serial no unupdated
+            ["16-09-2018", "25-12-2018"],
+            ["26-12-2018", "31-12-2018"], # MAPL/PINV-RET/VN/18-19/000010 purchase return has wrong serial no
+            ["01-01-2019", "31-03-2019"],
+            ["01-04-2019", "30-09-2019"],
+            ["01-10-2019", "31-03-2020"],
+            ["01-04-2020", "30-09-2020"],
+            ["01-10-2020", "31-03-2021"],
+            ["01-04-2021", "30-06-2021"],
+            ["01-07-2021", "30-09-2021"],
+            ["01-10-2021", "06-11-2021"],
+            ["07-11-2021", "17-11-2021", 15], # To Avoid a Serial No Purchase on 15.11, Sold on 07.11 
+            ["18-11-2021", "30-11-2021"],
+            ["01-12-2021", "31-12-2021"],
+            ["01-01-2022", "31-01-2022"],
+            ["01-02-2022", "10-02-2022"]
+        ]
 
     def __exit__(self, *args, **kwargs):
         self.logout()
@@ -94,31 +119,8 @@ class ImportDB(object):
         return interval
 
     def process(self, till_date=False, import_modules=None, dates_map=None, day_interval=10):
-        default_dates_map = [
-            ["01-04-2017", "30-06-2017"],
-            ["01-07-2017", "30-09-2017"],
-            ["01-10-2017", "15-10-2017"], # 
-            ["16-10-2017", "31-10-2017", 20], # To Avoid a Serial No Purchase on 30.10, Sold on 17.10, Day Interval=20
-            ["01-11-2017", "31-03-2018"],
-            ["01-04-2018", "07-05-2018"],
-            ["08-05-2018", "31-05-2018"], # To Avoid a Serial No Purchase on 10.05, Sold on 08.05
-            ["01-06-2018", "15-09-2018"], # 16.09 There was a problem serial no unupdated
-            ["16-09-2018", "25-12-2018"],
-            ["26-12-2018", "31-12-2018"], # MAPL/PINV-RET/VN/18-19/000010 purchase return has wrong serial no
-            ["01-01-2019", "31-03-2019"],
-            ["01-04-2019", "30-09-2019"],
-            ["01-10-2019", "31-03-2020"],
-            ["01-04-2020", "30-09-2020"],
-            ["01-10-2020", "31-03-2021"],
-            ["01-04-2021", "30-06-2021"],
-            ["01-07-2021", "30-09-2021"],
-            ["01-10-2021", "06-11-2021"],
-            ["07-11-2021", "17-11-2021", 15], # To Avoid a Serial No Purchase on 15.11, Sold on 07.11 
-            ["18-11-2021", "30-11-2021"],
-            ["01-12-2021", "31-12-2021"],
-            ["01-01-2022", "31-01-2022"],
-            ["01-02-2022", "10-02-2022"]
-        ]
+        if not dates_map:
+            dates_map  = self.dates_map
         print ("Staring Process at",datetime.datetime.utcnow())
         log_info(logging, 'Started Process at {0}'.format(datetime.datetime.utcnow()))
         if not frappe.db.get_single_value('Global Defaults', 'default_company'):
@@ -162,10 +164,12 @@ class ImportDB(object):
         print ("Completed Process at",datetime.datetime.utcnow())
         log_info(logging,'Completed Process at {0}'.format(datetime.datetime.utcnow()))
 
-    def post_process(self):
+    def post_process(self, dates_map=None):
+        if not dates_map:
+            dates_map = self.dates_map
         self.import_draft_documents()
         set_loans_accured()
-        self.import_biometric_details()
+        self.import_biometric_details(dates_map=dates_map)
         self.update_naming_series()
 
     def import_accounts(self, overwrite=False):
@@ -1001,7 +1005,7 @@ class ImportDB(object):
         if not self.log_test:
             frappe.db.commit()
 
-    def import_biometric_details(self):
+    def import_biometric_details(self, dates_map=None):
         try:
             if not self.remoteDBClient.get_doc("Biometric Machine"):
                 return
@@ -1011,8 +1015,14 @@ class ImportDB(object):
         if not frappe.db.table_exists("Biometric Machine"):
             return
         
+        filters=None
+        if dates_map:
+            from_date = dates_map[0][0]
+            to_date = dates_map[-1][1]
+            filters = json.dumps(build_date_time_filter('Biometric Attendance', from_date=from_date, to_date=to_date, \
+                        from_column_name="timestamp", to_column_name="timestamp"))
         self.import_documents_having_childtables('Biometric Users')
         self.import_documents_having_childtables('Branch Settings')
         self.import_documents_having_childtables('Biometric Machine')
-        self.import_documents_having_childtables('Biometric Attendance')
+        self.import_documents_having_childtables('Biometric Attendance', fetch_filters=filters)
         

@@ -1,7 +1,7 @@
 import frappe
 import json
 import datetime
-from frappe.utils import get_safe_filters, getdate, add_to_date, format_date
+from frappe.utils import get_safe_filters, getdate, add_to_date, format_date, format_datetime
 
 class FetchData(object):
     def __init__(self, connection, client_db_api_path, records_per_batch=500, day_interval=1):
@@ -142,12 +142,26 @@ class FetchData(object):
             return dt_filters
         return None
 
-def build_date_filter(doctype, from_date=None, to_date=None):        
+def build_date_filter(doctype, from_date=None, to_date=None, from_column_name=None, to_column_name=None):        
     date_filters = []
     if from_date:
-        date_filters.append([doctype, "posting_date", ">=", format_date(from_date, format_string="yyyy-mm-dd")])
+        date_filters.append([doctype, "posting_date" if not from_column_name else from_column_name, ">=", \
+                        format_date(from_date, format_string="yyyy-mm-dd")])
     if to_date:
-        date_filters.append([doctype, "posting_date", "<=", format_date(to_date, format_string="yyyy-mm-dd")])
+        date_filters.append([doctype, "posting_date" if not from_column_name else from_column_name, "<=", \
+                        format_date(to_date, format_string="yyyy-mm-dd")])
+    if len(date_filters)<=0:
+        date_filters = None
+    return date_filters
+
+def build_date_time_filter(doctype, from_date=None, to_date=None, from_column_name=None, to_column_name=None):        
+    date_filters = []
+    if from_date:
+        date_filters.append([doctype, "posting_date" if not from_column_name else from_column_name, ">=", \
+                    format_datetime(from_date, format_string="dd-MM-yyyy HH:mm:ss")])
+    if to_date:
+        date_filters.append([doctype, "posting_date" if not to_column_name else to_column_name, "<=", \
+                    format_datetime(to_date, format_string="dd-MM-yyyy HH:mm:ss")])
     if len(date_filters)<=0:
         date_filters = None
     return date_filters
