@@ -47,15 +47,15 @@ class ImportDB(object):
             ["01-04-2019", "30-09-2019"],
             ["01-10-2019", "31-03-2020"],
             ["01-04-2020", "30-09-2020"],
-            ["01-10-2020", "31-03-2021"]
-            #["01-04-2021", "30-06-2021"],
-            #["01-07-2021", "30-09-2021"],
-            #["01-10-2021", "06-11-2021"],
-            #["07-11-2021", "17-11-2021", 15], # To Avoid a Serial No Purchase on 15.11, Sold on 07.11 
-            #["18-11-2021", "30-11-2021"],
-            #["01-12-2021", "31-12-2021"],
-            #["01-01-2022", "31-01-2022"],
-            #["01-02-2022", "10-02-2022"]
+            ["01-10-2020", "31-03-2021"],
+            ["01-04-2021", "30-06-2021"],
+            ["01-07-2021", "30-09-2021"],
+            ["01-10-2021", "06-11-2021"],
+            ["07-11-2021", "17-11-2021", 15], # To Avoid a Serial No Purchase on 15.11, Sold on 07.11 
+            ["18-11-2021", "30-11-2021"],
+            ["01-12-2021", "31-12-2021"],
+            ["01-01-2022", "31-01-2022"],
+            ["01-02-2022", "10-02-2022"]
         ]
 
     def __exit__(self, *args, **kwargs):
@@ -804,6 +804,11 @@ class ImportDB(object):
             if not d_list or len(d_list)<=0:
                 continue
             self.import_transactions(d_list, non_sle_entries=True)
+
+    def import_other_documents(self):
+        documents = ["Finance Payment Tool", "Adjustments Set Off Tool", "Salary Payment Tool"]
+        for d in documents:
+            self.import_documents_having_childtables(d)
 
     def remove_child_rows(self,new_doc, child_table):
         if (new_doc.get(child_table) and not new_doc.is_new()): #Child Not Empty  and new_doc.docstatus == 0
