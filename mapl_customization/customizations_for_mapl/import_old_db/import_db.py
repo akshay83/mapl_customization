@@ -172,7 +172,7 @@ class ImportDB(object):
         self.import_biometric_details(dates_map=dates_map)
         self.update_naming_series()
 
-    def import_accounts(self, overwrite=False):
+    def import_accounts(self, overwrite=False, continue_on_error=False):
         def before_inserting(new_doc, old_doc):
             new_doc.lft = None
             new_doc.rgt = None
@@ -180,10 +180,8 @@ class ImportDB(object):
                 new_doc.flags.ignore_mandatory = True
             if not new_doc.is_new() and not new_doc.get('parent_account'):
                 raise SkipRecordException("Skiped Record {0}".format(new_doc.name))
-            if not new_doc.is_new():
-                frappe.local.flags.ignore_update_nsm = True
 
-        self.import_documents_having_childtables('Account', order_by="lft", before_insert=before_inserting, overwrite=overwrite)                
+        self.import_documents_having_childtables('Account', order_by="lft", before_insert=before_inserting, overwrite=overwrite, continue_on_error=continue_on_error)                
 
     def import_customer_group(self):
         self.import_documents_having_childtables('Customer Group')
@@ -908,7 +906,7 @@ class ImportDB(object):
                     new_name = get_new_name(doc)
                 self.insert_doc(new_doc, new_name=doc.name, continue_on_error=continue_on_error, submit=submit)
             elif overwrite:
-                self.save_doc(new_doc)
+                self.save_doc(new_doc, continue_on_error=continue_on_error)
             if (not overwrite and not is_doc_new):
                 return
             if after_insert:
