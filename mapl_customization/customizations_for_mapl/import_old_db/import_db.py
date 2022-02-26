@@ -324,11 +324,15 @@ class ImportDB(object):
     def import_items(self, id=None):
         def before_insert(new_doc, old_item_dict):
             if old_item_dict.get('expense_account') or old_item_dict.get('income_account'):
+                if not new_doc.is_new():
+                    self.remove_child_rows(new_doc, "item_defaults")
                 item_defaults = new_doc.append('item_defaults')
                 item_defaults.company = get_default_company()
                 item_defaults.expense_account = old_item_dict.get('expense_account')
                 item_defaults.income_account = old_item_dict.get('income_account')
             if old_item_dict.get('taxes_template'):
+                if not new_doc.is_new():
+                    self.remove_child_rows(new_doc, "taxes")
                 taxes = new_doc.append('taxes')
                 taxes.item_tax_template = old_item_dict.taxes_template
 
