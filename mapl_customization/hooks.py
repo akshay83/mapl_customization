@@ -231,7 +231,9 @@ cf_fields = [
 		"Item-manufacturer",
 		"Item-fame_code",
 		"Sales Invoice Item-battery_type",
-		"Sales Invoice Item-battery_manufacturer"
+		"Sales Invoice Item-battery_manufacturer",
+		"Sales Invoice Item-battery_chemistry",
+		"Sales Invoice Item-controller_no"
 ]
 
 print_fs = [

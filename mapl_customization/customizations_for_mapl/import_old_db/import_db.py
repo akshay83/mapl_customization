@@ -55,7 +55,7 @@ class ImportDB(object):
             ["18-11-2021", "30-11-2021"],
             ["01-12-2021", "31-12-2021"],
             ["01-01-2022", "31-01-2022"],
-            ["01-02-2022", "10-02-2022"]
+            ["01-02-2022", "28-02-2022"]
         ]
 
     def __exit__(self, *args, **kwargs):
@@ -497,6 +497,8 @@ class ImportDB(object):
                         new_doc.vehicle_no = new_doc.vehicle_no[:10]
                 for i in new_doc.items:
                     if cint(i.is_electric_vehicle) and i.battery_manufacturer:
+                        i.battery_chemistry = i.battery_type
+                        i.battery_type = None
                         if "tek" in i.battery_manufacturer.lower():
                             i.battery_manufacturer = "Trontek"
                             i.battery_type = "(2.9 KWh) 72V * 40 AH"
