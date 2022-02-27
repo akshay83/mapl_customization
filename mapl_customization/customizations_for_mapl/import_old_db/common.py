@@ -72,7 +72,7 @@ def set_loans_accured():
 
     #Close Loans where Employee has 0 Ledger Balance
     frappe.db.sql("""update `tabLoan` loan set status = 'Closed' where ifnull((select sum(debit)-sum(credit) from `tabGL Entry` 
-                where party_type='Employee' and party=loan.applicant and is_cancelled=0),0) > 0""")
+                where party_type='Employee' and party=loan.applicant and is_cancelled=0),0) <= 0""")
     frappe.db.commit()
 
 def find_closest_match(self, str, in_list):

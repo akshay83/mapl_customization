@@ -138,16 +138,36 @@ def check_average_purchase(doc):
 	return 1	
 
 def check_for_workflow_approval(doc):
+	"""
+	Return 1: If everything is Ok
+	Return 2: If Approval Required From Sales Manager (Rate < Purchase Rate && Not Delayed Payment)
+	Return 3: If Approval Required From System Manager (Rate is Ok && Delayed Payment)
+	"""
 	if (doc.doctype != "Sales Invoice"):
 		return
 	from mapl_customization.customizations_for_mapl.sales_invoice_validation import negative_stock_validation
 	#--DEBUG--print (check_average_purchase(doc))
 	#--DEBUG--print (negative_stock_validation(doc, None, show_message=False))
-	if cint(frappe.db.get_single_value("Accounts Settings", "check_purchase_rate_against_sale_rate")) and not check_average_purchase(doc):		
-		return 0
+	avg_pur_rate_check = 1
+	negative_check = 1
+	if cint(frappe.db.get_single_value("Accounts Settings", "check_purchase_rate_against_sale_rate")) and not check_average_purchase(doc):
+		avg_pur_rate_check = 0
 	if cint(frappe.db.get_single_value("Accounts Settings", "check_negative_stock")) and not negative_stock_validation(doc, None, show_message=False):
-		return 0
+		negative_check = 0
+	if not approval_required_for_delayed_payment(doc) and (cint(avg_pur_rate_check) and cint(negative_check)):
+		return 1
+	elif approval_required_for_delayed_payment(doc) and (cint(avg_pur_rate_check) and cint(negative_check)):
+		return 3
+	elif not approval_required_for_delayed_payment(doc) and (not cint(avg_pur_rate_check) or not cint(negative_check)):
+		return 2
 	return 1
+
+def approval_required_for_delayed_payment(doc):
+	if cint(doc.delayed_payment):
+		if doc.delayed_payment_reason and doc.delayed_payment_reason.lower() in ["other", "reference"]:
+			return 0
+		return 1
+	return 0
 
 @frappe.whitelist()
 def get_party_balance(party, party_type, company):

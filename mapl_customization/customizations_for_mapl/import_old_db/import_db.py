@@ -169,6 +169,7 @@ class ImportDB(object):
             dates_map = self.dates_map
         self.import_draft_documents(dates_map=dates_map)
         set_loans_accured()
+        self.import_other_documents()
         self.import_biometric_details(dates_map=dates_map)
         self.update_naming_series()
 
@@ -496,10 +497,10 @@ class ImportDB(object):
                     if len(new_doc.vehicle_no) > 10:
                         new_doc.vehicle_no = new_doc.vehicle_no[:10]
                 for i in new_doc.items:
+                    i.battery_chemistry = i.battery_type
+                    i.battery_type = None
                     if cint(i.is_electric_vehicle) and i.battery_manufacturer:
-                        i.battery_chemistry = i.battery_type
-                        i.battery_type = None
-                        if "tek" in i.battery_manufacturer.lower():
+                        if (("tek" in i.battery_manufacturer.lower()) or ("tex" in  i.battery_manufacturer.lower())):
                             i.battery_manufacturer = "Trontek"
                             i.battery_type = "(2.9 KWh) 72V * 40 AH"
                         elif "akira" in i.battery_manufacturer.lower():
@@ -601,7 +602,7 @@ class ImportDB(object):
         for i in doc.get('items'):
             repost_entries(i['item_code'], warehouse)
         
-    def import_payment_entries(self, from_date=None, to_date=None, overwrite=True):
+    def import_payment_entries(self, from_date=None, to_date=None, overwrite=True, doc_list=None):
         def before_inserting(new_doc, old_doc):
             #if e['docstatus'] == 2:
             #    raise SkipRecordException('Skip Cancelled Record')
@@ -615,9 +616,12 @@ class ImportDB(object):
             new_doc.unallocated_amount = new_doc.paid_amount
 
         monkey_patch_payment_entry_temporarily()
+        if doc_list:
+            self.import_documents_having_childtables('Payment Entry', before_insert=before_inserting, doc_list=doc_list, reset_batch=False, overwrite=overwrite) 
+            return
         self.do_batch_import('Payment Entry', from_date=from_date, to_date=to_date, before_insert=before_inserting, overwrite=overwrite)
 
-    def import_journal_entries(self, from_date=None, to_date=None, id=None, overwrite=True):
+    def import_journal_entries(self, from_date=None, to_date=None, id=None, overwrite=True, doc_list=None):
         def before_inserting(new_doc, old_doc):
             if old_doc['docstatus'] == 2:
                 raise SkipRecordException('Skip Cancelled Record')
@@ -627,7 +631,10 @@ class ImportDB(object):
                 row.reference_type = None
             new_doc.amended_from = None
 
-        monkey_patch_journal_entry_temporarily()        
+        monkey_patch_journal_entry_temporarily()
+        if doc_list:
+            self.import_documents_having_childtables('Journal Entry', before_insert=before_inserting, doc_list=doc_list, reset_batch=False, overwrite=overwrite) 
+            return
         self.do_batch_import('Journal Entry', from_date=from_date, to_date=to_date, before_insert=before_inserting, overwrite=overwrite)
 
     def import_period_closing_vouchers(self):
@@ -798,7 +805,7 @@ class ImportDB(object):
             return
         documents = ["Sales Invoice", "Purchase Invoice", "Delivery Note", "Payment Entry", "Journal Entry"]        
         for d in documents:
-            date_filters = build_date_filter(d, from_date=dates_map[0][0], to_date=dates_map[-1][1])
+            date_filters = None if not dates_map else build_date_filter(d, from_date=dates_map[0][0], to_date=dates_map[-1][1])
             filters = [[d, "docstatus","=","0"]]
             if date_filters:
                 filters.extend(date_filters)
@@ -807,12 +814,20 @@ class ImportDB(object):
             
             if not d_list or len(d_list)<=0:
                 continue
-            self.import_transactions(d_list, non_sle_entries=True)
+            if d in ["Sales Invoice", "Purchase Invoice", "Delivery Note"]:
+                self.import_transactions(d_list, non_sle_entries=True)
+            elif d == "Payment Entry":
+                self.import_payment_entries(doc_list=d_list)
+            elif d == "Journal Entry":
+                self.import_journal_entries(doc_list=d_list)
 
     def import_other_documents(self):
+        def before_insert(new_doc, old_doc):
+            new_doc.flags.ignore_mandatory = True
+
         documents = ["Finance Payment Tool", "Adjustments Set Off Tool", "Salary Payment Tool"]
         for d in documents:
-            self.import_documents_having_childtables(d)
+            self.import_documents_having_childtables(d, before_insert=before_insert)
 
     def remove_child_rows(self,new_doc, child_table):
         if (new_doc.get(child_table) and not new_doc.is_new()): #Child Not Empty  and new_doc.docstatus == 0
@@ -884,7 +899,8 @@ class ImportDB(object):
                     continue_on_error=False):
             doc = frappe._dict(old_doc_dict)
             new_doc = None
-            if not overwrite and (self.overwrite_if_modified_after and getdate(old_doc_dict.modified)>getdate(self.overwrite_if_modified_after)):
+            if not overwrite and (self.overwrite_if_modified_after and getdate(old_doc_dict['modified'])>getdate(self.overwrite_if_modified_after)):
+                log_info(logging, 'Overwriting {0}, {1} as Modified Condition Matches'.format(doctype, doc.name))
                 overwrite = True
             if not frappe.db.exists(doctype, doc.name):
                 new_doc = frappe.new_doc(doctype)
