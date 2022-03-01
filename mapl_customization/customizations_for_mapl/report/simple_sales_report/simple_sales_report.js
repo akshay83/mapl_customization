@@ -15,9 +15,9 @@ frappe.query_reports['Simple Sales Report'] = {
                 {
                         "fieldname":"let",
                         "label":__("Letter Head"),
-                        "fieldtype": "Link",
-                        "options": "Letter Head",
-                        "default": "%%"
+                        "fieldtype": "Select",
+                        "options": "All\nVijay Nagar\nGeeta Bhawan\nRanjeet Hanuman",
+                        "default": "All"
                 },
                 {
                         "fieldname":"brand",

@@ -39,7 +39,19 @@ frappe.ui.form.on("Purchase Invoice", "validate", function (frm) {
 });
 
 frappe.ui.form.on("Purchase Invoice Item", "item_code", function (frm, cdt, cdn) {
-    if (frm.doc.update_stock && locals[cdt][cdn].item_code) {
-        custom.show_custom_insert_dialog(frm, cdt, cdn);
-    }
+    setTimeout(function () {
+        let doc = null;
+        if (frm.open_grid_row() !== undefined) {
+            doc = frm.open_grid_row().doc;
+        } else {
+            doc = locals[cdt][cdn];
+        }
+        if (frm.doc.update_stock && doc.item_code && doc.has_serial_no) {
+            custom.show_custom_insert_dialog(frm, cdt, cdn);
+        }
+        if (frm.doc.update_stock && doc.item_code) {
+            doc.expense_account = "";
+            frm.refresh_field("items");
+        }
+    },500);
 });

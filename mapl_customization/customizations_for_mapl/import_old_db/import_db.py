@@ -319,7 +319,7 @@ class ImportDB(object):
             manufacturer.full_name = m[1]
             manufacturer.insert(ignore_if_duplicate=True)        
         battery_type = frappe.new_doc("Battery Type")
-        battery_type.type = "(2.9 KWh) 72V * 40 AH"
+        battery_type.type = "72V40AH / 2.9Kwh"
         battery_type.insert(ignore_if_duplicate=True)
 
     def import_items(self, id=None):
@@ -471,6 +471,8 @@ class ImportDB(object):
                         i.serial_no = i.serial_no.replace('0D154DBN700796','0D154DBN300065')
             if old_doc.doctype in ['Sales Invoice', 'Purchase Invoice']:
                 new_doc.set_incoming_rate() #Set Incoming Rate - Specially when a SRN is Done
+            if new_doc.docstatus == 2:
+                new_doc.workflow_state = "Cancelled"
 
         def before_inserting(new_doc, old_doc):
             new_doc.flags.ignore_validate = True
@@ -492,6 +494,8 @@ class ImportDB(object):
                 new_doc.delayed_payment_remarks = old_doc.get('special_remarks')
                 new_doc.notes = old_doc.get('reference_details')
                 new_doc.advances = None
+                new_doc.po_no = old_doc.purchase_order_no
+                new_doc.po_date = old_doc.purchase_order_date
                 if new_doc.get('vehicle_no'):
                     new_doc.vehicle_no = new_doc.vehicle_no.replace(" ","")
                     if len(new_doc.vehicle_no) > 10:
@@ -502,7 +506,7 @@ class ImportDB(object):
                     if cint(i.is_electric_vehicle) and i.battery_manufacturer:
                         if (("tek" in i.battery_manufacturer.lower()) or ("tex" in  i.battery_manufacturer.lower())):
                             i.battery_manufacturer = "Trontek"
-                            i.battery_type = "(2.9 KWh) 72V * 40 AH"
+                            i.battery_type = "72V40AH / 2.9Kwh"
                         elif "akira" in i.battery_manufacturer.lower():
                             i.manufacturer = "Akira"
                 if new_doc.get('workflow_state') and new_doc.workflow_state == 'Draft':
@@ -640,7 +644,10 @@ class ImportDB(object):
     def import_period_closing_vouchers(self):
         self.import_documents_having_childtables('Period Closing Voucher', order_by='transaction_date')
 
-    def update_naming_series(self):
+    def update_naming_series(self, doc=None):
+        if doc:
+            self.update_naming_series_entities(doc=doc)
+            return
         self.update_naming_series_transactions()
         self.update_naming_series_entities()
 
@@ -659,12 +666,14 @@ class ImportDB(object):
                 self.update_series(s.series_key, s.series_value)
         self.commit()
 
-    def update_naming_series_entities(self):
+    def update_naming_series_entities(self,doc=None):
         docs = [
             "Customer",
             "Supplier",
             "Employee"
         ]
+        if doc:
+            docs = [doc]
         for d in docs:
             series_list = self.get_entities_series_list(d)
             for s in series_list:
@@ -820,6 +829,27 @@ class ImportDB(object):
                 self.import_payment_entries(doc_list=d_list)
             elif d == "Journal Entry":
                 self.import_journal_entries(doc_list=d_list)
+
+    def import_cancelled_documents(self, document_type, id=None, dates_map=None):
+        doc_list = []
+        temp_install = frappe.flags.in_install
+        frappe.flags.in_install = "frappe"
+        if id and document_type:
+            doc_list = get_documents_with_childtables(self.remoteDBClient, self.parent_module, document_type, 
+                                        filters = json.dumps([[document_type, "docstatus","=","2"],[document_type, "name","=",id]]), 
+                                        page_length=1000, order_by="name")
+        elif not id:
+            date_filters = None if not dates_map else build_date_filter(document_type, from_date=dates_map[0][0], to_date=dates_map[-1][1])
+            filters = [[document_type, "docstatus","=","2"]]
+            if date_filters:
+                filters.extend(date_filters)
+            doc_list = get_documents_with_childtables(self.remoteDBClient, self.parent_module, document_type, 
+                                        filters = json.dumps(filters), page_length=1000, order_by="name")
+        if not doc_list or len(doc_list)<=0:
+            return
+        if document_type in ["Sales Invoice", "Purchase Invoice", "Delivery Note"]:
+            self.import_transactions(doc_list, non_sle_entries=True)
+        frappe.flags.in_install = temp_install
 
     def import_other_documents(self):
         def before_insert(new_doc, old_doc):

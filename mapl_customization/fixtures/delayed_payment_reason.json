@@ -38,5 +38,45 @@
   "parentfield": null,
   "parenttype": null,
   "reason": "Reference"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Delayed Payment Reason",
+  "modified": "2022-02-28 12:45:51.909778",
+  "name": "Cash On Delivery",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "reason": "Cash On Delivery"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Delayed Payment Reason",
+  "modified": "2022-02-28 12:46:34.515202",
+  "name": "Cashback",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "reason": "Cashback"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Delayed Payment Reason",
+  "modified": "2022-02-28 13:09:48.833586",
+  "name": "FOC Accessories with Vehicle",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "reason": "FOC Accessories with Vehicle"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Delayed Payment Reason",
+  "modified": "2022-02-28 20:45:09.901272",
+  "name": "Expense Claim",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "reason": "Expense Claim"
  }
 ]

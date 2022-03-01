@@ -165,6 +165,8 @@ def check_for_workflow_approval(doc):
 def approval_required_for_delayed_payment(doc):
 	if cint(doc.delayed_payment):
 		if doc.delayed_payment_reason and doc.delayed_payment_reason.lower() in ["other", "reference"]:
+			return 1
+		else:
 			return 0
 		return 1
 	return 0

@@ -140,9 +140,15 @@ def taxes_and_charges_validation(doc, method):
 		if doc.total_taxes_and_charges == 0:
 			frappe.throw("No Taxes and Charges Applied, Please ensure if this is Ok!!")
 		else:
-			for i in doc.items:
-				if i.net_rate == i.rate:
-					frappe.throw("""Taxes Does not seems to be Applied on Item {0}, Please ensure if this is Ok!!""".format(i.item_code))
+			taxes_inclusive = False
+			for i in doc.taxes:
+				if cint(i.included_in_print_rate):
+					taxes_inclusive = True
+					break
+			if taxes_inclusive:
+				for i in doc.items:
+					if i.net_rate == i.rate:
+						frappe.throw("""Taxes Does not seems to be Applied on Item {0}, Please ensure if this is Ok!!""".format(i.item_code))
 
 def validate_hsn_code(doc, method):
 	for i in doc.items:

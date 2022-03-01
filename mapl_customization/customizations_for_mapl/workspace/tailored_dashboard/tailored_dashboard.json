@@ -248,7 +248,7 @@
    "hidden": 0,
    "is_query_report": 1,
    "label": "Stock Balance",
-   "link_to": "Stock Balance",
+   "link_to": "Modified Stock Balance",
    "link_type": "Report",
    "onboard": 0,
    "type": "Link"
@@ -280,7 +280,7 @@
    "type": "Link"
   }
  ],
- "modified": "2022-02-21 19:19:39.598856",
+ "modified": "2022-02-28 23:55:24.978015",
  "modified_by": "Administrator",
  "module": "Customizations for MAPL",
  "name": "Tailored Dashboard",
