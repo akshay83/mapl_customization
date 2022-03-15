@@ -16,9 +16,7 @@ def execute(filters=None):
 		return [],[]
 
 	columns = get_columns(filters)
-
 	data = get_data(filters)
-
 	return columns, data
 
 def validate(filters):
@@ -44,44 +42,44 @@ def get_columns(filters):
             "fieldname":"item",
             "fieldtype":"Data",
             "label":"Month",
-	    "width":200
+	    	"width":200
         },
         {
             "fieldname":"in_qty",
             "fieldtype":"Float",
             "label":"In Qty",
-	    "width":80
+	    	"width":80
         },
-	{
-	    "fieldname":"in_value",
-	    "fieldtype":"Currency",
-	    "label":"In Value",
-	    "width":150
-	},
+		{
+			"fieldname":"in_value",
+			"fieldtype":"Currency",
+			"label":"In Value",
+			"width":150
+		},
         {
             "fieldname":"out_qty",
             "fieldtype":"Float",
             "label":"Out Qty",
-	    "width":80
+			"width":80
         },
-	{
-	    "fieldname":"out_value",
-	    "fieldtype":"Currency",
-	    "label":"Out Value",
-	    "width":150
-	},
+		{
+			"fieldname":"out_value",
+			"fieldtype":"Currency",
+			"label":"Out Value",
+			"width":150
+		},
         {
             "fieldname":"balance_qty",
             "fieldtype":"Float",
             "label":"Balance Qty",
-	    "width":80
+			"width":80
         },
-	{
-	    "fieldname":"balance_value",
-	    "fieldtype":"Currency",
-	    "label":"Balance Value",
-	    "width":150
-	}
+		{
+			"fieldname":"balance_value",
+			"fieldtype":"Currency",
+			"label":"Balance Value",
+			"width":150
+		}
 	]
 
 	return columns
@@ -90,10 +88,10 @@ def get_conditions(filters,with_to_date=False):
 	conditions = ""
 
 	if filters.get("to_date") and with_to_date:
-		conditions += " and posting_date <= '%s'" % frappe.db.escape(filters["to_date"])
+		conditions += " and posting_date <= '{0}'".format(filters["to_date"])
 
 	if filters.get("item_code"):
-		conditions += " and item_code = '%s'" % frappe.db.escape(filters.get("item_code"), percent=False)
+		conditions += " and item_code = '{0}'".format(filters.get("item_code"))
 
 	if filters.get("remove_material_transfer"):
 		conditions += """ and if(entry.voucher_type='Stock Entry',
@@ -102,14 +100,24 @@ def get_conditions(filters,with_to_date=False):
 
 	return conditions
 
-
 def get_opening_balance(filters):
-	query = """select item_code, warehouse, sum(actual_qty) as opening_balance, sum(stock_value_difference) as opening_value
-		from `tabStock Ledger Entry` as entry force index (posting_sort_index)
-		where docstatus < 2 and posting_date < %(fromdate)s and company=%(company)s
-        {condition} order by posting_date, posting_time, name""".format(**{
-            "condition":get_conditions(filters)
-        })
+	query = """
+				select 
+					item_code, 
+					warehouse, 
+					sum(actual_qty) as opening_balance, 
+					sum(stock_value_difference) as opening_value
+				from `tabStock Ledger Entry` as entry force index (posting_sort_index)
+				where 
+					posting_date < %(fromdate)s 
+					and company=%(company)s
+					{condition} 
+				order by 
+					posting_date, 
+					posting_time, 
+					name
+			""".format(**{"condition":get_conditions(filters)
+			})
 
 	return frappe.db.sql(query, {
 		'company':filters.get("company",""),
@@ -117,13 +125,29 @@ def get_opening_balance(filters):
 		},as_dict=True)
 
 def get_current_items(filters):
-	query = """select item_code, warehouse, posting_date, actual_qty, valuation_rate,
-			company, voucher_type, qty_after_transaction, stock_value_difference
-		from `tabStock Ledger Entry` as entry force index (posting_sort_index)
-		where docstatus < 2 and company = %(company)s and posting_date>= %(fromdate)s
-        {condition} order by posting_date, posting_time, name""".format(**{
-            "condition":get_conditions(filters,with_to_date=True)
-        })
+	query = """
+				select 
+					item_code, 
+					warehouse, 
+					posting_date, 
+					actual_qty, 
+					valuation_rate,
+					company, 
+					voucher_type, 
+					qty_after_transaction, 
+					stock_value_difference
+				from 
+					`tabStock Ledger Entry` as entry force index (posting_sort_index)
+				where 
+					company = %(company)s 
+					and posting_date>= %(fromdate)s
+					{condition} 
+				order by 
+					posting_date, 
+					posting_time, 
+					name
+			""".format(**{"condition":get_conditions(filters,with_to_date=True)
+				})
 
 	return frappe.db.sql(query, {
 		'company':filters.get("company",""),
@@ -168,22 +192,21 @@ def get_data(filters):
 			}
 		build_row["item"] = r
 		for i in items:
-			if i.posting_date.strftime("%B").lower()+" "+str(i.posting_date.year)== \
-					month_list[index].lower():
+			if i.posting_date.strftime("%B").lower()+" "+str(i.posting_date.year)==month_list[index].lower():
 				build_row["in_qty"] += i.actual_qty if i.actual_qty > 0 else 0
 				build_row["out_qty"] += abs(i.actual_qty) if i.actual_qty < 0 else 0
-				build_row["in_value"] += i.stock_value_difference if i.stock_value_difference > 0 else 0
-				build_row["out_value"] += abs(i.stock_value_difference) if i.stock_value_difference < 0 else 0
+				build_row["in_value"] += flt(i.stock_value_difference if i.stock_value_difference > 0 else 0)
+				build_row["out_value"] += flt(abs(i.stock_value_difference) if i.stock_value_difference < 0 else 0)
 
 		if index==0:
 			build_row["balance_qty"] = opening_balance+build_row["in_qty"]-build_row["out_qty"]
-			build_row["balance_value"] = opening_value+build_row["in_value"]-build_row["out_value"]
+			build_row["balance_value"] = flt(opening_value+build_row["in_value"]-build_row["out_value"])
 		else:
 			build_row["balance_qty"] = previous_balance_qty+build_row["in_qty"]-build_row["out_qty"]
-			build_row["balance_value"] = previous_balance_value+build_row["in_value"]-build_row["out_value"]
+			build_row["balance_value"] = flt(previous_balance_value+build_row["in_value"]-build_row["out_value"])
 
 		previous_balance_qty = build_row["balance_qty"]
-		previous_balance_value = build_row["balance_value"]
+		previous_balance_value = flt(build_row["balance_value"])
 
 		data.append(build_row)
 		index = index + 1

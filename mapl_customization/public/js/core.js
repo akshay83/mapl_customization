@@ -82,41 +82,50 @@ custom._get_party_balance_formatted = function (party, customer_name, company, _
 	}
 };
 
-custom.show_stock_dialog = function (stk) {
-	d = new frappe.ui.Dialog({ title: __('Current Stock at Warehouses') });
-	html_string = "<div><div style=\"width:40%;float:left;color:red;\"><b>Warehouse</b></div>\
-                                <div style=\"float:left;width:12%;\">Cur Stock</div>\
-                                <div style=\"float:left;width:12%;\">Open Order</div>\
-                                <div style=\"float:left;width:12%;\">Unconfirmed</div>\
-                                <div style=\"float:left;width:12%;\">Undelivered</div>\
-                                <div style=\"float:left;width:12%;\">Defective</div>\
-                                <div style=\"clear:both;\"></div>\
-						</div></div>";
-	html_string = html_string + "<div><span style=\"font-size:10px;\"><div style=\"width:40%;float:left;color:red;\">&nbsp</div>\
-                                <div style=\"float:left;width:12%;\">&nbsp</div>\
-                                <div style=\"float:left;width:12%;\">Confirmed Sales Order</div>\
-                                <div style=\"float:left;width:12%;\">Sales Invoice Not Submitted</div>\
-                                <div style=\"float:left;width:12%;\">Billed But Not Delivered</div>\
-                                <div style=\"float:left;width:12%;\">&nbsp</div>\
-                                <div style=\"clear:both;\">&nbsp</div>\
-						</div></span></div>";
-
-	$.each(Object.keys(stk).sort(), function (i, key) {
-		var v = stk[key];
-		html_string = html_string + $.format('<div style=\"padding-top:10px;\">\
-                				<div style=\"width:40%;float:left;\"><b>{0}</b></div>\
-                                <div style=\"color:blue;float:left;width:12%;\">{1}</div>\
-                                <div style=\"color:blue;float:left;width:12%;\">{2}</div>\
-                                <div style=\"color:blue;float:left;width:12%;\">{3}</div>\
-                                <div style=\"color:blue;float:left;width:12%;\">{4}</div>\
-                                <div style=\"color:blue;float:left;width:12%;\">{5}</div>\
-                                <div style=\"clear:both;\"></div>\
-                            </div>', [v['NAME'], v['CLOSING STOCK'], v['OPEN ORDER'], v['UNCONFIRMED'], v['UNDELIVERED'], v['DEFECTIVE']]);
+custom.show_effective_stock_for = function (item_code, on_date) {
+	frappe.call({
+		method: "mapl_customization.customizations_for_mapl.utils.get_effective_stock_at_all_warehouse",
+		args: {
+			"item_code": item_code,
+			"date": on_date
+		},
+		callback: function (r) {
+			if (r.message) {
+				custom.show_stock_dialog(item_code, r.message[0], r.message[1]);
+			}
+		}
 	});
-	html_string = html_string + "<div style=\"clear:both;\"></div><hr>";
-	$(d.body).html(html_string);
-	d.$wrapper.find('.modal-dialog').css("width", "900px");
-	d.show();
+};
+
+custom.show_stock_dialog = function (item_code, columns, values) {
+	let table_fields = [];
+	let data = {};
+	for (let i = 0; i < columns.length; i++) {
+		let fn = columns[i]["fieldname"];
+		let val = values[0][i];
+		table_fields.push({
+			fieldtype: "Data",
+			label: columns[i]["label"],
+			fieldname: fn,
+			in_list_view: 1,
+			read_only: 1,
+			hidden: (columns[i]["fieldtype"] == "Float" || columns[i]["fieldname"] == "warehouse") ? 0 : 1,
+			columns: columns[i]["fieldname"] == "warehouse" ? 2 : 1
+		});
+		data[fn] = val;
+	}
+	let fields = [{
+		fieldname: "stock_details",
+		fieldtype: "Table",
+		fields: table_fields,
+		data: [data],
+		readonly: 1
+	}];
+	let dialog = new frappe.ui.Dialog({ title: 'Current Stock for :' + item_code, fields });
+	dialog.$wrapper.find('.modal-content').css("width", "1200px");
+	dialog.$wrapper.find('.modal-dialog').css("position", "absolute");
+	dialog.$wrapper.find('.modal-dialog').css("left", "10%");
+	dialog.show();
 };
 
 custom.update_address = function (frm) {
@@ -182,4 +191,24 @@ custom.handle_default_print_action = function (doctype, frm) {
 	} else {
 		custom.hide_show_print_buttons(false);
 	}
+};
+
+custom.get_default_warehouse = async function (user_name) {
+	let uname = frappe.user.name;
+	if (user_name !== undefined && user_name != null) {
+		uname = user_name;
+	}
+	let return_value = null;
+	let promise = new Promise((resolve, reject) => {
+		frappe.db.get_value("User", uname, "default_user_warehouse").then(val => {
+			if (val.message.default_user_warehouse !== undefined && val.message.default_user_warehouse != null) {
+				return_value = val.message.default_user_warehouse;
+			} else {
+				return_value = frappe.defaults.get_default("default_warehouse");
+			}
+			resolve(return_value);
+		});
+	});
+	await promise.catch(() => frappe.throw());
+	return return_value;
 };

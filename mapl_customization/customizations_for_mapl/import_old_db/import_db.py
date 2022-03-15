@@ -644,22 +644,24 @@ class ImportDB(object):
     def import_period_closing_vouchers(self):
         self.import_documents_having_childtables('Period Closing Voucher', order_by='transaction_date')
 
-    def update_naming_series(self, doc=None):
-        if doc:
-            self.update_naming_series_entities(doc=doc)
-            return
+    def update_naming_series(self):
         self.update_naming_series_transactions()
         self.update_naming_series_entities()
 
-    def update_naming_series_transactions(self):
-        docs = [
-            "Sales Invoice",
-            "Purchase Invoice",
-            "Stock Entry",
-            "Payment Entry",
-            "Journal Entry",
-            "Salary Slip"            
-        ]
+    def update_naming_series_transactions(self, doc=None):
+        docs = []
+        if doc:
+            docs = [doc]
+        else:
+            docs = [
+                "Sales Invoice",
+                "Purchase Invoice",
+                "Stock Entry",
+                "Payment Entry",
+                "Journal Entry",
+                "Salary Slip",
+                "Delivery Note"            
+            ]
         for d in docs:
             series_list = self.get_transactions_series_list(d)
             for s in series_list:

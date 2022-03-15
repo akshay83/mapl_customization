@@ -93,7 +93,7 @@ def get_average_purchase_rate_for_item(item,with_tax=True,as_value=0):
 	query = """
 				select
 				   round(
-				     avg(sle.valuation_rate){0}
+				     (select valuation_rate from `tabStock Ledger Entry` where posting_date=max(sle.posting_date) and posting_time=max(sle.posting_time) and item_code=sle.item_code limit 1){0}
 				   ,2) as avg_rate
 				from
 				 `tabStock Ledger Entry` sle,
@@ -180,53 +180,10 @@ def get_party_balance(party, party_type, company):
 
 @frappe.whitelist()
 def get_effective_stock_at_all_warehouse(item_code, date=None):
-	query = """
-			SELECT
-			    NAME,
-			    `OPENING STOCK`,
-			    `IN QTY`,
-			    `OUT QTY`,
-			    (`OPENING STOCK`+`IN QTY`-`OUT QTY`) AS `CLOSING STOCK`,
-			    `UNCONFIRMED`,
-			    `UNDELIVERED`,
-			    `DEFECTIVE`,
-			    `OPEN ORDER`
-			FROM (
-			    SELECT OUTSTK.NAME,
-			      IFNULL((SELECT SUM(ACTUAL_QTY) FROM `tabStock Ledger Entry` Stk WHERE
-			        ITEM_CODE=%(item_code)s AND IS_CANCELLED=0 AND WAREHOUSE=OUTSTK.NAME AND POSTING_DATE < %(date)s),0) AS `OPENING STOCK`,
-
-			      IFNULL((SELECT SUM(ACTUAL_QTY) FROM `tabStock Ledger Entry` Stk WHERE
-			        ITEM_CODE=%(item_code)s AND IS_CANCELLED=0 AND ACTUAL_QTY > 0 AND WAREHOUSE=OUTSTK.NAME AND POSTING_DATE=%(date)s),0) AS `IN QTY`,
-
-			      IFNULL((SELECT SUM(ABS(ACTUAL_QTY)) FROM `tabStock Ledger Entry` Stk WHERE
-			        ITEM_CODE=%(item_code)s AND IS_CANCELLED=0 AND ACTUAL_QTY < 0 AND WAREHOUSE=OUTSTK.NAME AND POSTING_DATE=%(date)s),0) AS `OUT QTY`,
-
-			      IFNULL((SELECT SUM(INV_ITEM.QTY) FROM `tabSales Invoice` INV, `tabSales Invoice Item` INV_ITEM WHERE
-			        INV_ITEM.WAREHOUSE=OUTSTK.NAME AND INV_ITEM.PARENT=INV.NAME AND INV.DOCSTATUS<1 AND INV_ITEM.ITEM_CODE=%(item_code)s
-			        AND INV.POSTING_DATE<=%(date)s),0) AS `UNCONFIRMED`,
-
-			      IFNULL((SELECT SUM(INV_ITEM.QTY-INV_ITEM.DELIVERED_QTY) FROM `tabSales Invoice` INV,`tabSales Invoice Item` INV_ITEM
-			        WHERE INV_ITEM.PARENT=INV.NAME AND INV.DOCSTATUS=1 AND INV_ITEM.WAREHOUSE=OUTSTK.NAME
-			        AND INV_ITEM.DELIVERED_QTY<>INV_ITEM.QTY AND INV.UPDATE_STOCK=0 AND INV_ITEM.ITEM_CODE=%(item_code)s
-			        AND INV.POSTING_DATE<=%(date)s),0) AS `UNDELIVERED`,
-
-			      IFNULL((SELECT SUM(INV_ITEM.QTY-INV_ITEM.DELIVERED_QTY) FROM `tabSales Order` INV, `tabSales Order Item` INV_ITEM
-			        WHERE INV_ITEM.PARENT=INV.NAME AND INV.DOCSTATUS=1 AND INV_ITEM.WAREHOUSE=OUTSTK.NAME
-			        AND INV_ITEM.DELIVERED_QTY<>INV_ITEM.QTY AND INV_ITEM.ITEM_CODE=%(item_code)s
-			        AND INV.TRANSACTION_DATE<=%(date)s),0) AS `OPEN ORDER`,
-
-			      IFNULL((SELECT COUNT(*) FROM `tabStock Problem` PROB WHERE PROB.item=%(item_code)s AND PROB.WAREHOUSE=OUTSTK.NAME
-			        AND PROB.STATUS='Open'),0) AS `DEFECTIVE`
-
-			      FROM `tabWarehouse` OUTSTK
-			    ) DER GROUP BY NAME
-		"""
-
-	return frappe.db.sql(query, {
-			'date': date if date else datetime.date.today().strftime('%Y-%m-%d'),
-			'item_code': item_code },
-			as_dict=1)
+	from mapl_customization.customizations_for_mapl.report.effective_stock_report.effective_stock_report import execute
+	return execute(filters={"from_date":frappe.db.get_default("year_start_date"),
+					"to_date":date or frappe.db.get_default("year_end_date"),
+					"item_code": item_code})
 
 @frappe.whitelist()
 def get_non_stock_sales_purchase(from_date, to_date):

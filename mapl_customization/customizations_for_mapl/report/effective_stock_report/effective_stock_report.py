@@ -44,9 +44,23 @@ def get_columns(filters):
 		},
 		{
 			"fieldname":"brand",
-			"fieldtype":"Data",
+			"fieldtype":"Link",
 			"label":"Brand",
+			"options": "Brand",
 			"width":150
+		},
+		{
+			"fieldname":"warehouse",
+			"fieldtype":"Link",
+			"label":"Warehouse",
+			"options": "Warehouse",
+			"width":150
+		},
+		{
+			"fieldname":"description",
+			"fieldtype":"Data",
+			"label":"Description",
+			"width":170
 		},
 		{
 			"fieldname":"open_qty",
@@ -116,47 +130,29 @@ def get_columns(filters):
 	]
 	return columns
 
-def get_open_conditions(filters):
-	conditions = ""
-
-	if filters.get("from_date"):
-		conditions += " and posting_date < '{0}'".format(filters.get("from_date"))
-	return conditions
-
-def get_conditions(filters):
-	conditions = ""
-	if filters.get("from_date"):
-		conditions += " and posting_date > '{0}'".format(filters.get("from_date"))
-
-	if filters.get("to_date"):
-		conditions += " and posting_date <= '{0}'".format(filters.get("to_date"))
-
-	if filters.get("remove_material_transfer"):
-		conditions += """ and if(voucher_type='Stock Entry',
-			(select purpose from `tabStock Entry` se where se.name=voucher_no) 
-			not like '%%Transfer%%', True)"""
-
-	return conditions
-
 def get_conditions_for_invoice(filters):
 	conditions = ""
 
 	if filters.get("from_date"):
-		conditions += " and INV.posting_date > '{0}'".format(filters.get("from_date"))
+		conditions += " and INV.posting_date >= '{0}' ".format(filters.get("from_date"))
 
 	if filters.get("to_date"):
-		conditions += " and INV.posting_date <= '{0}'".format(filters.get("to_date"))
+		conditions += " and INV.posting_date <= '{0}' ".format(filters.get("to_date"))
+
+	conditions += " and INV_ITEM.warehouse = SLE.warehouse "
 
 	return conditions
 
 def get_global_condition(filters):
 	global_condition = ""
 	if filters.get("item_code"):
-		global_condition += " and OUTSTK.NAME = '{0}'".format(filters.get('item_code'))
+		global_condition += " AND SLE.ITEM_CODE = '{0}' ".format(filters.get('item_code'))
 
 	if filters.get("brand"):
-		global_condition += """ AND (select brand from `tabItem` where 
-			item_code=OUTSTK.NAME) = '{0}' """.format(filters.get("brand"))
+		global_condition += """ AND ITEM.BRAND='{0}' """.format(filters.get("brand"))
+
+	if filters.get("warehouse"):
+		global_condition += """ AND SLE.WAREHOUSE='{0}' """.format(filters.get("warehouse"))
 
 	return global_condition
 
@@ -164,9 +160,11 @@ def get_data(filters):
 
 	query = """
 		SELECT
-		  NAME,
+		  ITEM_CODE,
 		  ITEM_GROUP,
 		  BRAND,
+		  WAREHOUSE,
+		  DESCRIPTION,
 		  `OPENING STOCK`,
 		  `IN QTY`,
 		  `OUT QTY`,
@@ -179,34 +177,39 @@ def get_data(filters):
 		  (`OPENING STOCK`+`IN QTY`-`OUT QTY`)-`UNCONFIRMED`-`UNDELIVERED`-`DEFECTIVE`-`CHALLAN`+`PURCHASE` AS `EFFECTIVE STOCK`
 		  FROM (
 		    SELECT
-		        OUTSTK.NAME,
-			OUTSTK.ITEM_GROUP,
-			OUTSTK.BRAND,
-		        IFNULL((SELECT SUM(ACTUAL_QTY) FROM `tabStock Ledger Entry` Stk WHERE
-		          ITEM_CODE=OUTSTK.NAME {open_condition}),0) AS `OPENING STOCK`,
-		        IFNULL((SELECT SUM(ACTUAL_QTY) FROM `tabStock Ledger Entry` Stk WHERE
-		          ITEM_CODE=OUTSTK.NAME AND ACTUAL_QTY > 0 {condition}),0) AS `IN QTY`,
-		        IFNULL((SELECT SUM(ABS(ACTUAL_QTY)) FROM `tabStock Ledger Entry` Stk WHERE
-		          ITEM_CODE=OUTSTK.NAME AND ACTUAL_QTY < 0 {condition}),0) AS `OUT QTY`,
+		        SLE.ITEM_CODE,
+				ITEM.ITEM_GROUP,
+				ITEM.BRAND,
+				SLE.WAREHOUSE,
+				ITEM.DESCRIPTION,
+		        SUM(IFNULL(IF(SLE.POSTING_DATE<'{from_date}',SLE.actual_qty,0),0)) AS `OPENING STOCK`,
+  				SUM(IFNULL(IF(SLE.POSTING_DATE>='{from_date}' AND SLE.POSTING_DATE<='{to_date}' AND SLE.ACTUAL_QTY>0,SLE.ACTUAL_QTY,0),0)) AS `IN QTY`,
+				SUM(IFNULL(IF(SLE.POSTING_DATE>='{from_date}' AND SLE.POSTING_DATE<='{to_date}' AND SLE.ACTUAL_QTY<0,ABS(SLE.ACTUAL_QTY),0),0)) AS `OUT QTY`,
 		        IFNULL((SELECT SUM(INV_ITEM.QTY) FROM `tabSales Invoice` INV, `tabSales Invoice Item` INV_ITEM WHERE
-		        INV_ITEM.PARENT=INV.NAME AND INV.DOCSTATUS<1 AND INV_ITEM.ITEM_CODE=OUTSTK.NAME {inv_condition}),0) AS `UNCONFIRMED`,
+		        INV_ITEM.PARENT=INV.NAME AND INV.DOCSTATUS<1 AND INV_ITEM.ITEM_CODE=SLE.ITEM_CODE {inv_condition}),0) AS `UNCONFIRMED`,
 		        IFNULL((SELECT SUM(INV_ITEM.QTY-INV_ITEM.DELIVERED_QTY) FROM `tabSales Invoice` INV,
 		          `tabSales Invoice Item` INV_ITEM WHERE INV_ITEM.PARENT=INV.NAME AND INV.DOCSTATUS=1 AND
-		          INV_ITEM.DELIVERED_QTY<>INV_ITEM.QTY AND INV.UPDATE_STOCK=0 AND INV_ITEM.ITEM_CODE=OUTSTK.NAME {inv_condition}),0) AS `UNDELIVERED`,
+		          INV_ITEM.DELIVERED_QTY<>INV_ITEM.QTY AND INV.UPDATE_STOCK=0 AND INV_ITEM.ITEM_CODE=SLE.ITEM_CODE {inv_condition}),0) AS `UNDELIVERED`,
             	IFNULL((SELECT SUM(INV_ITEM.QTY) FROM `tabDelivery Note` INV, `tabDelivery Note Item` INV_ITEM WHERE
-                  INV_ITEM.PARENT=INV.NAME AND INV.DOCSTATUS<2 AND INV_ITEM.ITEM_CODE=OUTSTK.NAME  {inv_condition}),0) AS `CHALLAN`,
+                  INV_ITEM.PARENT=INV.NAME AND INV.DOCSTATUS<2 AND INV_ITEM.ITEM_CODE=SLE.ITEM_CODE  {inv_condition}),0) AS `CHALLAN`,
             	IFNULL((SELECT SUM(INV_ITEM.QTY) FROM `tabPurchase Invoice` INV, `tabPurchase Invoice Item` INV_ITEM WHERE
-                  INV_ITEM.PARENT=INV.NAME AND INV.DOCSTATUS<1 AND INV_ITEM.ITEM_CODE=OUTSTK.NAME  {inv_condition}),0) AS `PURCHASE`,				  
-		        IFNULL((SELECT COUNT(*) FROM `tabStock Problem` PROB WHERE PROB.item=OUTSTK.NAME AND PROB.STATUS='Open'),0) AS `DEFECTIVE`
+                  INV_ITEM.PARENT=INV.NAME AND INV.DOCSTATUS<1 AND INV_ITEM.ITEM_CODE=SLE.ITEM_CODE  {inv_condition}),0) AS `PURCHASE`,				  
+		        IFNULL((SELECT COUNT(*) FROM `tabStock Problem` PROB WHERE PROB.item=SLE.ITEM_CODE AND PROB.STATUS='Open'),0) AS `DEFECTIVE`
 		    FROM
-		      `tabItem` OUTSTK
+		      `tabStock Ledger Entry` SLE,
+			  `tabItem` ITEM
 		    WHERE
-		      OUTSTK.IS_STOCK_ITEM=1 {global_condition}
-		    ) DER GROUP BY NAME
+			  ITEM.name=SLE.item_code 
+		      {global_condition}
+			GROUP BY
+			  SLE.WAREHOUSE,
+			  SLE.ITEM_CODE
+		    ) DER
 		""".format(**{
-			"condition":get_conditions(filters),
-			"open_condition":get_open_conditions(filters),
 			"global_condition":get_global_condition(filters),
-			"inv_condition":get_conditions_for_invoice(filters)
+			"inv_condition":get_conditions_for_invoice(filters),
+			"from_date": filters.get("from_date"),
+			"to_date": filters.get("to_date")
 		})
+
 	return frappe.db.sql(query, as_list=1)

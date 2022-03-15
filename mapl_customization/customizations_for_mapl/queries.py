@@ -96,13 +96,32 @@ def mapl_customer_query(doctype, txt, searchfield, start, page_len, filters):
           					where phone.parent = link.parent
             					and phone.phone like %(txt)s)) and cust.disabled=0
   					group by cust.name
-  					order by cust.customer_name, name limit %(start)s, %(page_len)s
+  					order by cust.customer_name, name limit {0}, {1}
 				"""
 
-	return frappe.db.sql(new_query, {
-			'txt': "%%%s%%" % txt,
-			'start': start,
-			'page_len': page_len
+	return frappe.db.sql(new_query.format(start, page_len), {
+			'txt': "%%%s%%" % txt
+		})
+
+# searches for customer by phone only
+@frappe.whitelist()
+def mapl_customer_by_phone_query(doctype, txt, searchfield, start, page_len, filters):
+	new_query = """
+ 					select
+        				cust.name
+      				from `tabCustomer` cust
+  					where (cust.name in (select link.link_name
+         					from
+           						`tabContact Phone` phone,
+           						`tabDynamic Link` link
+          					where phone.parent = link.parent
+            					and phone.phone like %(txt)s)) and cust.disabled=0
+  					group by cust.name
+  					order by cust.customer_name, name limit {0}, {1}
+				"""
+
+	return frappe.db.sql(new_query.format(start, page_len), {
+			'txt': "%%%s%%" % txt
 		})
 
 # searches for supplier

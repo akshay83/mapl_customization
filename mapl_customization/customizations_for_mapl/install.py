@@ -65,6 +65,8 @@ def set_default_options():
 	session_defaults = frappe.get_single("Session Default Settings")
 	sd = session_defaults.append("session_defaults")
 	sd.ref_doctype = "Letter Head"
+	#sd = session_defaults.append("session_defaults")
+	#sd.ref_doctype = "Warehouse"
 	session_defaults.save()
 
 def set_view_permissions():
@@ -119,10 +121,12 @@ def after_install():
 	set_report_permissions()
 
 def on_login(login_manager):
+	warehouse_map = {"Vijay Nagar":"Main Location - MAPL","Geeta Bhawan":"Geeta Bhawan - MAPL","Ranjeet Hanuman":"Ranjeet Hanuman - MAPL"}
 	try:
 		letter_head = frappe.db.get_value("User", login_manager.user, "user_group")
 		letter_head = frappe.db.get_value("Letter Head",letter_head,"name") or \
 						frappe.db.get_value("Letter Head",{"is_default":1},"name")
 		frappe.defaults.set_user_default("letter_head",letter_head, login_manager.user)
+		#frappe.defaults.set_user_default("warehouse", warehouse_map.get(letter_head), login_manager.user)
 	except Exception:
 		pass

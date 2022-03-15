@@ -108,7 +108,6 @@ cf_fields = [
 		"Quotation-is_inclusive_of_taxes",
 		"Quotation-reporting_name",
 		"Quotation-show_bank_details",
-		"Salary Detail-rounding",
 		"Salary Slip-actual_salary",
 		"Salary Slip-advance_deduction_details",
 		"Salary Slip-bank_branch",
@@ -233,7 +232,8 @@ cf_fields = [
 		"Sales Invoice Item-battery_type",
 		"Sales Invoice Item-battery_manufacturer",
 		"Sales Invoice Item-battery_chemistry",
-		"Sales Invoice Item-controller_no"
+		"Sales Invoice Item-controller_no",
+		"User-default_user_warehouse"
 ]
 
 print_fs = [
@@ -306,7 +306,8 @@ fixtures = [	{
 doc_events = {
 	"*" : {
 		"autoname" : "mapl_customization.customizations_for_mapl.naming.set_auto_name",
-		"validate" : "mapl_customization.customizations_for_mapl.naming.check_series"
+		"validate" : "mapl_customization.customizations_for_mapl.naming.check_series",
+		"before_save": "mapl_customization.customizations_for_mapl.naming.check_letter_head"
 	},
 	"Sales Order": {
 		"validate" : "mapl_customization.customizations_for_mapl.sales_order_validation.sales_order_validate",
@@ -325,7 +326,8 @@ doc_events = {
 		"on_submit" : "mapl_customization.customizations_for_mapl.purchase_validation.purchase_receipt_on_submit",
 		"validate" : "mapl_customization.customizations_for_mapl.purchase_validation.purchase_receipt_validate",
 		"before_submit": "mapl_customization.customizations_for_mapl.purchase_validation.purchase_receipt_before_submit",
-		"on_cancel": "mapl_customization.customizations_for_mapl.purchase_validation.purchase_receipt_on_cancel"
+		"on_cancel": "mapl_customization.customizations_for_mapl.purchase_validation.purchase_receipt_on_cancel",
+		"before_validate": "mapl_customization.customizations_for_mapl.purchase_validation.purchase_invoice_before_validate"
 	},
 	"Sales Invoice" : {
 		"on_submit": "mapl_customization.customizations_for_mapl.sales_invoice_hooks.on_submit",
@@ -334,9 +336,9 @@ doc_events = {
 		"before_cancel":"mapl_customization.customizations_for_mapl.sales_invoice_hooks.before_cancel",
 		"on_cancel": "mapl_customization.customizations_for_mapl.sales_invoice_hooks.on_cancel"
 	},
-        "Stock Entry" : {
-                "validate": "mapl_customization.customizations_for_mapl.sales_invoice_validation.validate_stock_entry_serial_no"
-        },
+    "Stock Entry" : {
+        "validate": "mapl_customization.customizations_for_mapl.sales_invoice_validation.validate_stock_entry_serial_no"
+    },
 	"Salary Slip" : {
 		"validate": "mapl_customization.customizations_for_mapl.salary_slip_utils.salary_slip_before_save",
 		"on_submit": "mapl_customization.customizations_for_mapl.salary_slip_gl.on_submit",
@@ -371,8 +373,7 @@ override_doctype_class = {
     "Payment Entry": "mapl_customization.customizations_for_mapl.payment_entry_validation.CustomPaymentEntry"
 }
 
-#doctype_list_js = {"Payment Entry" : "/public/js/payment_entry_list.js",
-#			"Sales Invoice" : "/public/js/sales_invoice_list.js"}
+doctype_list_js = {"Customer" : "/public/js/customer_list.js"}
 
 #version-13 branch supports this
 jenv = {

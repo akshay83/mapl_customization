@@ -14,9 +14,9 @@ def get_salary_payable_account(employee, salary_structure, on_date, company):
             order_by="from_date desc",
             as_dict=True,
     )
-    if not salary_structure_assignment_payroll_payable:
-        salary_structure_assignment_payroll_payable = frappe.db.get_value("Company", company, "default_payroll_payable_account")
-    return salary_structure_assignment_payroll_payable
+    if not salary_structure_assignment_payroll_payable.payroll_payable_account:
+        salary_structure_assignment_payroll_payable.payroll_payable_account = frappe.db.get_value("Company", company, "default_payroll_payable_account")
+    return salary_structure_assignment_payroll_payable.payroll_payable_account
 
 def salary_slip_before_save(doc, method):
 	if doc.get('ignore_validate_hook'):

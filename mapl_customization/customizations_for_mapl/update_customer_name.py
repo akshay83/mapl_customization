@@ -18,7 +18,7 @@ def update_customer_name(customer, customer_name):
 
 		# Get Customer Name Data Fields from Parent
 		link_fields = frappe.db.sql("""select fieldname from `tabDocField` where parent=%(parent_value)s
-				and (fieldname like '%%cust%%' or fieldname like '%%party%%') and fieldtype = 'Data'""",{
+				and (fieldname like '%%cust%%' or fieldname like '%%party%%') and (fieldtype = 'Data' or oldfieldtype='Data')""",{
 					'parent_value' : p.parent
 					},as_dict=1)
 
@@ -40,21 +40,19 @@ def update_customer_name(customer, customer_name):
                                 and `default` like '%%{def_field}%%' and fieldtype = 'Data'""".format (**{
 					'def_field': l.fieldname
 					}), {
-                                        'parent_value' : p.parent
-                                        },as_dict=1)
+                        	'parent_value' : p.parent
+                        },as_dict=1)
 
 			for o in other_fields:
-
 				# Update Records
 				frappe.db.sql("""update `tab{tab_name}` set {other_field} = %(value)s where 
 						{link_field} = %(link_value)s""".format (**{
                                                 "tab_name":p.parent,
                                                 "other_field": o.fieldname,
 						"link_field": p.fieldname,
-                                        }), {
-                                                "value": customer_name,
-						"link_value": customer
-                                        })
-
+                        }), {
+                            	"value": customer_name,
+								"link_value": customer
+                        })
 
 	frappe.db.commit()

@@ -160,6 +160,15 @@
   {
    "hidden": 0,
    "is_query_report": 0,
+   "label": "Stock Problem",
+   "link_to": "Stock Problem",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
    "label": "Accounting Reports",
    "link_type": "DocType",
    "onboard": 0,
@@ -204,6 +213,32 @@
   {
    "hidden": 0,
    "is_query_report": 0,
+   "label": "Outstanding",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Reference Outstanding",
+   "link_to": "Reference Outstanding",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Finance Outstanding",
+   "link_to": "Finance Outstanding",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
    "label": "Daily Reports",
    "link_type": "DocType",
    "onboard": 0,
@@ -223,6 +258,15 @@
    "is_query_report": 1,
    "label": "Collection Report",
    "link_to": "Daily Collection Report",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Parking Report",
+   "link_to": "Parking Payment Report",
    "link_type": "Report",
    "onboard": 0,
    "type": "Link"
@@ -278,9 +322,35 @@
    "link_type": "Report",
    "onboard": 0,
    "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Monthly Stock Movement",
+   "link_to": "Monthly Stock Movement",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Tax Reports",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Sales Taxes Report",
+   "link_to": "Sales Taxes Report",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
   }
  ],
- "modified": "2022-02-28 23:55:24.978015",
+ "modified": "2022-03-09 20:43:11.272558",
  "modified_by": "Administrator",
  "module": "Customizations for MAPL",
  "name": "Tailored Dashboard",
@@ -300,6 +370,12 @@
    "doc_view": "List",
    "label": "Payment Entry",
    "link_to": "Payment Entry",
+   "type": "DocType"
+  },
+  {
+   "doc_view": "List",
+   "label": "Purchase Invoice",
+   "link_to": "Purchase Invoice",
    "type": "DocType"
   },
   {

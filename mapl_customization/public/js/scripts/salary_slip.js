@@ -81,11 +81,11 @@ frappe.ui.form.on("Salary Slip", "refresh", function (frm) {
 
 function fetch_payroll_payable_account(frm) {
 	frappe.db.get_value("Employee", frm.doc.employee, "date_of_joining").then((value) => {
+		if (value === undefined || frm.doc.salary_structure === undefined || value.message.date_of_joining === undefined) return;
 		let fetch_dt = frm.doc.start_date;
-		if (new Date(value) > new Date(frm.doc.start_date)) {
-			fetch_dt = value;
+		if (new Date(value.message.date_of_joining) > new Date(frm.doc.start_date)) {
+			fetch_dt = value.message.date_of_joining;
 		}
-		if (value === undefined || frm.doc.salary_structure === undefined) return;
 		frappe.call({
 			method: "mapl_customization.customizations_for_mapl.salary_slip_utils.get_salary_payable_account",
 			args: {
@@ -96,7 +96,8 @@ function fetch_payroll_payable_account(frm) {
 			},
 			callback: function(r) {
 				if (r.message) {
-					frm.doc.salary_payable_account = r.message.payroll_payable_account;
+					console.log(r.message);
+					frm.doc.salary_payable_account = r.message;
 					frm.refresh_field("salary_payable_account");
 				}
 			}

@@ -1,0 +1,46 @@
+{
+ "cards_label": "Custom Reports",
+ "category": "Modules",
+ "charts": [],
+ "creation": "2022-03-09 19:52:54.369548",
+ "developer_mode_only": 0,
+ "disable_user_customization": 0,
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "extends": "Payroll",
+ "extends_another_page": 1,
+ "hide_custom": 0,
+ "idx": 0,
+ "is_default": 0,
+ "is_standard": 1,
+ "label": "Custom Payroll",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Salary Register",
+   "link_to": "Custom Salary Register",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Salary Structure Details",
+   "link_to": "Salary Structure Details",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2022-03-09 19:52:54.369548",
+ "modified_by": "akshay.mehta@mehtaautomobiles.com",
+ "module": "Customizations for MAPL",
+ "name": "Custom Payroll",
+ "owner": "akshay.mehta@mehtaautomobiles.com",
+ "pin_to_bottom": 0,
+ "pin_to_top": 0,
+ "restrict_to_domain": "",
+ "shortcuts": []
+}

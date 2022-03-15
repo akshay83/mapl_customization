@@ -71,7 +71,7 @@ cur_frm.add_fetch('item_code', 'is_electric_vehicle', 'is_electric_vehicle');
 cur_frm.add_fetch('customer', 'tax_id', 'test_vat');
 cur_frm.add_fetch('customer', 'vehicle_no', 'customer_vehicle_no');
 
-frappe.ui.form.on("Sales Invoice", "onload_post_render", function (frm) {
+frappe.ui.form.on("Sales Invoice", "onload_post_render", async function (frm) {
 	$('div').find("[data-label='Fetch%20Timesheet']").hide();
 	$('div').find("[data-label='Get%20Items%20From']").hide();
 
@@ -100,6 +100,12 @@ frappe.ui.form.on("Sales Invoice", "onload_post_render", function (frm) {
 		}
 	});
 	$('.frappe-control.input-max-width[data-fieldname="grand_total"]').find('.control-value.like-disabled-input.bold').css('background', 'lightblue')
+	
+	//Set Default Warehouse
+    if (frm.is_new() !== undefined && frm.is_new()) {
+        frm.set_value("set_warehouse", await custom.get_default_warehouse());
+        frm.refresh_field("set_warehouse");
+    }
 });
 
 frappe.ui.form.on("Sales Invoice", "customer_address", function (frm) {
@@ -154,11 +160,8 @@ frappe.ui.form.on("Sales Invoice", "items_on_form_rendered", function (frm) {
 	// The button in child form
 	var grid_row = frm.open_grid_row();
 
-	//Set target_warehouse as Null, overcome problem of Default Warehouse
-	grid_row.grid_form.fields_dict.target_warehouse.set_model_value(null);
-
 	// Add Button to Child Form ... Wrap it around the "dialog_result" field
-	var $btn = $('<button class="btn btn-sm btn-default">' + __("Current Stock") + '</button>')
+	var $btn = $('<button class="btn btn-sm btn-default" style="background:var(--bg-blue);">' + __("Current Stock") + '</button>')
 		.appendTo($("<div>").css({
 			"margin-bottom": "10px",
 			"margin-top": "10px"
@@ -167,18 +170,7 @@ frappe.ui.form.on("Sales Invoice", "items_on_form_rendered", function (frm) {
 	// Bind a Event to Added Button
 	$btn.on("click", function () {
 		if (grid_row.grid_form.fields_dict.item_code.value) {
-			frappe.call({
-				method: "mapl_customization.customizations_for_mapl.utils.get_effective_stock_at_all_warehouse",
-				args: {
-					"item_code": grid_row.grid_form.fields_dict.item_code.value,
-					"date": frm.doc.posting_date
-				},
-				callback: function (r) {
-					if (r.message) {
-						custom.show_stock_dialog(r.message);
-					}
-				}
-			});
+			custom.show_effective_stock_for(grid_row.grid_form.fields_dict.item_code.value, frm.doc.posting_date);
 		}
 	});
 });

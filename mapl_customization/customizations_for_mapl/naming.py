@@ -170,14 +170,24 @@ def check_new_document(doc, method, fy):
 
 	last_series = frappe.db.sql(query, {'start_date':fy[1], 'end_date': fy[2], 'letter': doc.letter_head}, as_dict=1)
 
-	#DEBUG#print "DEBUG:"+doc_date, last_series[0].posting_date
-	#DEBUG#fy = get_fiscal_year(date=doc_date)
-	#DEBUG#print "DEBUG:"+fy[1], fy[2]
+	#--DEBUG--print ("DEBUG:"+doc_date, last_series[0].posting_date)
+	#--DEBUG--fy = get_fiscal_year(date=doc_date)
+	#--DEBUG--print ("DEBUG:"+fy[1], fy[2])
 
 	if last_series and len(last_series)>0:
 		if (getdate(doc.posting_date) < getdate(last_series[0].posting_date)):
 			msg = """{0} No {1} Already Made on {2}, Hence A New One Cannot Be Made for {3}""".format(doc.doctype, last_series[0].name, last_series[0].posting_date, doc.posting_date)
-			#print "DEBUG:"+msg
+			#--DEBUG--print ("DEBUG:"+msg)
 			frappe.throw(msg)
 		#else:
-			#print "DEBUG:OK"
+			#--DEBUG--print ("DEBUG:OK")
+
+def check_letter_head(doc, method):
+	if not doc.get("letter_head"):
+		return
+	if doc.doctype not in ["Sales Invoice", "Payment Entry", "Delivery Note"]:
+		return
+	if (doc.letter_head == 'Vijay Nagar' and 'VN' not in doc.name) or \
+			(doc.letter_head == 'Geeta Bhawan' and 'GB' not in doc.name) or \
+			(doc.letter_head == 'Ranjeet Hanuman' and 'RH' not in doc.name):
+		frappe.msgprint("Letter Head Mismatch Kindly Recheck Before Continuing")

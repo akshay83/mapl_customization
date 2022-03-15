@@ -243,6 +243,8 @@ def get_employee_details(filters):
 					  slip.bank_name,
 					  slip.ifsc_code,
 					  slip.bank_account_no,
+					  slip.salary_payable_account,
+					  slip.company,
 					  struct.base
 					from
 					  `tabSalary Slip` slip left join
@@ -258,7 +260,7 @@ def get_employee_details(filters):
 					(filters.get("from_date"), filters.get("to_date")), as_dict=True)
 
 	for e in emp_details:
-		build_row = {}
+		build_row = frappe._dict()
 		build_row["salary_slip_id"] = e.name
 		build_row["employee_id"] = e.employee
 		build_row["employee_name"] = e.employee_name
@@ -273,6 +275,8 @@ def get_employee_details(filters):
 		build_row["bank_name"] = e.bank_name
 		build_row["ifsc"] = e.ifsc_code
 		build_row["account_no"] = e.bank_account_no
+		build_row["salary_payable_account"] = e.salary_payable_account
+		build_row["company"] = e.company
 
 		build_row.update(get_earnings_and_deductions(e.name))
 		build_row.update(get_loan_details(e.name))

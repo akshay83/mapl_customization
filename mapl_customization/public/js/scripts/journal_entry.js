@@ -1,16 +1,23 @@
-cur_frm.set_query("party", "accounts", function (doc, cdt, cdn) {
-	var jvd = frappe.get_doc(cdt, cdn);
-	return {
-		query: "mapl_customization.customizations_for_mapl.queries.select_customer_supplier_query",
-		filters: { 'party_type': jvd.party_type }
-	}
+frappe.ui.form.on("Journal Entry", "onload_post_render", function (frm) {
+	frm.set_query("party", "accounts", function (doc, cdt, cdn) {
+		let pt = frappe.get_doc(cdt, cdn).party_type;
+		return {
+			query: "mapl_customization.customizations_for_mapl.queries.select_customer_supplier_query",
+			filters: { 'party_type': pt }
+		}
+	});
+	frm.set_query("party_type", "accounts", function (doc, cdt, cdn) {
+		return {
+			query: "erpnext.setup.doctype.party_type.party_type.get_party_type"
+		}
+	});
 });
 
 frappe.ui.form.on("Journal Entry Account", "party", function (frm, dt, dn) {
-	var grid_row = frm.open_grid_row();
-	var party = null;
-	var pt = null;
-	var p = null;
+	let grid_row = frm.open_grid_row();
+	let party = null;
+	let pt = null;
+	let p = null;
 
 	if (!grid_row) {
 		party = frappe.get_doc(dt, dn);
@@ -39,7 +46,7 @@ frappe.ui.form.on("Journal Entry Account", "party", function (frm, dt, dn) {
 					} else {
 						party.party_name = r.message;
 					}
-					cur_frm.refresh_field('accounts');
+					frm.refresh_field('accounts');
 				}
 			}
 		});

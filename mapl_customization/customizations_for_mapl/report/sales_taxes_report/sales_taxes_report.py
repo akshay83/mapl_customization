@@ -4,6 +4,7 @@
 from __future__ import unicode_literals
 import frappe
 import json
+from frappe.utils import flt
 
 def execute(filters=None):
 	columns, data = [], []
@@ -87,11 +88,14 @@ def execute(filters=None):
 	data = get_query(filters)
 	return columns, data
 
+def get_tax_type_query(with_tax_rate=1):
+	query = """select distinct template.tax_type {0} from `tabItem Tax` item,`tabItem Tax Template Detail` template 
+				where template.parent=item.item_tax_template order by template.tax_rate desc""".format(",template.tax_rate" if with_tax_rate else "")
+	return query
 
 def get_columns(filters):
 	columns = []
-	query = """select distinct tax_type,tax_rate from `tabItem Tax` order by tax_rate desc"""
-	for d in frappe.db.sql(query, as_dict=1):
+	for d in frappe.db.sql(get_tax_type_query(), as_dict=1):
 		build_column = {}
 		build_column["fieldname"] = d.tax_type+"-"+str(float(d.tax_rate))+"%"
 		build_column["label"] = d.tax_type+"-"+str(d.tax_rate)+"%"
@@ -100,21 +104,17 @@ def get_columns(filters):
 		columns.append(build_column)
 	return columns
 
-
-
 def get_conditions(filters):
 	conditions = ""
 
 	if filters.get("from_date"):
-		conditions += " and sales.posting_date >= '%s'" % frappe.db.escape(filters["from_date"])
+		conditions += " and sales.posting_date >= '{0}'".format(filters.get("from_date"))
 
 
 	if filters.get("to_date"):
-		conditions += " and sales.posting_date <= '%s'" % frappe.db.escape(filters["to_date"])
-
+		conditions += " and sales.posting_date <= '{0}'".format(filters.get("to_date"))
 
 	return conditions
-
 
 def get_document_specific_columns(filters):
 	if filters.get("document_type"):
@@ -123,8 +123,6 @@ def get_document_specific_columns(filters):
 				(select concat(ifnull(concat(addr.state,','),''),addr.gst_state) from `tabAddress` addr where addr.name=sales.customer_address) as state"""
 	return """,sales.supplier_gstin as gstin,sales.supplier_name as party_name,sales.bill_no as inv_no,sales.bill_date as inv_date,
 		  (select supplier_type from `tabSupplier` where name=sales.supplier) as supplier_type, supply_type"""
-
-
 
 def get_query(filters):
 	rows = []
@@ -144,7 +142,7 @@ def get_query(filters):
 			  where 
 			    taxes.parent=sales.name 
 			    and (taxes.charge_type != 'Actual' 
-				or taxes.account_head in (select distinct tax_type from `tabItem Tax`))
+				or taxes.account_head in ({tax_type_query}))
 			    and sales.docstatus = 1
 			    {condition}
 			  order by sales.name"""
@@ -156,7 +154,8 @@ def get_query(filters):
 	query = query.format(**{
 				"doctype":"Sales" if (filters.get("document_type") and filters["document_type"]=="Sales") else "Purchase",
 				"doc_columns": get_document_specific_columns(filters),
-				"condition":get_conditions(filters)
+				"condition":get_conditions(filters),
+				"tax_type_query":get_tax_type_query(with_tax_rate=0)
 				})
 
 	#if filters.get("document_type") and filters["document_type"] == "Sales":
@@ -178,7 +177,7 @@ def get_query(filters):
 				build_row["invoice_date"] = d.inv_date
 				build_row["posting_date"] = d.posting_date
 				build_row["party_gstin"] = d.gstin
-				build_row["taxable_amt"] = d.net_total
+				build_row["taxable_amt"] = flt(d.net_total)
 				build_row["party_name"] = d.party_name
 				build_row["charge_type"] = d.charge_type
 				build_row["supplier_type"] = d.supplier_type if d.supplier_type else d.state
@@ -186,40 +185,36 @@ def get_query(filters):
 				temp_name = d.name
 				temp_account_head = d.item_tax_rate
 
-			build_row["total_tax"] = build_row.get("total_tax",0) + d.tax_amount
+			build_row["total_tax"] = flt(build_row.get("total_tax",0) + d.tax_amount)
 
 			tax_json = d.item_wise_tax_detail
-			if isinstance(tax_json, basestring):
+			if isinstance(tax_json, str):
 				tax_json = json.loads(tax_json)
-
 
 			if d.charge_type != 'Actual':
 				for key, val in tax_json.items():
 					build_key = d.account_head+"-"+str(float(val[0]))+"%"
-					build_row[build_key] = build_row.get(build_key,0) + val[1]
+					build_row[build_key] = flt(build_row.get(build_key,0) + val[1])
 			else:
 				doc = frappe.get_doc("{doctype} Invoice".format(**{
 						"doctype":"Sales" if (filters.get("document_type") and filters["document_type"]=="Sales") else "Purchase",
 						}), d.name)
 
 				for i in doc.items:
-
 					txs = frappe.get_doc("Item", i.item_code).taxes
-
 					for t in txs:
 						build_key = d.account_head+"-"+str(float(t.tax_rate))+"%"
 						if t.tax_type==d.account_head:
-							build_row[build_key] = build_row.get(build_key, 0) + round((i.net_amount * float(t.tax_rate) / 100),2)
+							build_row[build_key] = flt(build_row.get(build_key, 0) + round((i.net_amount * float(t.tax_rate) / 100),2))
 
 	rows.append(build_row)
 	return rows
-
 
 def get_sales_query():
 	return """
 			select
                             sales.name,
-			    sales.reporting_name,
+			    			sales.reporting_name,
                             cust.customer_name,
                             concat(ifnull(addr.city,''),',',ifnull(addr.state,'')) as place,
                             concat(ifnull(addr.gst_state,''),',',ifnull(addr.gst_state_number,'')) as gst_state,
@@ -248,6 +243,6 @@ def get_sales_query():
                             and (taxes.charge_type != 'Actual'
                                 or taxes.account_head in (select distinct tax_type from `tabItem Tax`))
                             and sales.docstatus = 1
-			    {condition}
+			    			{condition}
                           order by sales.name, item.item_tax_rate, account_head
-	"""
+		"""

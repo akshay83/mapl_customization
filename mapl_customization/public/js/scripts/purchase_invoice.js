@@ -1,10 +1,18 @@
 cur_frm.add_fetch('item_code', 'is_vehicle', 'is_vehicle');
 cur_frm.add_fetch('item_code', 'is_electric_vehicle', 'is_electric_vehicle');
 
+frappe.ui.form.on("Purchase Invoice", "onload_post_render", async function(frm) {
+    //Set Default Warehouse
+    if (frm.is_new() !== undefined && frm.is_new()) {
+        frm.set_value("set_warehouse", await custom.get_default_warehouse());
+        frm.refresh_field("set_warehouse");
+    }
+});
+
 frappe.ui.form.on("Purchase Invoice", "items_on_form_rendered", function (frm, cdt, cdn) {
-    var grid_row = frm.open_grid_row();
+    let grid_row = frm.open_grid_row();
     // Add Button to Child Form ... Wrap it around the "dialog_result" field
-    var $btn = $('<button class="btn btn-sm btn-default" style="background:var(--bg-blue);">' + __("Add Serial No") + '</button>')
+    let $btn = $('<button class="btn btn-sm btn-default" style="background:var(--bg-blue);">' + __("Add Serial No") + '</button>')
         .appendTo($("<div>")
             .css({
                 "margin-bottom": "10px",
@@ -16,13 +24,6 @@ frappe.ui.form.on("Purchase Invoice", "items_on_form_rendered", function (frm, c
             custom.show_custom_insert_dialog(frm, cdt, cdn);
         }
     });
-});
-
-frappe.ui.form.on("Purchase Invoice", "items_on_form_rendered", function (frm) {
-    var grid_row = frm.open_grid_row();
-    //grid_row.grid_form.fields_dict.warehouse.set_model_value(frm.doc.default_accepted_warehouse);
-    //Set rejected_warehouse as Null, overcome problem of Default Warehouse
-    grid_row.grid_form.fields_dict.rejected_warehouse.set_model_value(null);
 });
 
 frappe.ui.form.on("Purchase Invoice", "validate", function (frm) {
@@ -39,7 +40,7 @@ frappe.ui.form.on("Purchase Invoice", "validate", function (frm) {
 });
 
 frappe.ui.form.on("Purchase Invoice Item", "item_code", function (frm, cdt, cdn) {
-    setTimeout(function () {
+    setTimeout(async function () {
         let doc = null;
         if (frm.open_grid_row() !== undefined) {
             doc = frm.open_grid_row().doc;
@@ -49,9 +50,5 @@ frappe.ui.form.on("Purchase Invoice Item", "item_code", function (frm, cdt, cdn)
         if (frm.doc.update_stock && doc.item_code && doc.has_serial_no) {
             custom.show_custom_insert_dialog(frm, cdt, cdn);
         }
-        if (frm.doc.update_stock && doc.item_code) {
-            doc.expense_account = "";
-            frm.refresh_field("items");
-        }
-    },500);
+    }, 500);
 });

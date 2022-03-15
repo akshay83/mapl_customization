@@ -57,13 +57,6 @@ frappe.ui.form.on("Payment Entry", "onload_post_render", function (frm) {
 			}
 		});
 	}
-
-	frm.set_query("party", function (doc) {
-		return {
-			query: "mapl_customization.customizations_for_mapl.queries.select_customer_supplier_query",
-			filters: { 'party_type': doc.party_type }
-		}
-	});
 	frm.set_query("party_address", function (doc) {
 		if (doc.party_type == "Customer") {
 			return {
@@ -85,7 +78,16 @@ frappe.ui.form.on("Payment Entry", "onload_post_render", function (frm) {
 		}
 	});
 });
-
+frappe.ui.form.on("Payment Entry", "party_type", function(frm) {
+	frm.set_query("party", function (doc) {
+		if (frm.doc.party_type == 'Customer') {
+			return {
+				query: "mapl_customization.customizations_for_mapl.queries.select_customer_supplier_query",
+				filters: { 'party_type': doc.party_type }
+			}
+		}
+	});
+});
 frappe.ui.form.on("Payment Entry", "party", function (frm) {
 	if (frm.doc.party_type && frm.doc.party) {
 		frappe.call({
@@ -118,9 +120,9 @@ frappe.ui.form.on("Payment Entry", "party", function (frm) {
 			frm.doc.company, function (result) {
 				show_alert(result, 8);
 			});
-			frm.fields_dict.payment_accounts_section.wrapper.show();
-			frm.fields_dict.accounting_dimensions_section.wrapper.show();
-			frm.fields_dict.finance.wrapper.show();			
+		frm.fields_dict.payment_accounts_section.wrapper.show();
+		frm.fields_dict.accounting_dimensions_section.wrapper.show();
+		frm.fields_dict.finance.wrapper.show();
 	}
 });
 
@@ -141,11 +143,11 @@ frappe.ui.form.on("Payment Entry", "party_address", function (frm) {
 	}
 });
 
-frappe.ui.form.on("Payment Entry", "*", function(frm) {
+frappe.ui.form.on("Payment Entry", "*", function (frm) {
 	custom.hide_print_button("Payment Entry", frm);
 });
 
-frappe.ui.form.on("Payment Entry", "onload", function(frm) {
+frappe.ui.form.on("Payment Entry", "onload", function (frm) {
 	//--DEBUG--console.log("Called Onload Event");
 	custom.hide_print_button("Payment Entry", frm);
 });

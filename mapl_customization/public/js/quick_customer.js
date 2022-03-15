@@ -2,7 +2,7 @@ frappe.provide("frappe");
 frappe.provide("custom");
 
 custom.customer_quick_entry = function (doc) {
-		var dialog = new frappe.ui.Dialog({
+		let dialog = new frappe.ui.Dialog({
 			title: __("Quick Customer Entry"),
 			fields: [
 				{fieldtype: "Select", fieldname: "customer_type", label: __("Customer Type"), reqd: 1, options: "Company\nIndividual", default: "Individual"},
@@ -60,7 +60,7 @@ custom.customer_quick_entry = function (doc) {
 
 
 	//TO HIDE A FIELD IN DIALOG
-	var fd = dialog.fields_dict;
+	let fd = dialog.fields_dict;
 
 	$(fd.company_name.wrapper).toggle(fd.customer_type.get_value()==='Individual')
 	$(fd.customer_type.input).change(function() {
@@ -122,15 +122,16 @@ custom.customer_quick_entry.unset_called_from = function() {
 }
 
 custom.customer_quick_entry.set_default_values = function(doc, docfields) {
-	for(var fid=0;fid<docfields.length;fid++) {
-		var f = docfields[fid];
-		var v;
+	for(let fid=0;fid<docfields.length;fid++) {
+		let f = docfields[fid];
+		let v;
 		try {
 			v = frappe.model.get_default_value(f, {doctype: 'Customer'}, null);
 		} catch (err) {
 		}
 		if(v) {
-			console.log(f+"  "+v);
+			console.log(f);
+			console.log(v);
 			doc.set_value(f.fieldname, v);
 		} else if(f.fieldtype == "Select" && f.options && typeof f.options === 'string'
 					&& !in_list(["[Select]", "Loading..."], f.options)) {

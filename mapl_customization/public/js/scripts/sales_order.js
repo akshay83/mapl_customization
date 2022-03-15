@@ -27,10 +27,10 @@ frappe.ui.form.on("Sales Order","onload_post_render", function(frm) {
 frappe.ui.form.on("Sales Order", "items_on_form_rendered", function(frm) {
 	// Important Note : Sub Form Fieldname+"_on_form_rendered" would trigger and add
 	// The button in child form
-	var grid_row = cur_frm.open_grid_row();
+	let grid_row = cur_frm.open_grid_row();
 
 	// Add Button to Child Form ... Wrap it around the "dialog_result" field
-	var $btn = $('<button class="btn btn-sm btn-default">' + __("Current Stock") + '</button>')
+	let $btn = $('<button class="btn btn-sm btn-default" style="background:var(--bg-blue);">' + __("Current Stock") + '</button>')
 		.appendTo($("<div>").css({
 			"margin-bottom": "10px",
 			"margin-top": "10px"
@@ -39,18 +39,7 @@ frappe.ui.form.on("Sales Order", "items_on_form_rendered", function(frm) {
 	// Bind a Event to Added Button
 	$btn.on("click", function() {
 		if (grid_row.grid_form.fields_dict.item_code.value) {
-			frappe.call({
-				method: "mapl_customization.customizations_for_mapl.utils.get_effective_stock_at_all_warehouse",
-				args: {
-					"item_code": grid_row.grid_form.fields_dict.item_code.value,
-					"date": cur_frm.doc.transaction_date
-				},
-				callback: function(r) {
-					if (r.message) {
-						custom.show_stock_dialog(r.message);
-					}
-				}
-			});
+			custom.show_effective_stock_for( grid_row.grid_form.fields_dict.item_code.value, frm.doc.transaction_date);
 		}
 	});
 });

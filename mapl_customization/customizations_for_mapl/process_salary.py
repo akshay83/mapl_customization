@@ -7,14 +7,16 @@ from mapl_customization.customizations_for_mapl.report.custom_salary_register.cu
 from erpnext import get_default_cost_center
 
 @frappe.whitelist()
-def process_staff_salaries_jv(payable_account, date, filters, director):
+def process_staff_salaries(date, filters):
+	process_staff_salaries_jv(date, filters)
 
+def process_staff_salaries_jv(date, filters, payable_account=None, omit_director=False):
 	if isinstance(filters, str):
 		filters = json.loads(filters)
 
 	if filters.get("date_range"):
 		filters.update({"from_date": filters.get("date_range")[0], "to_date":filters.get("date_range")[1]})
-	else:
+	elif not (filters.get("from_date") and filters.get("to_date")):
 		return
 
 	details = get_employee_details(filters)
@@ -25,9 +27,13 @@ def process_staff_salaries_jv(payable_account, date, filters, director):
 
 	earnings_deductions = {}
 	for d in details:
-		if not d["designation"] or (d["designation"] and d["designation"].lower() != 'director'):
-			process_staff_jv(jv, d, payable_account, earnings_deductions)
-
+		if omit_director and (d.get("designation") and d.designation.lower() == 'director'):
+			continue
+		pa = payable_account
+		if not pa:
+			pa = d.salary_payable_account or frappe.db.get_value("Company", d.company, "default_payroll_payable_account")
+		process_staff_jv(jv, d, pa, earnings_deductions)
+		
 	for comp, amount in earnings_deductions.items():
 		ac1 = jv.append("accounts")
 		account = frappe.get_list("Salary Component Account", filters={"parent":comp}, fields=["account","company"])
