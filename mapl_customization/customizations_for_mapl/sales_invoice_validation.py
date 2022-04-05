@@ -126,6 +126,8 @@ def vehicle_validation(doc, method):
 			frappe.throw("A Sales Invoice can have only ONE Vehicle")
 
 def negative_stock_validation(doc, method, show_message=True):
+	if cint(doc.is_return):
+		return 1
 	for i in doc.get("items"):
 		if ((i.item_code and frappe.db.get_value("Item", i.item_code, "is_stock_item"))):
 			if (i.actual_qty <= 0 or i.actual_qty < i.qty):

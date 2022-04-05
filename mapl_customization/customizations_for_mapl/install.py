@@ -77,6 +77,7 @@ def set_view_permissions():
 	frappe.db.set_value("Role","Accounts User", "form_sidebar", 1)
 	frappe.db.set_value("Role","Accounts User", "list_sidebar", 1)
 	frappe.db.set_value("Role","Accounts User", "view_switcher", 1)
+	frappe.db.set_value("Role","Accounts User", "timeline", 1)
 	from frappe.permissions import add_permission, update_permission_property
 	add_permission("Workflow", "Accounts User")
 	add_permission("Workflow", "Stock User")

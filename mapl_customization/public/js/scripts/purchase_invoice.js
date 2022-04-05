@@ -1,7 +1,7 @@
 cur_frm.add_fetch('item_code', 'is_vehicle', 'is_vehicle');
 cur_frm.add_fetch('item_code', 'is_electric_vehicle', 'is_electric_vehicle');
 
-frappe.ui.form.on("Purchase Invoice", "onload_post_render", async function(frm) {
+frappe.ui.form.on("Purchase Invoice", "onload_post_render", async function (frm) {
     //Set Default Warehouse
     if (frm.is_new() !== undefined && frm.is_new()) {
         frm.set_value("set_warehouse", await custom.get_default_warehouse());
@@ -51,4 +51,16 @@ frappe.ui.form.on("Purchase Invoice Item", "item_code", function (frm, cdt, cdn)
             custom.show_custom_insert_dialog(frm, cdt, cdn);
         }
     }, 500);
+});
+
+frappe.ui.form.on("Purchase Invoice", "refresh", function (frm) {
+    setTimeout(function () {
+        if (frm.doc.__islocal !== undefined && frm.doc.__islocal) {
+            console.log("Onload Purchase Invoice");
+            frappe.db.get_single_value("Global Defaults", "disable_rounded_total").then(val => {
+                frm.doc.disable_rounded_total = val;
+                frm.refresh_field('disable_rounded_total');
+            });
+        }
+    },2000);
 });

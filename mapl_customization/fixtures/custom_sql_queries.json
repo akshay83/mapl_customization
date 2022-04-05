@@ -171,12 +171,12 @@
   "description": null,
   "docstatus": 0,
   "doctype": "Custom SQL Queries",
-  "modified": "2022-02-27 01:29:31.971939",
+  "modified": "2022-03-15 15:45:06.356805",
   "name": "Serial Nos for Price Drop",
   "parent": null,
   "parentfield": null,
   "parenttype": null,
-  "query": "select \n  serial.name,\n  serial.item_code,\n  serial.brand,\n  serial.delivery_date,\n  min(sle.posting_date) as purchase_date,\n  count(*)\nfrom \n  `tabSerial No` serial,\n  `tabStock Ledger Entry` sle\nwhere\n  sle.item_code=serial.item_code\n  and serial.item_code regexp ('49E400|43ES480|49ES480|49ES630|55ES500|49EX600|55EX600')\n  and sle.voucher_no not in (select name from `tabStock Entry` where purpose='Material Transfer')  \n  and serial.name regexp REPLACE(TRIM(TRAILING '\\n' FROM sle.serial_no), '\\n', '|')\n  and (serial.delivery_date is null or serial.delivery_date &gt;= '2017-10-01')\ngroup by\n  serial.name\norder by \n  item_code",
+  "query": "select\r\n  serial.name,\r\n  serial.item_code,\r\n  serial.brand,\r\n  serial.delivery_date,\r\n  min(sle.posting_date) as purchase_date,\r\n  count(*)\r\nfrom\r\n  `tabSerial No` serial,\r\n  `tabStock Ledger Entry` sle\r\nwhere\r\n  sle.item_code=serial.item_code\r\n  and serial.item_code regexp ('OLED65G1PTZ.ATR|OLED55C1PTZ.ATR|OLED55C1XTZ.ATR|OLED55B1PTZ.ATR|OLED55A1PTZ.ATR')\r\n  and sle.voucher_no not in (select name from `tabStock Entry` where purpose='Material Transfer')  \r\n  and serial.name regexp REPLACE(TRIM(TRAILING '\\n' FROM sle.serial_no), '\\n', '|')\r\n  and (serial.delivery_date is null or serial.delivery_date >= '2022-03-04')\r\ngroup by\r\n  serial.name\r\norder by\r\n  item_code",
   "query_name": "Serial Nos for Price Drop"
  },
  {
@@ -411,12 +411,12 @@
   "description": null,
   "docstatus": 0,
   "doctype": "Custom SQL Queries",
-  "modified": "2022-02-27 01:29:31.784445",
+  "modified": "2022-03-19 17:13:55.326046",
   "name": "Finance Name Check",
   "parent": null,
   "parentfield": null,
   "parenttype": null,
-  "query": "select \n  idx, \n  finance_customer_name, \n  internal_customer_name \nfrom \n  `tabFinance Payment Details` \nwhere \n  (soundex(internal_customer_name)&lt;&gt;soundex(finance_customer_name) \n    or internal_customer is null) \n  and parent = 'BAFL RF Oct 19' \norder by idx",
+  "query": "select\r\n  idx,\r\n  finance_customer_name,\r\n  internal_customer_name\r\nfrom\r\n  `tabFinance Payment Details`\r\nwhere\r\n  (soundex(internal_customer_name)<>soundex(finance_customer_name)\r\n    or internal_customer is null)\r\n  and parent = 'Bajaj - 1st Feb to 15th Mar 22'\r\norder by idx",
   "query_name": "Finance Name Check"
  },
  {

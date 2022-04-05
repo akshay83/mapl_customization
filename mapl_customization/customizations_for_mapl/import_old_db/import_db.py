@@ -683,6 +683,13 @@ class ImportDB(object):
                     self.update_series(s.series_key, s.series_value)
         self.commit()
 
+    def update_naming_series_address(self):
+        series_list = self.get_address_series_list()
+        for s in series_list:
+            if (s.get('series_key') and s.series_key != "" and s.series_value.isdigit()):
+                self.update_series(s.series_key, s.series_value)
+        self.commit()
+
     def get_transactions_series_list(self, doctype):
         query = """
                 select  distinct substring(name, 1, length(name)-length(substring_index(name,'/',-1))) as series_key, 
@@ -698,6 +705,16 @@ class ImportDB(object):
                         group by substring(name, 1, length(name)-length(substring_index(name,'-',-1)))        
                 """
         return frappe.db.sql(query.format(doc), as_dict=1)
+
+    def get_address_series_list(self):
+        query = """select * from (
+                    select  distinct substring(name, 1, length(name)-length(substring_index(name,'-',-1))) as series_key,
+                        max(substring_index(name,'-',-1)) as series_value 
+                    from `tab{0}`
+                    group by substring(name, 1, length(name)-length(substring_index(name,'-',-1)))        
+                    ) series_data where series_key like '%billing-%' or series_key like '%shipping-%'
+                """
+        return frappe.db.sql(query.format("Address"), as_dict=1)
 
     def update_series(self, key, value):
         check = frappe.db.sql("select * from `tabSeries` where name='{0}'".format(key), as_list=1)

@@ -266,7 +266,12 @@ ps_fields = [
 	"Purchase Invoice-set_posting_time-default",
 	"Salary Slip-main-default_print_format",
 	"Journal Entry Account-credit_in_account_currency-columns",
-	"Journal Entry Account-debit_in_account_currency-columns"
+	"Journal Entry Account-debit_in_account_currency-columns",
+	"Purchase Invoice-is_return-no_copy",
+	"Journal Entry-cheque_no-no_copy",
+	"Journal Entry-cheque_date-no_copy",
+	"Journal Entry-user_remark-no_copy",
+	"Purchase Invoice-bill_date-no_copy"
 ]
 
 wf_names = [

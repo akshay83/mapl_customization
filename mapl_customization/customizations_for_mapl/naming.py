@@ -28,14 +28,10 @@ def set_auto_name(doc, method):
 		if doc.doctype == "Journal Entry" and 'FIN' in doc.naming_series:
 			return
 
-		user = frappe.session.user
+		user = frappe.session.user		
 		user_group = frappe.db.get_value("User", user, "user_group")
-
 		if user_group:
-			if (user_group.lower() == "geeta bhawan"):
-				location = "GB"
-			elif (user_group.lower() == "ranjeet hanuman"):
-				location = "RH"
+			location = frappe.db.get_value("User Group", user_group, "abbreviation")
 		#print "DEBUG:"+location
 
 		abbr = frappe.db.get_value("Company", doc.company, "abbr")
