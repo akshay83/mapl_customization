@@ -159,7 +159,7 @@ custom.hide_show_print_buttons = function (show) {
 	}
 };
 
-custom.hide_print_button = function (doctype, frm) {
+custom.hide_print_button = async function (doctype, frm) {
 	//TO HIDE PRINT ICON & PRINT MENU FROM A DOCUMENT IN VERSION 6 USE
 
 	//--DEBUG--console.log("Calling Hide Print Button");
@@ -167,18 +167,22 @@ custom.hide_print_button = function (doctype, frm) {
 	//--DEBUG--console.log(cur_frm.doc.__unsaved);
 	//--DEBUG--console.log("Cancel Button:"+$('.grey-link:contains(Cancel)').length);
 	if (frappe.user_roles.includes("System Manager") || frappe.user_roles.includes("Administrator")) return;
-	if (typeof frm.doc.workflow_state !== "undefined") {
-		frappe.db.get_value('Workflow', { "document_type": doctype, "is_active": 1 }, "name", function (val) {
-			if (Object.keys(val).length > 0) {
-				if (frm.doc.workflow_state != "Pending" && frm.doc.workflow_state != "Rejected" && frm.doc.workflow_state != "Cancelled" && !frm.is_dirty()) {
-					custom.hide_show_print_buttons(true);
-				} else {
-					custom.hide_show_print_buttons(false);
+	if (await custom.is_workflow_active_on(doctype)) {
+		if (frm.doc.workflow_state != "Pending" && frm.doc.workflow_state != "Rejected" && frm.doc.workflow_state != "Cancelled" && !frm.is_dirty()) {
+			let einvoice = false;
+			let print_doc = false;
+			if (doctype == 'Sales Invoice') einvoice = await custom.einvoice_eligibility(frm.doc);
+			if (einvoice) {
+				if (frm.doc.irn !== undefined && frm.doc.irn != null && frm.doc.irn_cancelled === 0) {
+					print_doc = true;
 				}
 			} else {
-				custom.handle_default_print_action(doctype, frm);
+				print_doc = true;
 			}
-		});
+			custom.hide_show_print_buttons(print_doc);
+		} else {
+			custom.hide_show_print_buttons(false);
+		}
 	} else {
 		custom.handle_default_print_action(doctype, frm);
 	}
@@ -211,4 +215,12 @@ custom.get_default_warehouse = async function (user_name) {
 	});
 	await promise.catch(() => frappe.throw());
 	return return_value;
+};
+
+custom.einvoice_eligibility = async function (doc) {
+	const res = await frappe.call({
+		method: 'erpnext.regional.india.e_invoice.utils.validate_eligibility',
+		args: { doc: doc, taxpro: 1 }
+	});
+	return res.message;
 };

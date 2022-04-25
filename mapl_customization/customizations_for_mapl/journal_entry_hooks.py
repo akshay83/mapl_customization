@@ -23,6 +23,7 @@ def submit_loan_disbursal_entry(doc, method):
 
 def on_cancel(doc, method):
     update_loan_on_cancel(doc, method)
+    update_finance_payment_tool(doc, method)
 
 def update_loan_on_cancel(doc, method):
     if not cint(frappe.db.get_single_value("Payroll Settings", "simplify_employee_loan_repayment")):
@@ -38,3 +39,10 @@ def update_loan_on_cancel(doc, method):
                                 loan_doc.name
                             ))
                 break
+
+def update_finance_payment_tool(doc, method):
+    finance_row = frappe.get_doc("Finance Payment Details", {"journal_reference":doc.name})
+    if finance_row and not finance_row.is_new():
+        finance_row.journal_reference = None
+        finance_row.imported = 0
+        finance_row.save()

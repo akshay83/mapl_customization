@@ -130,7 +130,7 @@ def get_columns(filters):
 	]
 	return columns
 
-def get_conditions_for_invoice(filters):
+def get_date_conditions(filters):
 	conditions = ""
 
 	if filters.get("from_date"):
@@ -139,9 +139,10 @@ def get_conditions_for_invoice(filters):
 	if filters.get("to_date"):
 		conditions += " and INV.posting_date <= '{0}' ".format(filters.get("to_date"))
 
-	conditions += " and INV_ITEM.warehouse = SLE.warehouse "
-
 	return conditions
+
+def get_conditions_for_invoice(filters):
+	return " and INV_ITEM.warehouse = SLE.warehouse "
 
 def get_global_condition(filters):
 	global_condition = ""

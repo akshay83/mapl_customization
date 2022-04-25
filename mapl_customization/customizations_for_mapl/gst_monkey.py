@@ -112,5 +112,6 @@ def monkey_patch_gst_validate_document_name():
 	utils.validate_document_name = validate_document_name
 
 def monkey_patch_gst():
+	print ("Monkey Patch GST")
 	monkey_patch_gst_validate_document_name()
 	monkey_patch_ewb_data()

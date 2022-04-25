@@ -1,3 +1,35 @@
+{% include "mapl_customization/customizations_for_mapl/einvoice/taxpro_einvoice.js" %}
+erpnext.setup_einvoice_actions('Sales Invoice');
+
+frappe.ui.form.on("Sales Invoice", "onload_post_render", async function (frm) {
+	let einvoice = await custom.einvoice_eligibility(frm.doc);
+	//--DEBUG--console.log(einvoice);
+	if (einvoice && (frm.doc.irn === undefined || frm.doc.irn == null)) {
+		if (custom.is_workflow_active_on("Sales Invoice") && frm.doc.workflow_state != "Approved") return;
+		frappe.msgprint("Create an E-Invoice to Continue Printing");
+	}
+});
+
+frappe.ui.form.on("Sales Invoice", "before_cancel", function (frm) {
+	if (frm.doc.irn && !frm.doc.irn_cancelled) {
+		frappe.throw("IRN Created, Cannot Cancel");
+	}
+});
+
+frappe.ui.form.on("Sales Invoice", "after_cancel", function (frm) {
+	//--DEBUG--console.log("Check After Cancel");
+	if (custom.is_workflow_active_on("Sales Invoice") && frm.doc.workflow_state !== 'Cancelled') {
+		frappe.call({
+			method: "unrestrict.unrestrict.update_workflow_on_cancel.update_workflow_state",
+			args: {
+				"doctype": "Sales Invoice",
+				"docname": frm.doc.name,
+				"value": "Cancelled"
+			}
+		});
+	}
+});
+
 frappe.ui.form.on("Sales Invoice", "is_pos", function (frm) {
 	console.log('is pos');
 	if (frm.doc.is_pos == 1) {
@@ -60,8 +92,8 @@ frappe.ui.form.on("Sales Invoice", "refresh", function (frm) {
 	}
 });
 
-frappe.ui.form.on("Sales Invoice", "before_save", function(frm) {
-	if (frm.doc.docstatus==0 && frm.is_dirty()) {
+frappe.ui.form.on("Sales Invoice", "before_save", function (frm) {
+	if (frm.doc.docstatus == 0 && frm.is_dirty()) {
 		frm.doc.workflow_state = "Pending";
 	}
 });
@@ -100,12 +132,12 @@ frappe.ui.form.on("Sales Invoice", "onload_post_render", async function (frm) {
 		}
 	});
 	$('.frappe-control.input-max-width[data-fieldname="grand_total"]').find('.control-value.like-disabled-input.bold').css('background', 'lightblue')
-	
+
 	//Set Default Warehouse
-    if (frm.is_new() !== undefined && frm.is_new()) {
-        frm.set_value("set_warehouse", await custom.get_default_warehouse());
-        frm.refresh_field("set_warehouse");
-    }
+	if (frm.is_new() !== undefined && frm.is_new()) {
+		frm.set_value("set_warehouse", await custom.get_default_warehouse());
+		frm.refresh_field("set_warehouse");
+	}
 });
 
 frappe.ui.form.on("Sales Invoice", "customer_address", function (frm) {

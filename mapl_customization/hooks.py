@@ -271,7 +271,11 @@ ps_fields = [
 	"Journal Entry-cheque_no-no_copy",
 	"Journal Entry-cheque_date-no_copy",
 	"Journal Entry-user_remark-no_copy",
-	"Purchase Invoice-bill_date-no_copy"
+	"Purchase Invoice-bill_date-no_copy",
+	"Address-main-allow_rename",
+	"Address-address_title-hidden",
+	"E Invoice Request Log-url-fieldtype",
+	"Contact-main-allow_rename"
 ]
 
 wf_names = [
@@ -428,6 +432,12 @@ standard_queries = {
 
 workflow_safe_globals = {
 	"mapl_customization.utils.check_for_workflow_approval" : "mapl_customization.customizations_for_mapl.utils.check_for_workflow_approval"
+}
+
+override_whitelisted_methods = {
+	"erpnext.regional.india.e_invoice.utils.validate_eligibility": "mapl_customization.customizations_for_mapl.einvoice.taxpro_einvoice.validate_eligibility",
+	"erpnext.regional.india.e_invoice.utils.cancel_irns": "mapl_customization.customizations_for_mapl.einvoice.taxpro_einvoice.cancel_irns",
+	"erpnext.regional.india.e_invoice.utils.generate_einvoices": "mapl_customization.customizations_for_mapl.einvoice.taxpro_einvoice.generate_einvoices"
 }
 
 on_login = "mapl_customization.customizations_for_mapl.install.on_login"

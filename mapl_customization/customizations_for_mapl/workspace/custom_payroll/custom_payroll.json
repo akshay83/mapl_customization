@@ -26,7 +26,7 @@
   },
   {
    "hidden": 0,
-   "is_query_report": 0,
+   "is_query_report": 1,
    "label": "Salary Structure Details",
    "link_to": "Salary Structure Details",
    "link_type": "Report",
@@ -34,7 +34,7 @@
    "type": "Link"
   }
  ],
- "modified": "2022-03-09 19:52:54.369548",
+ "modified": "2022-04-12 14:52:29.440956",
  "modified_by": "akshay.mehta@mehtaautomobiles.com",
  "module": "Customizations for MAPL",
  "name": "Custom Payroll",

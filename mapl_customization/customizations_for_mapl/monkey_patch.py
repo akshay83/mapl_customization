@@ -70,3 +70,6 @@ def do_monkey_patch():
 
 	from mapl_customization.customizations_for_mapl.gst_monkey import monkey_patch_gst
 	monkey_patch_gst()
+
+	from mapl_customization.customizations_for_mapl.monkey_patch_einvoice import monkey_patch_einvoice_get_doc_details
+	monkey_patch_einvoice_get_doc_details()
