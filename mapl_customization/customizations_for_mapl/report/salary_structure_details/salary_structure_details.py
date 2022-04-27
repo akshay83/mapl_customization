@@ -66,7 +66,13 @@ def get_default_columns(filters):
 		},
 		{
 			"fieldname":"base",
-			"label":"Base",
+			"label":"Reported Salary",
+			"fieldtype":"Float",
+			"width":70
+		},
+		{
+			"fieldname":"actual_salary",
+			"label":"Actual Salary",
 			"fieldtype":"Float",
 			"width":70
 		},
@@ -95,10 +101,10 @@ def get_default_columns(filters):
 def get_earnings_columns(filters):
 	columns = []
 	earnings = frappe.db.sql("""select
-					  distinct sc.salary_component
-					from `tabSalary Detail` sc, `tabSalary Structure` struct
-					where
-					  struct.name = sc.parent""", as_dict=True)
+									distinct sc.salary_component
+								from `tabSalary Detail` sc, `tabSalary Structure` struct
+								where
+									struct.name = sc.parent""", as_dict=True)
 
 	for e in earnings:
 		build_column = {}
@@ -126,7 +132,6 @@ def get_earnings_columns(filters):
 		build_column["width"] = 120
 		columns.append(build_column)
 
-
 	return columns
 
 def get_employee_details(filters):
@@ -141,12 +146,15 @@ def get_employee_details(filters):
 					  employee.ifsc_code,
 					  employee.bank_ac_no,
 					  struct.name as struct_name,
-					  struct_emp.base
+					  struct_emp.base,
+					  struct_emp.actual_salary
 					from
 					  `tabEmployee` employee join
 					  `tabSalary Structure Assignment` struct_emp
 						on (struct_emp.employee = employee.name) join
 					  `tabSalary Structure` struct on (struct.name = struct_emp.salary_structure and struct.is_active='Yes')
+					where 
+					  employee.status = 'Active' 
 					order by
 					  employee.branch, employee.employee_name""", as_dict=True)
 
@@ -159,6 +167,7 @@ def get_employee_details(filters):
 		build_row["designation"] = e.designation
 		build_row["struct_name"] = e.struct_name
 		build_row["base"] = e.base
+		build_row["actual_salary"] = e.actual_salary
 		build_row["bank_name"] = e.bank_name
 		build_row["ifsc"] = e.ifsc_code
 		build_row["account_no"] = e.bank_ac_no

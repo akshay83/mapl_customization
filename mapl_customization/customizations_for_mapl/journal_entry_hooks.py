@@ -1,5 +1,6 @@
 import frappe
 from frappe.utils import cint
+from frappe.exceptions import DoesNotExistError
 
 def on_submit(doc, method):
     submit_loan_disbursal_entry(doc, method)
@@ -41,6 +42,8 @@ def update_loan_on_cancel(doc, method):
                 break
 
 def update_finance_payment_tool(doc, method):
+    if not frappe.db.exists("Finance Payment Details", {"journal_reference":doc.name}):
+        return
     finance_row = frappe.get_doc("Finance Payment Details", {"journal_reference":doc.name})
     if finance_row and not finance_row.is_new():
         finance_row.journal_reference = None

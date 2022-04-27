@@ -62,26 +62,27 @@ def validate_customer_balance(doc, method):
 
 def validate_serial_no(doc, method):
 	""" check if serial number is already used in other sales invoice """
+	if (frappe.session.user == "Administrator" or "System Manager" in frappe.get_roles()) or doc.docstatus == 2:
+		return
 	for item in doc.items:
 		if not item.serial_no:
 			continue
-
+		#--DEBUG--print (item.serial_no)
+		#--DEBUG--print (item.serial_no.split("\n"))
 		for serial_no in item.serial_no.split("\n"):
 			query = """
-				select parent from `tabSales Invoice Item` where serial_no like '%{serial_no}%' and docstatus <> 2 {docname}
-				"""
-
-			query = query.format(**{
-				"serial_no": serial_no,
-				"docname": "and parent <> '{0}'".format(doc.name) if doc.name else ""
-				})
-
+						select parent from `tabSales Invoice Item` where serial_no like '%{serial_no}%' and docstatus <> 2 {docname}
+					""".format(**{
+						"serial_no": serial_no,
+						"docname": "and parent <> '{0}'".format(doc.name) if doc.name else ""
+					})
+			#--DEBUG--print (query)
+			#--DEBUG--print (frappe.db.sql(query, as_dict=1))
 			for c in frappe.db.sql(query, as_dict=1):
-				if c.name:
-					frappe.throw("Serial Number: {0} is already referenced in Sales Invoice: {1} {2}".format(
-						serial_no, c.parent, doc.doctstaus
+				if c.parent:
+					frappe.throw("Serial Number: {0} is already referenced in Sales Invoice: {1}".format(
+						serial_no, c.parent
 					))
-
 
 def validate_gst_state(doc, method):
 	ship_state = frappe.db.get_value("Address", doc.shipping_address_name, "gst_state")

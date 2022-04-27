@@ -6,7 +6,7 @@ frappe.ui.form.on("Sales Invoice", "onload_post_render", async function (frm) {
 	//--DEBUG--console.log(einvoice);
 	if (einvoice && (frm.doc.irn === undefined || frm.doc.irn == null)) {
 		if (custom.is_workflow_active_on("Sales Invoice") && frm.doc.workflow_state != "Approved") return;
-		frappe.msgprint("Create an E-Invoice to Continue Printing");
+		frm.layout.show_message("Create an E-Invoice to Continue Printing","yellow");
 	}
 });
 
