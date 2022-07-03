@@ -71,7 +71,16 @@ def validate_serial_no(doc, method):
 		#--DEBUG--print (item.serial_no.split("\n"))
 		for serial_no in item.serial_no.split("\n"):
 			query = """
-						select parent from `tabSales Invoice Item` where serial_no like '%{serial_no}%' and docstatus <> 2 {docname}
+						select 
+							max(if(qty>0,parent,null)) as parent,
+							sum(if(qty>0,1,-1)) as rec_qty 
+						from 
+							`tabSales Invoice Item` 
+						where 
+							serial_no like '%{serial_no}%' 
+							and docstatus <> 2 
+							{docname} 
+						having sum(rec_qty) > 0
 					""".format(**{
 						"serial_no": serial_no,
 						"docname": "and parent <> '{0}'".format(doc.name) if doc.name else ""
@@ -104,9 +113,10 @@ def validate_gst_state(doc, method):
 		frappe.throw("""Address has been changed after creating this document, 
 					Please use <b>Update Address</b> under Address to update the correct Shipping Address in the Document""")
 
-
 	if doc.taxes_and_charges == 'Out of State GST' and ship_state == 'Madhya Pradesh':
 		if doc.special_invoice and doc.special_invoice == 'SEZ Supply':
+			return
+		if doc.special_invoice and "bill-to-ship-to" in doc.special_invoice.lower():
 			return
 		frappe.throw("""Please Check Correct Shipping Address/Taxes""")
 
@@ -123,7 +133,7 @@ def vehicle_validation(doc, method):
 		if cint(i.is_vehicle) and len(doc.items)>1:
 			frappe.throw("A Sales Invoice can have only Single Vehicle and No Other Item")
 
-		if cint(i.is_vehicle) and len(i.serial_no.strip(' \n').split('\n'))>1:
+		if i.serial_no and cint(i.is_vehicle) and len(i.serial_no.strip(' \n').split('\n'))>1:
 			frappe.throw("A Sales Invoice can have only ONE Vehicle")
 
 def negative_stock_validation(doc, method, show_message=True):

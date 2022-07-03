@@ -11,8 +11,31 @@ def execute(filters=None):
 
 	#validate(filters)
 	columns = get_columns(filters)
-	data = get_data(filters)
+	data = map_data(filters)
 	return columns, data
+
+def map_data(filters):
+	data = get_data(filters)
+	rows = []
+	for d in data:
+		build_row = frappe._dict()
+		build_row["item"] = d["ITEM_CODE"]
+		build_row["item_group"] = d["ITEM_GROUP"]
+		build_row["brand"] = d["BRAND"]
+		build_row["warehouse"] = d["WAREHOUSE"]
+		build_row["description"] = d["DESCRIPTION"]
+		build_row["balance_qty"] = d["CLOSING STOCK"]
+		build_row["effective_qty"] = d["EFFECTIVE STOCK"]
+		build_row["open_qty"] = d["OPENING STOCK"]
+		build_row["in_qty"] = d["IN QTY"]
+		build_row["out_qty"] = d["OUT QTY"]
+		build_row["unconfirmed_qty"] = d["UNCONFIRMED"]
+		build_row["undelivered_qty"] = d["UNDELIVERED"]
+		build_row["challan_qty"] = d["CHALLAN"]
+		build_row["purchase_qty"] = d["PURCHASE"]
+		build_row["defective_qty"] = d["DEFECTIVE"]
+		rows.append(build_row)
+	return rows
 
 def validate(filters):
 	if (not filters.get("from_date")):
@@ -63,6 +86,18 @@ def get_columns(filters):
 			"width":170
 		},
 		{
+			"fieldname":"balance_qty",
+			"fieldtype":"Float",
+			"label":"Balance Qty",
+			"width":100
+		},
+		{
+			"fieldname":"effective_qty",
+			"fieldtype":"Float",
+			"label":"Effective Qty",
+			"width":100
+		},		
+		{
 			"fieldname":"open_qty",
 			"fieldtype":"Float",
 			"label":"Opening Qty",
@@ -78,12 +113,6 @@ def get_columns(filters):
 			"fieldname":"out_qty",
 			"fieldtype":"Float",
 			"label":"Out Qty",
-			"width":100
-		},
-		{
-			"fieldname":"balance_qty",
-			"fieldtype":"Float",
-			"label":"Balance Qty",
 			"width":100
 		},
 		{
@@ -119,12 +148,6 @@ def get_columns(filters):
 			"fieldtype":"Float",
 			"label":"Defective Qty",
 			"description": "Products Booked under Problematic Document",
-			"width":100
-		},
-		{
-			"fieldname":"effective_qty",
-			"fieldtype":"Float",
-			"label":"Effective Qty",
 			"width":100
 		}
 	]
@@ -213,4 +236,4 @@ def get_data(filters):
 			"to_date": filters.get("to_date")
 		})
 
-	return frappe.db.sql(query, as_list=1)
+	return frappe.db.sql(query, as_dict=1)

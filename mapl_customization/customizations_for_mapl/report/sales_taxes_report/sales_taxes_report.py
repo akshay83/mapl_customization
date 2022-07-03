@@ -4,7 +4,7 @@
 from __future__ import unicode_literals
 import frappe
 import json
-from frappe.utils import flt
+from frappe.utils import flt, getdate
 
 def execute(filters=None):
 	columns, data = [], []
@@ -201,11 +201,24 @@ def get_query(filters):
 						}), d.name)
 
 				for i in doc.items:
-					txs = frappe.get_doc("Item", i.item_code).taxes
-					for t in txs:
-						build_key = d.account_head+"-"+str(float(t.tax_rate))+"%"
-						if t.tax_type==d.account_head:
-							build_row[build_key] = flt(build_row.get(build_key, 0) + round((i.net_amount * float(t.tax_rate) / 100),2))
+					if i.item_tax_template:
+						template_taxes = frappe.get_doc("Item Tax Template", i.item_tax_template).taxes
+						for temp_taxes in template_taxes:
+							build_key = d.account_head+"-"+str(float(temp_taxes.tax_rate))+"%"
+							if temp_taxes.tax_type==d.account_head:
+								build_row[build_key] = flt(build_row.get(build_key, 0) + round((i.net_amount * float(temp_taxes.tax_rate) / 100),2))
+					else:
+						txs = frappe.get_doc("Item", i.item_code).taxes
+						if txs:
+							txs.sort(key=lambda item:(item.valid_from is None, getdate(item.valid_from)), reverse=True)
+						for t in txs:
+							if not t.valid_from or getdate(t.valid_from) <= getdate(doc.posting_date):								
+								template_taxes = frappe.get_doc("Item Tax Template", t.item_tax_template).taxes
+								for temp_taxes in template_taxes:
+									build_key = d.account_head+"-"+str(float(temp_taxes.tax_rate))+"%"
+									if temp_taxes.tax_type==d.account_head:
+										build_row[build_key] = flt(build_row.get(build_key, 0) + round((i.net_amount * float(temp_taxes.tax_rate) / 100),2))
+							break
 
 	rows.append(build_row)
 	return rows

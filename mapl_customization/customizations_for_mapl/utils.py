@@ -91,21 +91,19 @@ def get_money_in_words(number):
 @frappe.whitelist()
 def get_average_purchase_rate_for_item(item,with_tax=True,as_value=0):
 	query = """
-				select
-				   round(
-				     (select valuation_rate from `tabStock Ledger Entry` where posting_date=max(sle.posting_date) and posting_time=max(sle.posting_time) and item_code=sle.item_code limit 1){0}
-				   ,2) as avg_rate
-				from
-				 `tabStock Ledger Entry` sle,
-				 `tabItem Tax` it
-				where
-				 it.parent = sle.item_code
-				 and (it.valid_from <= cast(now() as Date) or it.valid_from is null)
-				 and sle.item_code = %s
-				 and sle.is_cancelled = 0
-				order by
-				  it.valid_from desc
-				limit 1
+			select
+           		ifnull(round(sle.valuation_rate,2){0},0) as avg_rate
+        	from
+         		`tabStock Ledger Entry` sle left join
+         		`tabItem Tax` it on (it.parent = sle.item_code)
+        	where
+         		(it.valid_from <= cast(now() as Date) or it.valid_from is null)
+         		and sle.item_code = %s
+         		and sle.is_cancelled = 0
+        	order by
+          		sle.posting_date desc,
+          		sle.posting_time desc
+        	limit 1
 		""".format("*(1+((select max(tax_rate) from `tabItem Tax Template Detail` detail where detail.parent = it.item_tax_template))/100)" if with_tax else "")
 	if not as_value:
 		return frappe.db.sql(query, item)
@@ -124,12 +122,15 @@ def check_average_purchase(doc):
 		cumulative_check = True
 	threshold = frappe.db.get_single_value("Accounts Settings", "rate_check_threshold")
 	for i in doc.get("items"):
+		if not cint(frappe.db.get_value("Item", i.item_code, "is_stock_item")):
+			continue
 		ar = get_average_purchase_rate_for_item(i.item_code, with_tax=False, as_value=1)
 		if not cumulative_check:
 			#--DEBUG--print ("Purchase:",(ar-(ar*threshold/100))," Sale:",i.net_rate)
 			if i.net_rate < (ar-(ar*threshold/100)):
 				return 0
 		else:
+			#--DEBUG--print (i.item_code, i.net_rate, ar)
 			total_sale_rate += i.net_rate
 			total_purchase_rate += ar
 	if cumulative_check:
@@ -141,7 +142,7 @@ def check_for_workflow_approval(doc):
 	"""
 	Return 1: If everything is Ok
 	Return 2: If Approval Required From Sales Manager (Rate < Purchase Rate && Not Delayed Payment)
-	Return 3: If Approval Required From System Manager (Rate is Ok && Delayed Payment)
+	Return 3: If Approval Required From System Manager (Delayed Payment Irrespective of Rate Check)
 	"""
 	if (doc.doctype != "Sales Invoice"):
 		return
@@ -156,9 +157,11 @@ def check_for_workflow_approval(doc):
 		negative_check = 0
 	if not approval_required_for_delayed_payment(doc) and (cint(avg_pur_rate_check) and cint(negative_check)):
 		return 1
-	elif approval_required_for_delayed_payment(doc) and (cint(avg_pur_rate_check) and cint(negative_check)):
+	elif approval_required_for_delayed_payment(doc):
 		return 3
-	elif not approval_required_for_delayed_payment(doc) and (not cint(avg_pur_rate_check) or not cint(negative_check)):
+	elif not cint(negative_check):
+		return 3
+	elif not approval_required_for_delayed_payment(doc) and not cint(avg_pur_rate_check):
 		return 2
 	return 1
 

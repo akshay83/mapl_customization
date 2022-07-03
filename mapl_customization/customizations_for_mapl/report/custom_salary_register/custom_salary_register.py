@@ -245,7 +245,9 @@ def get_employee_details(filters):
 					  slip.bank_account_no,
 					  slip.salary_payable_account,
 					  slip.company,
-					  struct.base
+					  struct.base,
+					  slip.salary_structure,
+					  struct.from_date
 					from
 					  `tabSalary Slip` slip left join
 					  `tabSalary Structure Assignment` struct
@@ -255,9 +257,13 @@ def get_employee_details(filters):
 					  and struct.docstatus = 1
 					  and slip.start_date = %s
 					  and slip.end_date = %s
+					  and struct.from_date = (
+						select max(from_date)
+						from `tabSalary Structure Assignment` assign
+						where assign.employee=slip.employee and assign.salary_structure=slip.salary_structure and assign.docstatus=1 and from_date <= %s)
 					order by
 					  slip.branch, slip.employee_name""",
-					(filters.get("from_date"), filters.get("to_date")), as_dict=True)
+					(filters.get("from_date"), filters.get("to_date"), filters.get("from_date")), as_dict=True)
 
 	for e in emp_details:
 		build_row = frappe._dict()
@@ -277,6 +283,8 @@ def get_employee_details(filters):
 		build_row["account_no"] = e.bank_account_no
 		build_row["salary_payable_account"] = e.salary_payable_account
 		build_row["company"] = e.company
+		build_row["salary_structure"] = e.salary_structure
+		build_row["salary_from_date"] = e.from_date
 
 		build_row.update(get_earnings_and_deductions(e.name))
 		build_row.update(get_loan_details(e.name))

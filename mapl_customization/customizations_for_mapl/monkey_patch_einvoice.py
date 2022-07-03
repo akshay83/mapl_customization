@@ -1,6 +1,7 @@
 import frappe
-from frappe.utils.data import getdate, format_date
-from erpnext.regional.india.e_invoice.utils import validate_address_fields, sanitize_for_json
+from frappe import _
+from frappe.utils.data import getdate, format_date, flt
+from erpnext.regional.india.e_invoice.utils import validate_address_fields, sanitize_for_json, get_gst_accounts, update_other_charges, validate_eligibility
 
 def get_doc_details(invoice):
     if getdate(invoice.posting_date) < getdate('2021-01-01'):
@@ -57,6 +58,60 @@ def get_return_doc_reference(invoice):
         dict(invoice_name=reporting_name, invoice_date=format_date(invoice_date, "dd/mm/yyyy"))
     )
 
+def update_invoice_taxes(invoice, invoice_value_details):
+    gst_accounts = get_gst_accounts(invoice.company)
+    gst_accounts_list = [d for accounts in gst_accounts.values() for d in accounts if d]
+
+    invoice_value_details.total_cgst_amt = 0
+    invoice_value_details.total_sgst_amt = 0
+    invoice_value_details.total_igst_amt = 0
+    invoice_value_details.total_cess_amt = 0
+    invoice_value_details.total_other_charges = 0
+    considered_rows = []
+
+    for t in invoice.taxes:
+        tax_amount = t.base_tax_amount_after_discount_amount
+        #--DEBUG--print ("GST Account:", t.account_head in gst_accounts_list)
+        if t.account_head in gst_accounts_list:
+            if t.account_head in gst_accounts.cess_account:
+                # using after discount amt since item also uses after discount amt for cess calc
+                invoice_value_details.total_cess_amt += abs(t.base_tax_amount_after_discount_amount)
+
+            for tax_type in ['igst', 'cgst', 'sgst']:
+                if t.account_head in gst_accounts[f'{tax_type}_account']:
+
+                    invoice_value_details[f'total_{tax_type}_amt'] += abs(tax_amount)
+                update_other_charges(t, invoice_value_details, gst_accounts_list, invoice, considered_rows)
+        #Monkey-here, as there is no provision for subsidy in erpnext
+        #else:
+            #invoice_value_details.total_other_charges += abs(tax_amount)
+        elif "subsidy" in t.account_head.lower():
+            invoice_value_details.invoice_discount_amt += abs(tax_amount)
+        else:
+            invoice_value_details.total_other_charges += abs(tax_amount)
+            
+    return invoice_value_details
+
+def validate_einvoice_fields(doc):
+    invoice_eligible = validate_eligibility(doc)
+
+    if not invoice_eligible:
+        return
+
+    if doc.docstatus == 0 and doc._action == 'save':
+        if doc.irn and not (frappe.session.user == "Administrator" or "System Manager" in frappe.get_roles()):
+            frappe.throw(_('You cannot edit the invoice after generating IRN'), title=_('Edit Not Allowed'))
+        if len(doc.name) > 16:
+            raise_document_name_too_long_error()
+
+        doc.einvoice_status = 'Pending'
+
+    elif doc.docstatus == 1 and doc._action == 'submit' and not doc.irn:
+        frappe.throw(_('You must generate IRN before submitting the document.'), title=_('Missing IRN'))
+
+    elif doc.irn and doc.docstatus == 2 and doc._action == 'cancel' and not doc.irn_cancelled:
+        frappe.throw(_('You must cancel IRN before cancelling the document.'), title=_('Cancel Not Allowed'))
+
 def monkey_patch_einvoice_get_doc_details():
     print ("Monkey Patching E-Invoice----------------------")
     from erpnext.regional.india.e_invoice import utils
@@ -64,4 +119,6 @@ def monkey_patch_einvoice_get_doc_details():
     utils.get_party_details = get_party_details
     utils.raise_document_name_too_long_error = raise_document_name_too_long_error
     utils.get_return_doc_reference = get_return_doc_reference
+    utils.update_invoice_taxes = update_invoice_taxes
+    utils.validate_einvoice_fields = validate_einvoice_fields
 

@@ -18,7 +18,7 @@ class SalaryPaymentTool(Document):
 			for i in self.payment_details:
 				if not i.transaction_reference:
 					frappe.throw("""Need Individual Reference No""")
-
+		self.validate_total_amount()
 
 	def on_trash(self):
 		if self.journal_reference:
@@ -27,17 +27,19 @@ class SalaryPaymentTool(Document):
 			for i in self.payment_details:
 				if i.journal_reference:
 					frappe.throw("""Cannot Delete As Posting Already Done""")
-
+	
+	def validate_total_amount(self):
+		total_rows_salary = 0
+		for i in self.payment_details:
+			total_rows_salary += i.amount_paid
+		if total_rows_salary != (self.total_payment or 0):
+			frappe.throw("Total Paid Amount Does Not Match Total of Individual Payment")
 
 @frappe.whitelist()
 def fetch_details(from_date, to_date):
-
 	filters = {}
-
 	filters.update({"from_date": from_date, "to_date":to_date})
-
 	details = get_employee_details(filters)
-
 	return details
 
 @frappe.whitelist()

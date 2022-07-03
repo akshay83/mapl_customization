@@ -57,7 +57,8 @@ def validate_hsn_code(doc, method):
 
 def purchase_receipt_validate(doc, method):
 	if doc.get('ignore_validate_hook'):
-		return	
+		return
+	validate_taxes(doc, method)
 	for i in doc.items:
 		if cint(i.is_vehicle):
 			chassis_nos = i.serial_no.split("\n")
@@ -124,3 +125,11 @@ def purchase_invoice_gst_check(doc, method):
 
 	if (doc.taxes_and_charges == 'In State GST' or not doc.taxes_and_charges or doc.taxes_and_charges == "") and state != 'Madhya Pradesh':
 		frappe.throw("""Please Check Correct Address/GSTIN""")
+
+def validate_taxes(doc, method):
+	if not doc.taxes:
+		frappe.throw("""No Taxes Applied, Please Re-Check.""")
+	
+	if not doc.total_taxes_and_charges or doc.total_taxes_and_charges == 0:
+		if not (frappe.session.user == "Administrator" or "System Manager" in frappe.get_roles()):
+			frappe.throw("""No Taxes Applied, Please Re-Check.""")

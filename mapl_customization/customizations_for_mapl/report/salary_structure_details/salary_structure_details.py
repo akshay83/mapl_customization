@@ -65,6 +65,12 @@ def get_default_columns(filters):
 			"width":120
 		},
 		{
+			"fieldname":"from_date",
+			"label":"Applicable From",
+			"fieldtype":"Date",
+			"width":120
+		},		
+		{
 			"fieldname":"base",
 			"label":"Reported Salary",
 			"fieldtype":"Float",
@@ -146,6 +152,7 @@ def get_employee_details(filters):
 					  employee.ifsc_code,
 					  employee.bank_ac_no,
 					  struct.name as struct_name,
+					  struct_emp.from_date,
 					  struct_emp.base,
 					  struct_emp.actual_salary
 					from
@@ -154,7 +161,13 @@ def get_employee_details(filters):
 						on (struct_emp.employee = employee.name) join
 					  `tabSalary Structure` struct on (struct.name = struct_emp.salary_structure and struct.is_active='Yes')
 					where 
-					  employee.status = 'Active' 
+					  employee.status = 'Active'
+					  and struct_emp.docstatus = 1
+					  and struct_emp.from_date = (
+								select max(from_date)
+								from `tabSalary Structure Assignment` assign
+								where assign.employee=employee.name and assign.salary_structure=struct.name and assign.docstatus=1)
+					  and struct.docstatus = 1
 					order by
 					  employee.branch, employee.employee_name""", as_dict=True)
 
@@ -171,6 +184,7 @@ def get_employee_details(filters):
 		build_row["bank_name"] = e.bank_name
 		build_row["ifsc"] = e.ifsc_code
 		build_row["account_no"] = e.bank_ac_no
+		build_row["from_date"] = e.from_date
 
 		build_row.update(get_earnings_and_deductions(e.struct_name))
 

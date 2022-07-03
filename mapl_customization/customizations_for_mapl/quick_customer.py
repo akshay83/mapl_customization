@@ -15,10 +15,10 @@ def do_quick_entry(args):
 		frappe.throw("Please specify Arguments")
 
 	customer = make_customer(args)
-	make_contact(args, customer)
+	contact = make_contact(args, customer)
 	billing_add_name = enter_billing_address (args,customer)
 	enter_shipping_address (args, customer)
-	customer.db_set('customer_primary_contact', customer.customer_name)
+	customer.db_set('customer_primary_contact', contact.name)
 	customer.db_set('mobile_no', customer.primary_contact_no)
 	customer.db_set('email_id', args.get("primary_email"))
 	customer.db_set('customer_primary_address', billing_add_name)
@@ -49,6 +49,18 @@ def validate(args):
 	if args.get("primary_email"):
 		if not is_valid_email(args.get("primary_email")):
 			frappe.throw("Invalid Email Address")
+
+	validate_pin_with_state(frappe._dict({
+		"gst_state": args.get("billing_gst_state"),
+		"state": args.get("billing_state"),
+		"pincode": args.get("billing_pin")
+	}), None, raise_error=True)
+	if args.get("shipping_address_1") or args.get("shipping_address_2"):
+		validate_pin_with_state(frappe._dict({
+			"gst_state": args.get("shipping_gst_state"),
+			"state": args.get("shipping_state"),
+			"pincode": args.get("shipping_pin")
+		}), None, raise_error=True)
 
 	validate_gstid(args)
 
@@ -182,7 +194,7 @@ def validate_address(doc, method):
 	validate_pin_with_state(doc, method)
 	validate_address_creation(doc, method)
 
-def validate_pin_with_state(doc, method):
+def validate_pin_with_state(doc, method, raise_error=False):
 	if not doc.gst_state:
 		frappe.throw("""Please Select GST State""")
 
@@ -193,7 +205,7 @@ def validate_pin_with_state(doc, method):
 		frappe.throw("""Please Select Pin Code""")
 
 	try:
-		req = requests.get(url = 'https://api.postalpincode.in/pincode/'+doc.pincode, timeout = 5)
+		req = requests.get(url = 'https://api.postalpincode.in/pincode/'+doc.pincode, timeout = 5, verify=False)
 		#DEBUG print '-----------------------VALIDATE STATE-----------------------'
 		data = req.json()
 		#DEBUG print data
@@ -211,17 +223,14 @@ def validate_pin_with_state(doc, method):
 		if pincode_state.lower() != doc.state.lower():
 			frappe.throw("""<div> Please Select Correct Pincode along with Correct State. </br>Current State:<B>'{0}'</B> GST State:<B>'{1}'</B> State By Pincode:<B>'{2}'</B></div>""".format(doc.state, doc.gst_state, pincode_state))
 
-
 		if pincode_state.lower() != doc.gst_state.lower():
 			frappe.throw("""<div> Please Select Correct Pincode along with Correct GST State. </br>Current State:<B>'{0}'</B> GST State:<B>'{1}'</B> State By Pincode:<B>'{2}'</B></div>""".format(doc.state, doc.gst_state, pincode_state))
 
-	except requests.ConnectionError:
-		frappe.msgprint("""Unable to Verify Pincode with GST State. Continuing for Now""")
-	except requests.Timeout:
-		frappe.msgprint("""Unable to Verify Pincode with GST State. Continuing for Now""")
-	except ValueError:
-		frappe.msgprint("""Unable to Verify Pincode with GST State. Continuing for Now""")
-
+	except (requests.ConnectionError, requests.Timeout, ValueError):
+		if raise_error:
+			frappe.throw("""Unable to Verify Pincode with GST State""")
+		else:
+			frappe.msgprint("""Unable to Verify Pincode with GST State. Continuing for Now""")
 
 def validate_address_creation(doc, method):
 	if doc.is_new():

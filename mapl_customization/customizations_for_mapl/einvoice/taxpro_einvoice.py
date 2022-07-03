@@ -106,6 +106,8 @@ class TaxproGSP(GSPConnector):
                     raise RequestFailed('IRN has already been generated for the invoice but cannot fetch details for it.')
             elif res.get('Status') == "0" and res.get('ErrorDetails')[0].get("ErrorCode") == "2278":
                 frappe.throw("IRN Already Generated or Cancelled")
+            elif res.get('Status') == "0" and res.get('ErrorDetails')[0].get("ErrorCode") == "3074":
+                frappe.throw("Customer GSTIN is Cancelled or Wrong")
             else:
                 raise RequestFailed
 

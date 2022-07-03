@@ -224,3 +224,28 @@ custom.einvoice_eligibility = async function (doc) {
 	});
 	return res.message;
 };
+
+custom._check_sales_invoice_negative_stock = async function (frm) {
+	if (frm.doc.docstatus >= 1 || frm.doc.update_stock == 0 || frm.doc.__islocal == 1) return false;	
+	let negative_stock = false;
+	let promise = new Promise((resolve, reject) => {
+		frm.doc.items.forEach(function (i, idx, array) {
+			frappe.db.get_value("Item", i.item_code, "is_stock_item").then(val => {
+				if (val.message.is_stock_item) {
+					if (i.actual_qty <= 0 || i.actual_qty < i.qty) {
+						negative_stock = true;
+						resolve(negative_stock);
+						return;
+					}
+				}
+				if (idx === array.length - 1) {
+					resolve(negative_stock);
+					return;
+				}
+			});
+		});
+	});
+	await promise.catch(() => frappe.throw());
+	//--DEBUG--console.log("Out:" + negative_stock);
+	return negative_stock;
+}

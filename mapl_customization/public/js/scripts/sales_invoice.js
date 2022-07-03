@@ -1,12 +1,18 @@
 {% include "mapl_customization/customizations_for_mapl/einvoice/taxpro_einvoice.js" %}
 erpnext.setup_einvoice_actions('Sales Invoice');
 
-frappe.ui.form.on("Sales Invoice", "onload_post_render", async function (frm) {
+frappe.ui.form.on("Sales Invoice", "refresh", async function (frm) {
 	let einvoice = await custom.einvoice_eligibility(frm.doc);
 	//--DEBUG--console.log(einvoice);
 	if (einvoice && (frm.doc.irn === undefined || frm.doc.irn == null)) {
 		if (custom.is_workflow_active_on("Sales Invoice") && frm.doc.workflow_state != "Approved") return;
 		frm.layout.show_message("Create an E-Invoice to Continue Printing","yellow");
+	}
+	if (await custom._check_sales_invoice_negative_stock(frm)) {
+		frm.layout.show_message("Negative Stock Error, Cross Check All Items Before Continuing","red");
+	}
+	if (frm.doc.delayed_payment === 1 && ["other", "reference"].includes(frm.doc.delayed_payment_reason.toLowerCase()) && frm.doc.workflow_state === 'Pending') {
+		frm.layout.show_message("Reference Sale, Requires Approval","yellow");
 	}
 });
 
