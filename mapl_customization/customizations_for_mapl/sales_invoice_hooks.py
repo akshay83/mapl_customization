@@ -21,7 +21,7 @@ def before_cancel(doc, method):
 			frappe.throw("""Bill Cancellation Not Allowed as Taxes Might Have Been Filed""")
 
 def on_cancel(doc, method):
-	if doc.irn and not cint(doc.irn_cancelled):
+	if doc.irn and not cint(doc.irn_cancelled) and not (frappe.session.user == "Administrator" or "System Manager" in frappe.get_roles()):
 		frappe.throw("""IRN Generated, Cannot Cancel""")
 		
 	if frappe.db.get_single_value('Accounts Settings', 'enable_common_party_accounting'):

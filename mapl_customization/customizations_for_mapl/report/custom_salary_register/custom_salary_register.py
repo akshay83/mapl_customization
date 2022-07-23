@@ -85,6 +85,18 @@ def get_default_columns(filters):
 			"width":120
 		},
 		{
+			"fieldname":"employee_uan",
+			"label":"UAN No",
+			"fieldtype":"Data",
+			"width":100
+		},
+		{
+			"fieldname":"employee_esic",
+			"label":"ESIC No",
+			"fieldtype":"Data",
+			"width":100
+		},		
+		{
 			"fieldname":"branch",
 			"label":"Branch",
 			"fieldtype":"Link",
@@ -232,6 +244,8 @@ def get_employee_details(filters):
 					  slip.name,
 					  slip.employee_name,
 					  slip.employee,
+					  ifnull(slip.uan_no,(select uan_no from `tabEmployee` where name=slip.employee limit 1)) as uan_no,
+					  ifnull(slip.esic_no,(select esic_no from `tabEmployee` where name=slip.employee limit 1)) as esic_no,
 					  slip.branch,
 					  slip.designation,
 					  slip.department,
@@ -270,6 +284,8 @@ def get_employee_details(filters):
 		build_row["salary_slip_id"] = e.name
 		build_row["employee_id"] = e.employee
 		build_row["employee_name"] = e.employee_name
+		build_row["employee_uan"] = e.uan_no
+		build_row["employee_esic"] = e.esic_no
 		build_row["branch"] = e.branch
 		build_row["department"] = e.department
 		build_row["designation"] = e.designation

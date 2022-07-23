@@ -98,8 +98,10 @@ def validate_einvoice_fields(doc):
     if not invoice_eligible:
         return
 
+    is_admin = (frappe.session.user == "Administrator" or "System Manager" in frappe.get_roles())
     if doc.docstatus == 0 and doc._action == 'save':
-        if doc.irn and not (frappe.session.user == "Administrator" or "System Manager" in frappe.get_roles()):
+        #Monkey Here
+        if doc.irn and not is_admin:
             frappe.throw(_('You cannot edit the invoice after generating IRN'), title=_('Edit Not Allowed'))
         if len(doc.name) > 16:
             raise_document_name_too_long_error()
@@ -109,7 +111,7 @@ def validate_einvoice_fields(doc):
     elif doc.docstatus == 1 and doc._action == 'submit' and not doc.irn:
         frappe.throw(_('You must generate IRN before submitting the document.'), title=_('Missing IRN'))
 
-    elif doc.irn and doc.docstatus == 2 and doc._action == 'cancel' and not doc.irn_cancelled:
+    elif doc.irn and doc.docstatus == 2 and doc._action == 'cancel' and not doc.irn_cancelled and not is_admin:
         frappe.throw(_('You must cancel IRN before cancelling the document.'), title=_('Cancel Not Allowed'))
 
 def monkey_patch_einvoice_get_doc_details():

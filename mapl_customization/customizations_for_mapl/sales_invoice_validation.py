@@ -121,7 +121,7 @@ def validate_gst_state(doc, method):
 		frappe.throw("""Please Check Correct Shipping Address/Taxes""")
 
 	if (doc.taxes_and_charges == 'In State GST' or not doc.taxes_and_charges or doc.taxes_and_charges == "") and ship_state != 'Madhya Pradesh':
-		if doc.special_invoice and doc.special_invoice == 'Insurance Claim':
+		if doc.special_invoice and (doc.special_invoice == 'Insurance Claim' or "bill-to-ship-to" in doc.special_invoice.lower()):
 			return
 		frappe.throw("""Please Check Correct Shipping Address/Taxes""")
 

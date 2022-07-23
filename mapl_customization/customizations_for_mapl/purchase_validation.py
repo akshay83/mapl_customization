@@ -24,8 +24,9 @@ def purchase_receipt_on_cancel(doc, method):
 	pass
 
 def purchase_receipt_on_submit(doc,method):
+	validate_taxes(doc, method)	
 	validate_hsn_code(doc, method)
-	save_serial_no(doc, method)
+	save_serial_no(doc, method)	
 
 def save_serial_no(doc, method):
 	for i in doc.items:
@@ -58,7 +59,6 @@ def validate_hsn_code(doc, method):
 def purchase_receipt_validate(doc, method):
 	if doc.get('ignore_validate_hook'):
 		return
-	validate_taxes(doc, method)
 	for i in doc.items:
 		if cint(i.is_vehicle):
 			chassis_nos = i.serial_no.split("\n")

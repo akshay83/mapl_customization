@@ -1,6 +1,3 @@
-cur_frm.add_fetch('employee', 'bank_branch', 'bank_branch');
-cur_frm.add_fetch('employee', 'ifsc_code', 'ifsc_code');
-
 frappe.ui.form.on("Salary Slip", "calculate_actual_salary", function(frm) {
 	let calculation_dialog = new frappe.ui.Dialog({
 			title: "Calculate Actual Salary",

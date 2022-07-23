@@ -108,6 +108,8 @@ class TaxproGSP(GSPConnector):
                 frappe.throw("IRN Already Generated or Cancelled")
             elif res.get('Status') == "0" and res.get('ErrorDetails')[0].get("ErrorCode") == "3074":
                 frappe.throw("Customer GSTIN is Cancelled or Wrong")
+            elif res.get('Status') == "0" and res.get('ErrorDetails')[0].get("ErrorCode") == "3028":
+                frappe.throw("Customer GSTIN is Wrong")
             else:
                 raise RequestFailed
 
