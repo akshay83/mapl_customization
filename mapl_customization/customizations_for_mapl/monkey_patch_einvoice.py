@@ -1,7 +1,7 @@
 import frappe
 from frappe import _
 from frappe.utils.data import getdate, format_date, flt
-from erpnext.regional.india.e_invoice.utils import validate_address_fields, sanitize_for_json, get_gst_accounts, update_other_charges, validate_eligibility
+from erpnext.regional.india.e_invoice.utils import validate_address_fields, sanitize_for_json, get_gst_accounts, update_other_charges, validate_eligibility, read_json, update_item_taxes
 
 def get_doc_details(invoice):
     if getdate(invoice.posting_date) < getdate('2021-01-01'):
@@ -114,6 +114,44 @@ def validate_einvoice_fields(doc):
     elif doc.irn and doc.docstatus == 2 and doc._action == 'cancel' and not doc.irn_cancelled and not is_admin:
         frappe.throw(_('You must cancel IRN before cancelling the document.'), title=_('Cancel Not Allowed'))
 
+def get_item_list(invoice):
+    item_list = []
+
+    for d in invoice.items:
+        einvoice_item_schema = read_json('einv_item_template')
+        item = frappe._dict({})
+        item.update(d.as_dict())
+
+        item.sr_no = d.idx
+        item.description = sanitize_for_json(d.item_name)
+
+        item.qty = abs(item.qty)
+        if flt(item.qty) != 0.0:
+            item.unit_rate = abs(item.taxable_value / item.qty)
+        else:
+            item.unit_rate = abs(item.taxable_value)
+        item.gross_amount = abs(item.taxable_value)
+        item.taxable_value = abs(item.taxable_value)
+        item.discount_amount = 0
+
+        item.is_service_item = 'Y' if item.gst_hsn_code and item.gst_hsn_code[:2] == "99" else 'N'
+        item.serial_no = ""
+
+        item = update_item_taxes(invoice, item)
+
+        item.total_value = abs(
+            item.taxable_value + item.igst_amount + item.sgst_amount +
+            item.cgst_amount + item.cess_amount + item.cess_nadv_amount + item.other_charges
+        )
+
+        #Monkey-here
+        item.uom = frappe.db.get_value("UOM", item.uom, "einvoice_reporting_unit") or item.uom
+
+        einv_item = einvoice_item_schema.format(item=item)
+        item_list.append(einv_item)
+
+    return ', '.join(item_list)
+
 def monkey_patch_einvoice_get_doc_details():
     print ("Monkey Patching E-Invoice----------------------")
     from erpnext.regional.india.e_invoice import utils
@@ -123,4 +161,5 @@ def monkey_patch_einvoice_get_doc_details():
     utils.get_return_doc_reference = get_return_doc_reference
     utils.update_invoice_taxes = update_invoice_taxes
     utils.validate_einvoice_fields = validate_einvoice_fields
+    utils.get_item_list = get_item_list
 

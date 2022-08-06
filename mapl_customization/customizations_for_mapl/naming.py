@@ -160,6 +160,7 @@ def check_new_document(doc, method, fy):
 			  and posting_date between %(start_date)s and %(end_date)s
 			  and letter_head = %(letter)s
 			order by
+			  posting_date desc,
 			  name desc
 			limit 1
 			""".format(doc.doctype)
@@ -179,11 +180,11 @@ def check_new_document(doc, method, fy):
 			#--DEBUG--print ("DEBUG:OK")
 
 def check_letter_head(doc, method):
-	if not doc.get("letter_head"):
+	if not doc.get("letter_head") and doc.doctype not in ["Sales Invoice", "Payment Entry", "Delivery Note"]:
 		return
 	if doc.doctype not in ["Sales Invoice", "Payment Entry", "Delivery Note"]:
 		return
 	if (doc.letter_head == 'Vijay Nagar' and 'VN' not in doc.name) or \
 			(doc.letter_head == 'Geeta Bhawan' and 'GB' not in doc.name) or \
 			(doc.letter_head == 'Ranjeet Hanuman' and 'RH' not in doc.name):
-		frappe.msgprint("Letter Head Mismatch Kindly Recheck Before Continuing")
+		frappe.throw("Letter Head Mismatch Kindly Recheck Before Continuing")

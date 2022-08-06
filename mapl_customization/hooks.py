@@ -236,7 +236,8 @@ cf_fields = [
 		"Sales Invoice Item-battery_manufacturer",
 		"Sales Invoice Item-battery_chemistry",
 		"Sales Invoice Item-controller_no",
-		"User-default_user_warehouse"
+		"User-default_user_warehouse",
+		"UOM-einvoice_reporting_unit"
 ]
 
 print_fs = [
