@@ -138,6 +138,14 @@ def check_average_purchase(doc):
 			return 0
 	return 1	
 
+def execute_and_get_custom_condition_result(doc):
+	condition = frappe.db.get_single_value("Accounts Settings", "custom_workflow_condition")
+	if not condition:
+		return 9
+	result = {}
+	exec(compile(condition, '<string>', 'exec'), doc, result)
+	return result['return_result']
+
 def check_for_workflow_approval(doc):
 	"""
 	Return 1: If everything is Ok
@@ -149,6 +157,7 @@ def check_for_workflow_approval(doc):
 	from mapl_customization.customizations_for_mapl.sales_invoice_validation import negative_stock_validation
 	#--DEBUG--print (check_average_purchase(doc))
 	#--DEBUG--print (negative_stock_validation(doc, None, show_message=False))
+	custom_condition = execute_and_get_custom_condition_result(doc)
 	avg_pur_rate_check = 1
 	negative_check = 1
 	if cint(frappe.db.get_single_value("Accounts Settings", "check_purchase_rate_against_sale_rate")) and not check_average_purchase(doc):
@@ -162,6 +171,8 @@ def check_for_workflow_approval(doc):
 	elif not cint(negative_check):
 		return 3
 	elif not approval_required_for_delayed_payment(doc) and not cint(avg_pur_rate_check):
+		if custom_condition != 9:
+			return custom_condition
 		return 2
 	return 1
 
