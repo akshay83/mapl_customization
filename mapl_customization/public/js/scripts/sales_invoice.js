@@ -8,11 +8,13 @@ frappe.ui.form.on("Sales Invoice", "refresh", async function (frm) {
 		if (custom.is_workflow_active_on("Sales Invoice") && frm.doc.workflow_state != "Approved") return;
 		frm.layout.show_message("Create an E-Invoice to Continue Printing","yellow");
 	}
-	if (await custom._check_sales_invoice_negative_stock(frm)) {
-		frm.layout.show_message("Negative Stock Error, Cross Check All Items Before Continuing","red");
+	let negative_check = await custom.check_if_sales_invoice_will_result_in_negative_stock(frm.doc);
+	if (negative_check.result) {
+		frm.layout.show_message("On Submission, This Invoice will Result in Negative Stock. Check Item "+negative_check.item,"red");
 	}
-	if (frm.doc.delayed_payment === 1 && ["other", "reference"].includes(frm.doc.delayed_payment_reason.toLowerCase()) && frm.doc.workflow_state === 'Pending') {
-		frm.layout.show_message("Reference Sale, Requires Approval","yellow");
+	if (frm.doc.docstatus == 0 && frm.doc.workflow_state === 'Pending' && frm.doc.delayed_payment === 1 
+			&& ["other", "reference"].includes(frm.doc.delayed_payment_reason.toLowerCase())) {
+				frm.layout.show_message("Reference Sale, Requires Approval","yellow");
 	}
 });
 

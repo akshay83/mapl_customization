@@ -154,7 +154,6 @@ def check_for_workflow_approval(doc):
 	"""
 	if (doc.doctype != "Sales Invoice"):
 		return
-	from mapl_customization.customizations_for_mapl.sales_invoice_validation import negative_stock_validation
 	#--DEBUG--print (check_average_purchase(doc))
 	#--DEBUG--print (negative_stock_validation(doc, None, show_message=False))
 	custom_condition = execute_and_get_custom_condition_result(doc)
@@ -162,7 +161,7 @@ def check_for_workflow_approval(doc):
 	negative_check = 1
 	if cint(frappe.db.get_single_value("Accounts Settings", "check_purchase_rate_against_sale_rate")) and not check_average_purchase(doc):
 		avg_pur_rate_check = 0
-	if cint(frappe.db.get_single_value("Accounts Settings", "check_negative_stock")) and not negative_stock_validation(doc, None, show_message=False):
+	if cint(frappe.db.get_single_value("Accounts Settings", "check_negative_stock")) and check_if_invoice_will_end_up_in_negative_stock(doc).result:
 		negative_check = 0
 	if not approval_required_for_delayed_payment(doc) and (cint(avg_pur_rate_check) and cint(negative_check)):
 		return 1
@@ -184,6 +183,99 @@ def approval_required_for_delayed_payment(doc):
 			return 0
 		return 1
 	return 0
+
+@frappe.whitelist()
+def check_if_invoice_will_end_up_in_negative_stock(doc):
+	"""
+		1S 0D 1I 1A - STAGE1
+          		 W
+
+		1S 1D 1D 1A - STAGE2
+       		  W
+
+		1S 1D 1DS 1A - 
+       		  E
+
+		0S 1D - STAGE1
+    		W
+
+		1S 1DS 1D 1A - STAGE 2
+    		E
+
+		1S 1ED 1DS 1A - STAGE 2
+        		E
+
+		1S 1ES 1D 1A - STAGE 2
+        	E
+	"""
+	if isinstance(doc, str):
+		doc = json.loads(doc)
+	if cint(doc.get("is_return")) or cint(doc.get("docstatus")) > 0:
+		return frappe._dict({"result":False})
+
+	stage1 = check_stage_1_for_negative_stock(doc)
+	if stage1["result"]:
+		return frappe._dict(stage1)
+	return frappe._dict(check_stage_2_for_negative_stock(doc))
+
+def check_stage_2_for_negative_stock(doc):
+	"""
+		Returns True if any Item is Short (or Negative) in Sales Invoice else False; Compares values from Effective Stock
+	"""
+	query = """
+				select 
+          			sle.item_code,
+          			ifnull(sum(sle.actual_qty)
+             			-ifnull((select sum(qty) from `tabSales Invoice Item` item, `tabSales Invoice` inv 
+						 	where inv.name=item.parent and inv.update_stock=1 and item.warehouse=%(warehouse)s and item.item_code=sle.item_code and inv.docstatus=0 and item.parent <> %(parent)s ),0)
+             			+ifnull((select sum(qty) from `tabPurchase Invoice Item` where warehouse=%(warehouse)s and item_code=sle.item_code and docstatus=0),0),0) as effective_qty
+				from 
+					`tabStock Ledger Entry` sle
+				where 
+					item_code=%(item)s
+					and warehouse=%(warehouse)s
+			"""
+	#--DEBUG--print (query)
+	item_effective_qty_map = []
+	for i in doc.get("items"):
+		if not any(e.get('item_code') == i.get("item_code") for e in item_effective_qty_map):
+			qtys = frappe.db.sql(query, { "parent":doc.get('name'), "warehouse":i.get("warehouse"), "item": i.get("item_code")}, as_dict=1)
+			item_effective_qty_map.append({"item_code":i.get("item_code"),"effective_qty":qtys[0].effective_qty})
+	#--DEBUG--print (item_effective_qty_map)
+	return check_result_against_items(item_effective_qty_map, doc.get("items"))
+
+def check_stage_1_for_negative_stock(doc):
+	"""
+		Returns True if any Item is Short (or Negative) in Sales Invoice else False; Compares Values with Balance Stock as per SLE
+	"""
+	items = "'"+"','".join([i.get("item_code") for i in doc.get("items")])+"'"
+	query = """
+				select 
+					item_code,
+					ifnull(sum(actual_qty),0) as effective_qty 
+				from 
+					`tabStock Ledger Entry` 
+				where 
+					item_code in ({0}) 
+				group by 
+					item_code	
+			""".format(items)
+	#--DEBUG--print (query)
+	qtys = frappe.db.sql(query, as_dict=1)
+	return check_result_against_items(qtys, doc.get("items"))
+
+def check_result_against_items(balance_stk, doc_items):
+	for m in balance_stk:
+		balance_qty = m.get("effective_qty")
+		for i in doc_items:
+			if not cint(frappe.db.get_value("Item", i.get("item_code"),"is_stock_item")):
+				continue
+			if m.get("item_code") == i.get("item_code"):
+				balance_qty = balance_qty - i.get("qty")
+		if balance_qty < 0:
+			#--DEBUG--print (m["item_code"], balance_qty)
+			return {"result":True, "item":m.get("item_code")}
+	return {"result":False}
 
 @frappe.whitelist()
 def get_party_balance(party, party_type, company):

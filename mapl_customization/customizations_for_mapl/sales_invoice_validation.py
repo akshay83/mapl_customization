@@ -14,6 +14,7 @@ def sales_invoice_validate(doc, method):
 def sales_on_submit_validation(doc, method):
 	if doc.get('ignore_validate_hook'):
 		return	
+	negative_stock_validation(doc, method, raise_error=True)
 	vehicle_validation(doc, method)
 	validate_hsn_code(doc, method)
 	taxes_and_charges_validation(doc, method)
@@ -136,17 +137,16 @@ def vehicle_validation(doc, method):
 		if i.serial_no and cint(i.is_vehicle) and len(i.serial_no.strip(' \n').split('\n'))>1:
 			frappe.throw("A Sales Invoice can have only ONE Vehicle")
 
-def negative_stock_validation(doc, method, show_message=True):
+def negative_stock_validation(doc, method, raise_error=False):
+	from mapl_customization.customizations_for_mapl.utils import check_if_invoice_will_end_up_in_negative_stock
 	if cint(doc.is_return):
-		return 1
-	for i in doc.get("items"):
-		if ((i.item_code and frappe.db.get_value("Item", i.item_code, "is_stock_item"))):
-			if (i.actual_qty <= 0 or i.actual_qty < i.qty):
-				if show_message:
-					frappe.msgprint("Negative Stock for {0}, Please verify before Submitting".format(i.item_code))
-				else:
-					return 0
-	return 1
+		return
+	negative_check = check_if_invoice_will_end_up_in_negative_stock(doc)
+	if negative_check.result:
+		if not raise_error:
+			frappe.msgprint("Negative Stock for {0}, Please verify before Submitting".format(negative_check.item_code))
+		else:
+			frappe.throw("Negative Stock for {0}, Please verify before Submitting".format(negative_check.item_code))
 
 def taxes_and_charges_validation(doc, method):
 	if not (frappe.session.user == "Administrator" or "System Manager" in frappe.get_roles()):
@@ -190,5 +190,3 @@ def validate_stock_entry_serial_no(doc, method):
 			for s in snos:
 				if warehouse != frappe.db.get_value("Serial No", s, "warehouse"):
 					frappe.throw("""Item {0} with Serial No {1} Not in Warehouse {2}""".format(i.item_code, s, warehouse))
-
-

@@ -179,6 +179,9 @@ custom.hide_print_button = async function (doctype, frm) {
 			} else {
 				print_doc = true;
 			}
+			if (doctype == 'Sales Invoice' && await custom.check_if_sales_invoice_will_result_in_negative_stock(frm.doc).result) {
+					print_doc = false; 
+			}
 			custom.hide_show_print_buttons(print_doc);
 		} else {
 			custom.hide_show_print_buttons(false);
@@ -225,27 +228,28 @@ custom.einvoice_eligibility = async function (doc) {
 	return res.message;
 };
 
-custom._check_sales_invoice_negative_stock = async function (frm) {
-	if (frm.doc.docstatus >= 1 || frm.doc.update_stock == 0 || frm.doc.__islocal == 1) return false;	
-	let negative_stock = false;
+custom.check_if_sales_invoice_will_result_in_negative_stock = async function (doc) {
+	const delay = ms => new Promise(res => setTimeout(res, ms)); //Utility Method
+	if (doc.docstatus >= 1 || doc.update_stock == 0 || doc.__islocal == 1) return false;
+	let negative_stock = { "result": false };
 	let promise = new Promise((resolve, reject) => {
-		frm.doc.items.forEach(function (i, idx, array) {
-			frappe.db.get_value("Item", i.item_code, "is_stock_item").then(val => {
-				if (val.message.is_stock_item) {
-					if (i.actual_qty <= 0 || i.actual_qty < i.qty) {
-						negative_stock = true;
-						resolve(negative_stock);
-						return;
-					}
+		frappe.call({
+			method: "mapl_customization.customizations_for_mapl.utils.check_if_invoice_will_end_up_in_negative_stock",
+			args: {
+				doc: doc
+			},
+			callback: async function (r) {
+				//--DEBUG--console.log(r);
+				if (!r.exc) {
+					// await delay(5000); // - way to use delay ----- async function
+					negative_stock = r.message;
 				}
-				if (idx === array.length - 1) {
-					resolve(negative_stock);
-					return;
-				}
-			});
+				resolve(negative_stock);
+				return;
+			}
 		});
 	});
 	await promise.catch(() => frappe.throw());
 	//--DEBUG--console.log("Out:" + negative_stock);
 	return negative_stock;
-}
+};

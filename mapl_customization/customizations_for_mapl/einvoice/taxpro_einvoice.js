@@ -1,7 +1,7 @@
 erpnext.setup_einvoice_actions = (doctype) => {
 	frappe.ui.form.on(doctype, {
 		async refresh(frm) {
-			console.log("TaxPro Overriden");
+			//--DEBUG--console.log("TaxPro Overriden");
 			if (frm.doc.docstatus == 2) return;
 
 			const invoice_eligible = await custom.einvoice_eligibility(frm.doc);
@@ -33,7 +33,8 @@ erpnext.setup_einvoice_actions = (doctype) => {
 						}
 					});
 				};
-				if (!wf || (wf && frm.doc.workflow_state == 'Approved')) {
+				let negative_check = await custom.check_if_sales_invoice_will_result_in_negative_stock(frm.doc);
+				if ((!wf || (wf && frm.doc.workflow_state == 'Approved')) && !negative_check.result) {
 					add_custom_button(__("Generate IRN - Taxpro"), action);
 				}
 			}
