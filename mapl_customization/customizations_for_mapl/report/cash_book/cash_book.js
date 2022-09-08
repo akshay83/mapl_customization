@@ -20,5 +20,12 @@ frappe.query_reports['Cash Book'] = {
                         "default": "%%"
                 }
 
-        ]
+        ],
+	"formatter":function (value, row, column, data, default_formatter) {
+		value = default_formatter(value, row, column, data);
+		if (column.fieldname != "posting_date") {
+			value = "<div style='text-align:right;'>" + value + "</div>";
+		}
+		return value;
+	}        
 }

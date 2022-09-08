@@ -1,11 +1,13 @@
 import frappe
 import html
+import json
 from frappe.utils import cint, flt
 
 def sales_invoice_validate(doc, method):
 	if doc.get('ignore_validate_hook'):
 		return	
 	negative_stock_validation(doc, method)
+	validate_hsn_code(doc, method)
 	validate_stock_entry_serial_no(doc, method)
 	validate_serial_no(doc, method)
 	validate_gst_state(doc, method)
@@ -16,7 +18,7 @@ def sales_on_submit_validation(doc, method):
 		return	
 	negative_stock_validation(doc, method, raise_error=True)
 	vehicle_validation(doc, method)
-	validate_hsn_code(doc, method)
+	validate_hsn_code(doc, method, raise_error=True)
 	taxes_and_charges_validation(doc, method)
 	validate_grand_total(doc, method)
 	
@@ -163,10 +165,25 @@ def taxes_and_charges_validation(doc, method):
 					if i.net_rate == i.rate:
 						frappe.throw("""Taxes Does not seems to be Applied on Item {0}, Please ensure if this is Ok!!""".format(i.item_code))
 
-def validate_hsn_code(doc, method):
-	for i in doc.items:
-		if not i.gst_hsn_code:
-			frappe.throw("HSN Code not found for {0}".format(i.item_code))
+@frappe.whitelist()
+def validate_hsn_code(doc, method, raise_error=False):
+	if isinstance(doc, str):
+		doc = json.loads(doc)
+	length_check = frappe.db.get_single_value("Stock Settings", "check_hsn_code_length")
+	for i in doc["items"]:
+		if not i["gst_hsn_code"]:
+			if raise_error:
+				frappe.throw("HSN Code not found for {0}".format(i["item_code"]))
+			else:
+				frappe.msgprint("HSN Code not found for {0}".format(i["item_code"]))
+			return 0
+		if length_check > 0 and len(i["gst_hsn_code"]) < length_check:
+			if raise_error:
+				frappe.throw("HSN Code Needs to be at least {0} Digits for Item {1}".format(length_check, i["item_code"]))
+			else:
+				frappe.msgprint("HSN Code Needs to be at least {0} Digits for Item {1}".format(length_check, i["item_code"]))
+			return 0
+	return 1
 
 def validate_grand_total(doc, method):
 	if not doc.grand_total:

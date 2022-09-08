@@ -108,9 +108,9 @@ def get_average_purchase_rate_for_item(item,with_tax=True,as_value=0):
 	if not as_value:
 		return frappe.db.sql(query, item)
 	else:
-		ar = frappe.db.sql(query, item, as_dict=1)[0].avg_rate
+		ar = frappe.db.sql(query, item, as_dict=1)
 		if ar:
-			return ar
+			return ar[0].avg_rate
 	return 0
 
 def check_average_purchase(doc):

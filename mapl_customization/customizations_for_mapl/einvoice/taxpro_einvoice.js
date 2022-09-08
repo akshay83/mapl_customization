@@ -34,7 +34,8 @@ erpnext.setup_einvoice_actions = (doctype) => {
 					});
 				};
 				let negative_check = await custom.check_if_sales_invoice_will_result_in_negative_stock(frm.doc);
-				if ((!wf || (wf && frm.doc.workflow_state == 'Approved')) && !negative_check.result) {
+				let hsn_code_length_check = await custom.check_sales_invoice_hsn_length(frm.doc);
+				if ((!wf || (wf && frm.doc.workflow_state == 'Approved')) && !negative_check.result && hsn_code_length_check) {
 					add_custom_button(__("Generate IRN - Taxpro"), action);
 				}
 			}

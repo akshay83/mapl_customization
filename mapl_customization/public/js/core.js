@@ -179,7 +179,9 @@ custom.hide_print_button = async function (doctype, frm) {
 			} else {
 				print_doc = true;
 			}
-			if (doctype == 'Sales Invoice' && await custom.check_if_sales_invoice_will_result_in_negative_stock(frm.doc).result) {
+			if (doctype == 'Sales Invoice' 
+				&& await custom.check_if_sales_invoice_will_result_in_negative_stock(frm.doc).result
+				&& !(await custom.check_sales_invoice_hsn_length(frm.doc))) {
 					print_doc = false; 
 			}
 			custom.hide_show_print_buttons(print_doc);
@@ -252,4 +254,29 @@ custom.check_if_sales_invoice_will_result_in_negative_stock = async function (do
 	await promise.catch(() => frappe.throw());
 	//--DEBUG--console.log("Out:" + negative_stock);
 	return negative_stock;
+};
+
+custom.check_sales_invoice_hsn_length = async function (doc) {
+	if (doc.docstatus >= 1 || doc.update_stock == 0 || doc.__islocal == 1) return false;
+	let length_check_failed = false;
+	let promise = new Promise((resolve, reject) => {
+		frappe.call({
+			method: "mapl_customization.customizations_for_mapl.sales_invoice_validation.validate_hsn_code",
+			args: {
+				doc: doc,
+				method: null
+			},
+			callback: async function (r) {
+				//--DEBUG--console.log(r);
+				if (!r.exc) {
+					length_check_failed = r.message==0?true:false;
+				}
+				resolve(length_check_failed);
+				return;
+			}
+		});
+	});
+	await promise.catch(() => frappe.throw());
+	//--DEBUG--console.log("Length Check Failed:" + length_check_failed);
+	return length_check_failed;
 };

@@ -238,7 +238,8 @@ cf_fields = [
 		"Sales Invoice Item-controller_no",
 		"User-default_user_warehouse",
 		"UOM-einvoice_reporting_unit",
-		"Accounts Settings-custom_workflow_condition"
+		"Accounts Settings-custom_workflow_condition",
+		"Stock Settings-check_hsn_code_length"
 ]
 
 print_fs = [
