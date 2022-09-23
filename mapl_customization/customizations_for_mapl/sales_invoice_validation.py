@@ -56,6 +56,8 @@ def validate_customer_balance(doc, method):
 		return
 	if cint(doc.delayed_payment) or cint(doc.is_finance):
 		return
+	if doc.docstatus == 2:
+		return
 	balance = flt(get_customer_credit_balance())
 	inv_total = flt(get_customer_invoice_total())
 	if abs(balance)-abs(inv_total) < 0:
@@ -166,24 +168,29 @@ def taxes_and_charges_validation(doc, method):
 						frappe.throw("""Taxes Does not seems to be Applied on Item {0}, Please ensure if this is Ok!!""".format(i.item_code))
 
 @frappe.whitelist()
-def validate_hsn_code(doc, method, raise_error=False):
+def validate_hsn_code(doc, method, raise_error=False, show_message=1):
+	if (frappe.session.user == "Administrator" or "System Manager" in frappe.get_roles()):
+		raise_error = False
+	from frappe.model.document import Document
 	if isinstance(doc, str):
 		doc = json.loads(doc)
+	if isinstance(doc, Document):
+		doc = doc.as_dict()
 	length_check = frappe.db.get_single_value("Stock Settings", "check_hsn_code_length")
 	for i in doc["items"]:
-		if not i["gst_hsn_code"]:
+		if not i.get("gst_hsn_code"):
 			if raise_error:
 				frappe.throw("HSN Code not found for {0}".format(i["item_code"]))
-			else:
+			elif cint(show_message):
 				frappe.msgprint("HSN Code not found for {0}".format(i["item_code"]))
-			return 0
+			return {"hsn_error": True, "result": True, "item_code": i["item_code"]}
 		if length_check > 0 and len(i["gst_hsn_code"]) < length_check:
 			if raise_error:
 				frappe.throw("HSN Code Needs to be at least {0} Digits for Item {1}".format(length_check, i["item_code"]))
-			else:
+			elif cint(show_message):
 				frappe.msgprint("HSN Code Needs to be at least {0} Digits for Item {1}".format(length_check, i["item_code"]))
-			return 0
-	return 1
+			return {"hsn_digits_failed": length_check, "result": True, "item_code": i["item_code"]}
+	return {"result": False}
 
 def validate_grand_total(doc, method):
 	if not doc.grand_total:

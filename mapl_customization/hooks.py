@@ -281,7 +281,8 @@ ps_fields = [
 	"Address-main-allow_rename",
 	"Address-address_title-hidden",
 	"E Invoice Request Log-url-fieldtype",
-	"Contact-main-allow_rename"
+	"Contact-main-allow_rename",
+	"GST HSN Code-main-allow_rename"
 ]
 
 wf_names = [

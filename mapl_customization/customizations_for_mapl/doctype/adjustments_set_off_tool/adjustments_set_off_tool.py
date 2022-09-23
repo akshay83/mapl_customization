@@ -13,13 +13,11 @@ from erpnext.accounts.utils import get_fiscal_year
 class AdjustmentsSetOffTool(Document):
 	pass
 
-
 @frappe.whitelist()
 def make_jv(doc_name):
 	payment_doc = frappe.get_doc("Adjustments Set Off Tool", doc_name)
 	if not payment_doc:
 		return
-
 	if payment_doc.journal_reference:
 		return
 
@@ -36,7 +34,6 @@ def make_jv(doc_name):
 
 	jv.posting_date = payment_doc.adjustment_date
 	jv.company = payment_doc.company
-
 
 	adj_acc_credit_total = 0
 	adj_acc_debit_total = 0
@@ -72,36 +69,25 @@ def make_jv(doc_name):
 
 	jv.save()
 	jv.submit()
-
 	payment_doc.journal_reference = jv.name
-
 	payment_doc.save()
-
 
 def get_period_condition(filters):
 	conditions = ""
-
 	if filters.get("from_date"):
 		conditions += """ and gl_entry.posting_date >= '%s'""" % filters["from_date"]
-
 	if filters.get("to_date"):
 		conditions += """ and gl_entry.posting_date <= '%s'""" % filters["to_date"]
-
 	return conditions
-
 
 def get_finance_condition(filters):
 	conditions = ""
-
 	if filters.get("is_financed"):
 		if cint(filters["is_financed"]) == 0:
 			conditions += """where data.`Hypothecation` <= 0"""
-
 		if cint(filters["is_financed"]) == 1:
 			conditions += """where data.`Hypothecation` > 0"""
-
 	return conditions
-
 
 def get_cut_off_date(filters):
 	return """'%s'""" % filters["check_balance_till"]
@@ -111,18 +97,15 @@ def get_condition(filters):
 	conditions = " and "
 	tp = filters.get("threshold_percentage", 0)
 	ta = filters.get("threshold_amount", 0)
-
 	if flt(tp) != 0:
 		conditions += """ abs(`Percentage`) < %s""" % tp
-
 	elif flt(ta) != 0:
 		conditions += """ abs(`Difference`) < %s""" % ta
-
 	return conditions
 
 @frappe.whitelist()
 def fetch_details(filters):
-	if isinstance(filters, basestring):
+	if isinstance(filters, str):
 		filters = json.loads(filters)
 
 	if not filters.get("from_date") and not filters.get("to_date") and not filters.get("check_balance_till"):
@@ -184,5 +167,4 @@ def fetch_details(filters):
 			   })
 
 	details = frappe.db.sql(update_query, as_dict=1)
-
 	return details

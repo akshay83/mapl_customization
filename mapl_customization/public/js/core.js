@@ -179,9 +179,9 @@ custom.hide_print_button = async function (doctype, frm) {
 			} else {
 				print_doc = true;
 			}
-			if (doctype == 'Sales Invoice' 
-				&& await custom.check_if_sales_invoice_will_result_in_negative_stock(frm.doc).result
-				&& !(await custom.check_sales_invoice_hsn_length(frm.doc))) {
+			let negative_stock_check = await custom.check_if_sales_invoice_will_result_in_negative_stock(frm.doc);
+			let hsn_check = await custom.check_sales_invoice_hsn_length(frm.doc);
+			if (doctype == 'Sales Invoice' && (negative_stock_check.result	|| hsn_check.result)) {
 					print_doc = false; 
 			}
 			custom.hide_show_print_buttons(print_doc);
@@ -232,8 +232,8 @@ custom.einvoice_eligibility = async function (doc) {
 
 custom.check_if_sales_invoice_will_result_in_negative_stock = async function (doc) {
 	const delay = ms => new Promise(res => setTimeout(res, ms)); //Utility Method
-	if (doc.docstatus >= 1 || doc.update_stock == 0 || doc.__islocal == 1) return false;
-	let negative_stock = { "result": false };
+	let negative_stock = { "result": false };	
+	if (doc.docstatus >= 1 || doc.update_stock == 0 || doc.__islocal == 1) return negative_stock;
 	let promise = new Promise((resolve, reject) => {
 		frappe.call({
 			method: "mapl_customization.customizations_for_mapl.utils.check_if_invoice_will_end_up_in_negative_stock",
@@ -257,19 +257,20 @@ custom.check_if_sales_invoice_will_result_in_negative_stock = async function (do
 };
 
 custom.check_sales_invoice_hsn_length = async function (doc) {
-	if (doc.docstatus >= 1 || doc.update_stock == 0 || doc.__islocal == 1) return false;
-	let length_check_failed = false;
+	let length_check_failed = {"result": false};
+	if (doc.docstatus >= 1 || doc.__islocal == 1) return length_check_failed;
 	let promise = new Promise((resolve, reject) => {
 		frappe.call({
 			method: "mapl_customization.customizations_for_mapl.sales_invoice_validation.validate_hsn_code",
 			args: {
 				doc: doc,
-				method: null
+				method: null,
+				show_message: 0
 			},
 			callback: async function (r) {
 				//--DEBUG--console.log(r);
 				if (!r.exc) {
-					length_check_failed = r.message==0?true:false;
+					length_check_failed = r.message;
 				}
 				resolve(length_check_failed);
 				return;

@@ -12,6 +12,10 @@ frappe.ui.form.on("Sales Invoice", "refresh", async function (frm) {
 	if (negative_check.result) {
 		frm.layout.show_message("On Submission, This Invoice will Result in Negative Stock. Check Item "+negative_check.item,"red");
 	}
+	let hsn_length_check = await custom.check_sales_invoice_hsn_length(frm.doc);
+	if (hsn_length_check.result) {
+		frm.layout.show_message("HSN Code Needs to be at least "+hsn_length_check.hsn_digits_failed+" Digits for Item "+hsn_length_check.item_code,"red");
+	}
 	if (frm.doc.docstatus == 0 && frm.doc.workflow_state === 'Pending' && frm.doc.delayed_payment === 1 
 			&& ["other", "reference"].includes(frm.doc.delayed_payment_reason.toLowerCase())) {
 				frm.layout.show_message("Reference Sale, Requires Approval","yellow");
