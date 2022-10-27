@@ -42,9 +42,9 @@ class TaxproGSP(GSPConnector):
             res = make_get_request(url, headers=headers, data=data)
 
         self.log_request(url, headers, data, res)
-        print ('-------------REQUEST RESULT--------------')
-        print (frappe.flags.integration_request.json())
-        print ('-----------------------------------------')
+        ##--DEBUG--print ('-------------REQUEST RESULT--------------')
+        ##--DEBUG--print (frappe.flags.integration_request.json())
+        ##--DEBUG--print ('-----------------------------------------')
         return res
 
     def fetch_auth_token(self):
@@ -52,9 +52,9 @@ class TaxproGSP(GSPConnector):
         res = {}
         try:
             res = self.make_request('get', self.authenticate_url, headers)
-            print ('----------------AuthToken----------------')
-            print (res)
-            print ('-----------------------------------------')
+            ##--DEBUG--print ('----------------AuthToken----------------')
+            ##--DEBUG--print (res)
+            ##--DEBUG--print ('-----------------------------------------')
             res = res.get("Data")
             if isinstance(res, str):
                 res = json.loads(res)
@@ -88,9 +88,9 @@ class TaxproGSP(GSPConnector):
             einvoice = make_einvoice(self.invoice)
             data = json.dumps(einvoice, indent=4)
             res = self.make_request('post', self.generate_irn_url, headers, data)
-            print ('----------------Generate IRN----------------')
-            print (res)
-            print ('-----------------------------------------')
+            ##--DEBUG--print ('----------------Generate IRN----------------')
+            ##--DEBUG--print (res)
+            ##--DEBUG--print ('-----------------------------------------')
 
             if res.get('Status') == "1":
                 self.set_einvoice_data(json.loads(res.get('Data')))
@@ -178,9 +178,9 @@ class TaxproGSP(GSPConnector):
             }, indent=4)
 
             res = self.make_request('post', self.cancel_irn_url, headers, data)
-            print ('----------------Cancel IRN----------------')
-            print (res)
-            print ('-----------------------------------------')
+            ##--DEBUG--print ('----------------Cancel IRN----------------')
+            ##--DEBUG--print (res)
+            ##--DEBUG--print ('-----------------------------------------')
             if res.get('Status') == "1":
                 self.invoice.irn_cancelled = 1
                 res = res.get("Data")
@@ -231,9 +231,9 @@ class TaxproGSP(GSPConnector):
 
         try:
             res = self.make_request('post', self.generate_ewaybill_url, headers, data)
-            print ('----------------Generate EWAY----------------')
-            print (res)
-            print ('-----------------------------------------')
+            ##--DEBUG--print ('----------------Generate EWAY----------------')
+            ##--DEBUG--print (res)
+            ##--DEBUG--print ('-----------------------------------------')
             if res.get('Status') == "1":
                 res = json.loads(res.get("Data"))
                 self.update_eway_bill_details(res, args)
@@ -273,14 +273,14 @@ class TaxproGSP(GSPConnector):
         headers["UserName"] = headers["user_name"]        
         #del headers["user_name"]
         headers["action"] = "CANEWB"
-        print ('------------Cancel EWB Headers------------')
-        print (headers)
-        print ('------------------------------------------')
+        ##--DEBUG--print ('------------Cancel EWB Headers------------')
+        ##--DEBUG--print (headers)
+        ##--DEBUG--print ('------------------------------------------')
         try:
             res = self.make_request('post', self.get_url_with_params(self.cancel_ewaybill_url), headers, data)
-            print ('----------------Cancel EWAY----------------')
-            print (res)
-            print ('-----------------------------------------')
+            ##--DEBUG--print ('----------------Cancel EWAY----------------')
+            ##--DEBUG--print (res)
+            ##--DEBUG--print ('-----------------------------------------')
             if res.get('Status') == "1" or (res.get('status_cd') == '0' and res.get('error').get('error_cd') == "312"):
                 self.invoice.ewaybill = None
                 self.invoice.eway_bill_cancelled = 1

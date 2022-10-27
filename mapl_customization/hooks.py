@@ -239,7 +239,9 @@ cf_fields = [
 		"User-default_user_warehouse",
 		"UOM-einvoice_reporting_unit",
 		"Accounts Settings-custom_workflow_condition",
-		"Stock Settings-check_hsn_code_length"
+		"Stock Settings-check_hsn_code_length",
+		"Payment Entry-cash_back_amount",
+		"Payment Entry-instant_cash_back_provider"
 ]
 
 print_fs = [

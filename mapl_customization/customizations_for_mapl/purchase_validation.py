@@ -10,15 +10,17 @@ def purchase_invoice_before_validate(doc, method):
 	from erpnext.stock import get_warehouse_account_map
 	for i in doc.items:
 		is_stock_item = frappe.db.get_value("Item", i.item_code, "is_stock_item")
-		i.expense_account = frappe.db.get_value("Item Default", { "parent": i.item_code, "company": doc.company }, "expense_account")
-		if not i.expense_account and cint(is_stock_item):
+		temp_expense_account = frappe.db.get_value("Item Default", { "parent": i.item_code, "company": doc.company }, "expense_account")
+		if not temp_expense_account and cint(is_stock_item):
 			warehouse_map = get_warehouse_account_map(doc.company)
 			if warehouse_map and warehouse_map.get(i.warehouse):
 				i.expense_account = warehouse_map.get(i.warehouse).get("account")
 			else:
 				i.expense_account = doc.get_company_default("default_inventory_account")
-		elif not i.expense_account and not cint(is_stock_item):
+		elif not temp_expense_account and not cint(is_stock_item) and not i.expense_account:
 			frappe.throw("Please Set Expense Account")
+		elif temp_expense_account and not i.expense_account:
+			i.expense_account = temp_expense_account
 
 def purchase_receipt_on_cancel(doc, method):
 	pass
