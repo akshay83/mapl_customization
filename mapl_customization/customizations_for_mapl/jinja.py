@@ -45,3 +45,6 @@ def render_template(content, doc):
 
 def table_exists(doctype):
 	return frappe.db.table_exists(doctype)
+
+def doc_exists(*args, **kwargs):
+	return frappe.db.exists(*args, **kwargs)

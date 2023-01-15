@@ -397,7 +397,8 @@ doctype_list_js = {"Customer" : "/public/js/customer_list.js"}
 jenv = {
 	"methods" : [
 		"render_template:mapl_customization.customizations_for_mapl.jinja.render_template",
-		"table_exists:mapl_customization.customizations_for_mapl.jinja.table_exists"
+		"table_exists:mapl_customization.customizations_for_mapl.jinja.table_exists",
+		"doc_exists:mapl_customization.customizations_for_mapl.jinja.doc_exists"
 		],
 	"filters": [
 		"date_to_code:mapl_customization.customizations_for_mapl.jinja.date_to_code",
@@ -409,7 +410,8 @@ jenv = {
 jinja = {
 	"methods" : [
 				"mapl_customization.customizations_for_mapl.jinja.render_template",
-				"mapl_customization.customizations_for_mapl.jinja.table_exists"
+				"mapl_customization.customizations_for_mapl.jinja.table_exists",
+				"mapl_customization.customizations_for_mapl.jinja.doc_exists"
 			],
 	"filters": [
 		"mapl_customization.customizations_for_mapl.jinja.date_to_code",

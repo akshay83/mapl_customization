@@ -1,5 +1,6 @@
 import frappe
 from erpnext.accounts.doctype.payment_entry.payment_entry import PaymentEntry
+from erpnext.accounts.general_ledger import make_gl_entries, process_gl_map
 
 def payment_entry_validate(doc, method):
 	if doc.get('ignore_validate_hook'):
@@ -14,14 +15,23 @@ class CustomPaymentEntry(PaymentEntry):
 		return print_setting_fields
 
 	def make_gl_entries(self, cancel=0, adv_adj=0):
-		gl_entries = self.build_gl_map()
+		if self.payment_type in ("Receive", "Pay") and not self.get("party_account_field"):
+			super().setup_party_account_field()
+
+		gl_entries = []
+		super().add_party_gl_entries(gl_entries)
+		super().add_bank_gl_entries(gl_entries)
+		super().add_deductions_gl_entries(gl_entries)
+		super().add_tax_gl_entries(gl_entries)
+
 		#Activate when you want system to post CB Amount to an Account
 		#gl_entries = self.add_cashback_gl_entries(gl_entries)
 		gl_entries = process_gl_map(gl_entries)
 		make_gl_entries(gl_entries, cancel=cancel, adv_adj=adv_adj)
 
 	def add_cashback_gl_entries(self, gl_entries):
-		if self.cash_back_amount and self.cash_back_amount > 0 and self.instant_cash_back_provider:
+		if self.get("cash_back_amount") and self.cash_back_amount > 0 and self.instant_cash_back_provider and \
+					"cash back" in self.special_payment.lower():
 			icb_account = frappe.db.get_value("Instant Cashback Providers", self.instant_cash_back_provider, "linked_account")
 			gl_entries.append(self.get_gl_dict({
 						"account": icb_account,

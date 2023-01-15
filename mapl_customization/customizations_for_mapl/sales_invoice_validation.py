@@ -1,12 +1,13 @@
 import frappe
 import html
 import json
-from frappe.utils import cint, flt
+from frappe.utils import cint, flt, getdate
 
 def sales_invoice_validate(doc, method):
 	if doc.get('ignore_validate_hook'):
 		return	
 	negative_stock_validation(doc, method)
+	validate_serial_purchase(doc, method)
 	validate_hsn_code(doc, method)
 	validate_stock_entry_serial_no(doc, method)
 	validate_serial_no(doc, method)
@@ -21,7 +22,19 @@ def sales_on_submit_validation(doc, method):
 	validate_hsn_code(doc, method, raise_error=True)
 	taxes_and_charges_validation(doc, method)
 	validate_grand_total(doc, method)
-	
+
+def validate_serial_purchase(doc, method):
+	if (frappe.session.user == "Administrator" or "System Manager" in frappe.get_roles()) or doc.docstatus == 2:
+		return
+	for i in doc.items:
+		if i.serial_no:
+			snos = i.serial_no.strip(' \n').split('\n')
+			for s in snos:
+				sale_dt = getdate(doc.posting_date)
+				purchase_dt = getdate(frappe.db.get_value("Serial No", s, "purchase_date"))
+				if purchase_dt > sale_dt:
+					frappe.throw("Trying to Sell {0} before it is Purchased on {1}".format(s, purchase_dt))
+
 def validate_customer_balance(doc, method):
 	def get_customer_invoice_total():
 		filters = {
@@ -85,7 +98,7 @@ def validate_serial_no(doc, method):
 							serial_no like '%{serial_no}%' 
 							and docstatus <> 2 
 							{docname} 
-						having sum(rec_qty) > 0
+						having rec_qty > 0
 					""".format(**{
 						"serial_no": serial_no,
 						"docname": "and parent <> '{0}'".format(doc.name) if doc.name else ""

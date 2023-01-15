@@ -12,16 +12,15 @@ function custom_hide_sections(frm, hide) {
 		frm.fields_dict.accounting_dimensions_section.wrapper.show();
 		frm.fields_dict.finance.wrapper.show();
 	}
-}
+};
 function custom_hide_or_show_cashback_fields(frm, show) {
 	let fields = ["base_amount", "cash_back_amount", "instant_cash_back_provider"];
 	for (let f in fields) {
-		console.log(f);
 		frm.set_df_property(fields[f], "hidden", !show);
 		frm.set_df_property(fields[f], "reqd", show);
 		frm.refresh_field(fields[f]);
 	}
-}
+};
 frappe.ui.form.on("Payment Entry", "refresh", function (frm) {
 	$('.btn.btn-default.btn-xs:contains("Receipts")').css('width', '200px');
 	$('.btn.btn-default.btn-xs:contains("Payments")').css('width', '200px');
@@ -49,10 +48,14 @@ frappe.ui.form.on("Payment Entry", "mode_of_payment", function (frm) {
 			if (val.base_mode.toLowerCase() == "card") {
 				frm.set_df_property("special_payment", "reqd", 1);
 				frm.set_df_property("special_payment", "hidden", 0);
-				frm.refresh_field("special_payment");
 			} else {
+				custom_hide_or_show_cashback_fields(frm, false);
+				frm.set_df_property("special_payment", "reqd", 0);
+				frm.set_df_property("special_payment", "hidden", 1);
+				frm.set_value("special_payment", "");
 				frm.fields_dict.party_section.wrapper.show();
 			}
+			frm.refresh_field("special_payment");
 		});
 	}
 });
@@ -61,6 +64,7 @@ frappe.ui.form.on("Payment Entry", "special_payment", function (frm) {
 		if (frm.doc.special_payment.toLowerCase().includes("cash back")) {
 			custom_hide_or_show_cashback_fields(frm, true);
 		} else {
+			custom_hide_or_show_cashback_fields(frm, false);
 			frm.fields_dict.party_section.wrapper.show();
 		}
 	}
@@ -71,7 +75,9 @@ frappe.ui.form.on("Payment Entry", "cash_back_amount", function (frm) {
 			frappe.msgprint("Check Base Amount");
 		} else {
 			frm.set_value("paid_amount", (frm.doc.base_amount - frm.doc.cash_back_amount));
+			frm.set_value("received_amount", (frm.doc.base_amount - frm.doc.cash_back_amount));
 			frm.refresh_field("paid_amount");
+			frm.refresh_field("received_amount");
 			frm.fields_dict.party_section.wrapper.show();	
 		}	
 	}
