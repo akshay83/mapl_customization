@@ -36,13 +36,6 @@ def get_columns(filters):
 			"width":250
 		},
 		{
-			"fieldname":"warehouse",
-			"fieldtype":"Link",
-			"label":"Warehouse",
-			"options":"Warehouse",
-			"width":150
-		},
-		{
 			"fieldname":"item_group",
 			"fieldtype":"Link",
 			"label":"Item Group",
@@ -74,6 +67,28 @@ def get_columns(filters):
 			"width":150
 		}
 	]
+	
+	warehouse_column_index = 2
+	if not filters.get("brand"):
+		columns.insert(1, {
+			"fieldname":"brand",
+			"fieldtype":"Link",
+			"label":"Brand",
+			"options":"Brand",
+			"width":100
+			}
+		)
+		warehouse_column_index = 3
+
+	if filters.get("group_by_warehouse") and cint(filters.get("group_by_warehouse")):
+		columns.insert(warehouse_column_index, {
+			"fieldname":"warehouse",
+			"fieldtype":"Link",
+			"label":"Warehouse",
+			"options":"Warehouse",
+			"width":150
+			}
+		)
 
 	return columns
 
@@ -121,33 +136,35 @@ def get_global_condition(filters):
 	return global_condition
 
 def get_data(filters):
-	query = ""
-	if filters.get("group_by_warehouse") and cint(filters.get("group_by_warehouse")):
-		query = """SELECT *,`OPENING STOCK`+`IN QTY`-`OUT QTY` AS `CLOSING STOCK` FROM (
-			SELECT OUTSTK.ITEM_CODE,OUTSTK.WAREHOUSE, item.ITEM_GROUP, IFNULL((SELECT SUM(ACTUAL_QTY) FROM `tabStock Ledger Entry` Stk WHERE
-			ITEM_CODE=OUTSTK.ITEM_CODE AND WAREHOUSE=OUTSTK.WAREHOUSE {open_condition}),0) AS `OPENING STOCK`,
-			IFNULL((SELECT SUM(ACTUAL_QTY) FROM `tabStock Ledger Entry` Stk WHERE
-			ITEM_CODE=OUTSTK.ITEM_CODE AND WAREHOUSE=OUTSTK.WAREHOUSE AND ACTUAL_QTY > 0 {condition}),0) AS `IN QTY`,
-			IFNULL((SELECT SUM(ABS(ACTUAL_QTY)) FROM `tabStock Ledger Entry` Stk WHERE
-			ITEM_CODE=OUTSTK.ITEM_CODE AND WAREHOUSE=OUTSTK.WAREHOUSE AND ACTUAL_QTY < 0 {condition}),0) AS `OUT QTY`
-			FROM `tabStock Ledger Entry` OUTSTK,`tabItem` item where item.item_code=OUTSTK.item_code {global_condition}
-			group by OUTSTK.item_code, OUTSTK.WAREHOUSE order by OUTSTK.item_code,OUTSTK.WAREHOUSE) DER """.format(**{
-				"condition":get_conditions(filters),
-				"open_condition":get_open_conditions(filters),
-				"global_condition":get_global_condition(filters)
-			})
-	else:
-		query = """SELECT *,`OPENING STOCK`+`IN QTY`-`OUT QTY` AS `CLOSING STOCK` FROM (
-			SELECT OUTSTK.ITEM_CODE,null as `warehouse`, item.ITEM_GROUP, IFNULL((SELECT SUM(ACTUAL_QTY) FROM `tabStock Ledger Entry` Stk WHERE
-			ITEM_CODE=OUTSTK.ITEM_CODE {open_condition}),0) AS `OPENING STOCK`,
-			IFNULL((SELECT SUM(ACTUAL_QTY) FROM `tabStock Ledger Entry` Stk WHERE
-			ITEM_CODE=OUTSTK.ITEM_CODE AND ACTUAL_QTY > 0 {condition}),0) AS `IN QTY`,
-			IFNULL((SELECT SUM(ABS(ACTUAL_QTY)) FROM `tabStock Ledger Entry` Stk WHERE
-			ITEM_CODE=OUTSTK.ITEM_CODE AND ACTUAL_QTY < 0 {condition}),0) AS `OUT QTY`
-			FROM `tabStock Ledger Entry` OUTSTK,`tabItem` item where item.item_code=OUTSTK.item_code {global_condition}
-			group by OUTSTK.item_code order by OUTSTK.item_code) DER """.format(**{
-				"condition":get_conditions(filters),
-				"open_condition":get_open_conditions(filters),
-				"global_condition":get_global_condition(filters)
-			})
+	query = """SELECT *,`OPENING STOCK`+`IN QTY`-`OUT QTY` AS `CLOSING STOCK` 
+					FROM (	
+						SELECT 
+							OUTSTK.ITEM_CODE,
+							item.BRAND,							
+							item.ITEM_GROUP
+							{warehouse_condition} 
+							,IFNULL((SELECT SUM(ACTUAL_QTY) FROM `tabStock Ledger Entry` Stk WHERE
+								ITEM_CODE=OUTSTK.ITEM_CODE AND WAREHOUSE=OUTSTK.WAREHOUSE {open_condition}),0) AS `OPENING STOCK`,
+							IFNULL((SELECT SUM(ACTUAL_QTY) FROM `tabStock Ledger Entry` Stk WHERE
+								ITEM_CODE=OUTSTK.ITEM_CODE AND WAREHOUSE=OUTSTK.WAREHOUSE AND ACTUAL_QTY > 0 {condition}),0) AS `IN QTY`,
+							IFNULL((SELECT SUM(ABS(ACTUAL_QTY)) FROM `tabStock Ledger Entry` Stk WHERE
+								ITEM_CODE=OUTSTK.ITEM_CODE AND WAREHOUSE=OUTSTK.WAREHOUSE AND ACTUAL_QTY < 0 {condition}),0) AS `OUT QTY`
+						FROM 
+							`tabStock Ledger Entry` OUTSTK,
+							`tabItem` item 
+						where 
+							item.item_code=OUTSTK.item_code 
+							{global_condition}
+						group by 
+							OUTSTK.item_code
+							{warehouse_condition}
+						order by 
+							OUTSTK.item_code
+							{warehouse_condition}
+					) DUMP """.format(**{
+						"condition":get_conditions(filters),
+						"open_condition":get_open_conditions(filters),
+						"global_condition":get_global_condition(filters),
+						"warehouse_condition":", OUTSTK.WAREHOUSE" if (filters.get("group_by_warehouse") and cint(filters.get("group_by_warehouse"))) else ""
+					})
 	return frappe.db.sql(query, as_list=1)

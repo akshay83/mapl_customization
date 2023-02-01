@@ -284,7 +284,8 @@ ps_fields = [
 	"Address-address_title-hidden",
 	"E Invoice Request Log-url-fieldtype",
 	"Contact-main-allow_rename",
-	"GST HSN Code-main-allow_rename"
+	"GST HSN Code-main-allow_rename",
+	"Quotation Item-item_code-reqd"
 ]
 
 wf_names = [
@@ -326,6 +327,9 @@ doc_events = {
 		"autoname" : "mapl_customization.customizations_for_mapl.naming.set_auto_name",
 		"validate" : "mapl_customization.customizations_for_mapl.naming.check_series",
 		"before_save": "mapl_customization.customizations_for_mapl.naming.check_letter_head"
+	},
+	"Quotation": {
+		"before_validate": "mapl_customization.customizations_for_mapl.quotation_hooks.quotation_before_validate"
 	},
 	"Sales Order": {
 		"validate" : "mapl_customization.customizations_for_mapl.sales_order_validation.sales_order_validate",

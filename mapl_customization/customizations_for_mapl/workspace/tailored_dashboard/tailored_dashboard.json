@@ -344,6 +344,15 @@
   },
   {
    "hidden": 0,
+   "is_query_report": 1,
+   "label": "Stock Report",
+   "link_to": "Modified Stock Balance",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
    "is_query_report": 0,
    "label": "Tax Reports",
    "link_type": "DocType",
@@ -360,7 +369,7 @@
    "type": "Link"
   }
  ],
- "modified": "2022-09-08 16:59:40.904258",
+ "modified": "2023-01-16 15:00:45.977016",
  "modified_by": "akshay.mehta@mehtaautomobiles.com",
  "module": "Customizations for MAPL",
  "name": "Tailored Dashboard",
@@ -392,6 +401,12 @@
    "doc_view": "List",
    "label": "Journal Entry",
    "link_to": "Journal Entry",
+   "type": "DocType"
+  },
+  {
+   "doc_view": "List",
+   "label": "Quotation",
+   "link_to": "Quotation",
    "type": "DocType"
   }
  ],

@@ -66,7 +66,7 @@ erpnext.setup_einvoice_actions = (doctype) => {
 					d.show();
 				};
 				if (frappe.user_roles.includes("System Manager") || frappe.user_roles.includes("Administrator")) {
-				add_custom_button(__("Cancel IRN - Taxpro"), action);
+					add_custom_button(__("Cancel IRN - Taxpro"), action);
 				}
 			}
 
@@ -95,8 +95,9 @@ erpnext.setup_einvoice_actions = (doctype) => {
 					});
 					d.show();
 				};
-				//Disabled For Now
-				//add_custom_button(__("Generate E-Way Bill - Taxpro"), action);
+				if (frappe.user_roles.includes("System Manager") || frappe.user_roles.includes("Administrator")) {
+					add_custom_button(__("Generate E-Way Bill - Taxpro"), action);
+				}
 			}
 
 			if (irn && ewaybill && !irn_cancelled && !eway_bill_cancelled) {
@@ -123,8 +124,9 @@ erpnext.setup_einvoice_actions = (doctype) => {
 					});
 					d.show();
 				};
-				//Disabled For Now
-				//add_custom_button(__("Cancel E-Way Bill - Taxpro"), action);
+				if (frappe.user_roles.includes("System Manager") || frappe.user_roles.includes("Administrator")) {
+					add_custom_button(__("Cancel E-Way Bill - Taxpro"), action);
+				}
 			}
 		}
 	});

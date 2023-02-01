@@ -95,7 +95,7 @@ def check_series(doc, method):
 
 	fy = get_fiscal_year(date=docdt)
 	if existing:
-		old_fiscal_year = get_fiscal_year(date=existing.posting_date)
+		old_fiscal_year = get_fiscal_year(date=(existing.get('posting_date') or existing.get('transaction_date')))
 		if old_fiscal_year[1] != fy[1]:
 			frappe.throw("""Financial Year Change Not Allowed""")
 
