@@ -26,6 +26,11 @@ function custom_set_tax_rate_type(frm) {
 	frm.refresh();
 };
 
+function custom_toggle_bank(frm) {
+	frm.set_df_property("bank", "reqd", frm.doc.show_bank_details == 1);
+	frm.refresh_field("bank");
+}
+
 frappe.ui.form.on("Quotation", "onload_post_render", function (frm) {
 	frm.set_query("party_name", function (doc) {
 		return {
@@ -44,6 +49,11 @@ frappe.ui.form.on("Quotation", "onload_post_render", function (frm) {
 			filters: { 'customer': doc.party_name }
 		}
 	});
+	custom_toggle_bank(frm);
+});
+
+frappe.ui.form.on("Quotation", "show_bank_details", function (frm) {
+	custom_toggle_bank(frm);
 });
 
 frappe.ui.form.on("Quotation", "customer_address", function (frm) {
