@@ -6,7 +6,7 @@ erpnext.setup_einvoice_actions = (doctype) => {
 
 			const invoice_eligible = await custom.einvoice_eligibility(frm.doc);
 			//--DEBUG--console.log(invoice_eligible);
-			if (!invoice_eligible) return;
+			//if (!invoice_eligible) return;
 
 			let wf = await custom.is_workflow_active_on("Sales Invoice");
 
@@ -18,7 +18,7 @@ erpnext.setup_einvoice_actions = (doctype) => {
 				}
 			};
 
-			if (!irn && !__unsaved) {
+			if (invoice_eligible && !irn && !__unsaved) {
 				const action = () => {
 					if (frm.doc.__unsaved) {
 						frappe.throw(__('Please save the document to generate IRN.'));
@@ -40,7 +40,7 @@ erpnext.setup_einvoice_actions = (doctype) => {
 				}
 			}
 			//--DEBUG--console.log(irn, !irn_cancelled, !ewaybill);
-			if (irn && !irn_cancelled && !ewaybill) {
+			if (invoice_eligible && irn && !irn_cancelled && !ewaybill) {
 				const action = () => {
 					const d = new frappe.ui.Dialog({
 						title: __("Cancel IRN"),
@@ -57,7 +57,7 @@ erpnext.setup_einvoice_actions = (doctype) => {
 									remark: data.remark
 								},
 								freeze: true,
-								callback: () => frm.reload_doc() || d.hide(),
+								callback: () => { d.hide(); frm.reload_doc(); },
 								error: () => d.hide()
 							});
 						},
@@ -70,7 +70,7 @@ erpnext.setup_einvoice_actions = (doctype) => {
 				}
 			}
 
-			if (irn && !irn_cancelled && !ewaybill) {
+			if (invoice_eligible && irn && !irn_cancelled && !ewaybill) {
 				const action = () => {
 					const d = new frappe.ui.Dialog({
 						title: __('Generate E-Way Bill'),
@@ -79,7 +79,7 @@ erpnext.setup_einvoice_actions = (doctype) => {
 						primary_action: function() {
 							const data = d.get_values();
 							frappe.call({
-								method: 'mapl_customization.customizations_for_mapl.einvoice.taxpro_einvoice.generate_eway_bill',
+								method: 'mapl_customization.customizations_for_mapl.einvoice.taxpro_einvoice.generate_eway_bill_by_irn',
 								args: {
 									doctype,
 									docname: name,
@@ -87,7 +87,36 @@ erpnext.setup_einvoice_actions = (doctype) => {
 									...data
 								},
 								freeze: true,
-								callback: () => frm.reload_doc() || d.hide(),
+								callback: () => { d.hide(); frm.reload_doc(); },
+								error: () => d.hide()
+							});
+						},
+						primary_action_label: __('Submit')
+					});
+					d.show();
+				};
+				//if (frappe.user_roles.includes("System Manager") || frappe.user_roles.includes("Administrator")) {
+				add_custom_button(__("Generate E-Way Bill - Taxpro"), action);
+				//}
+			}
+
+			if (!invoice_eligible && !ewaybill) {
+				const action = () => {
+					const d = new frappe.ui.Dialog({
+						title: __('Generate E-Way Bill'),
+						size: "large",
+						fields: get_ewaybill_fields(frm),
+						primary_action: function() {
+							const data = d.get_values();
+							frappe.call({
+								method: 'mapl_customization.customizations_for_mapl.einvoice.taxpro_einvoice.generate_eway_bill_by_json',
+								args: {
+									doctype,
+									docname: name,
+									...data
+								},
+								freeze: true,
+								callback: () => { d.hide(); frm.reload_doc(); },
 								error: () => d.hide()
 							});
 						},
@@ -96,11 +125,13 @@ erpnext.setup_einvoice_actions = (doctype) => {
 					d.show();
 				};
 				if (frappe.user_roles.includes("System Manager") || frappe.user_roles.includes("Administrator")) {
-					add_custom_button(__("Generate E-Way Bill - Taxpro"), action);
+					if (frm.doc.docstatus == 1) {
+						add_custom_button(__("Generate E-Way Bill - Taxpro"), action);
+					}
 				}
 			}
 
-			if (irn && ewaybill && !irn_cancelled && !eway_bill_cancelled) {
+			if ((irn && ewaybill && !irn_cancelled && !eway_bill_cancelled) || (!invoice_eligible && ewaybill)) {
 				const action = () => {
 					const d = new frappe.ui.Dialog({
 						title: __("Cancel IRN"),
@@ -116,7 +147,7 @@ erpnext.setup_einvoice_actions = (doctype) => {
 									remark: data.remark
 								},
 								freeze: true,
-								callback: () => frm.reload_doc() || d.hide(),
+								callback: () => { d.hide(); frm.reload_doc(); },
 								error: () => d.hide()
 							});
 						},

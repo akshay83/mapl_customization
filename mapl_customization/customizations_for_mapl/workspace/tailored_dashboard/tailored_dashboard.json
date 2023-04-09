@@ -1,7 +1,12 @@
 {
  "cards_label": "Links",
  "category": "Modules",
- "charts": [],
+ "charts": [
+  {
+   "chart_name": "Daily Sales",
+   "label": "Sales"
+  }
+ ],
  "charts_label": "",
  "creation": "2022-02-21 14:28:03.891025",
  "developer_mode_only": 0,
@@ -369,7 +374,7 @@
    "type": "Link"
   }
  ],
- "modified": "2023-01-16 15:00:45.977016",
+ "modified": "2023-03-17 13:38:17.607309",
  "modified_by": "akshay.mehta@mehtaautomobiles.com",
  "module": "Customizations for MAPL",
  "name": "Tailored Dashboard",

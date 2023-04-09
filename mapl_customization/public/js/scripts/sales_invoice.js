@@ -7,7 +7,9 @@ frappe.ui.form.on("Sales Invoice", "refresh", async function (frm) {
 	if (einvoice && (frm.doc.irn === undefined || frm.doc.irn == null)) {
 		if (custom.is_workflow_active_on("Sales Invoice") && frm.doc.workflow_state != "Approved") return;
 		frm.layout.show_message("Create an E-Invoice to Continue Printing","yellow");
-	}
+	} /*else if (!einvoice && frm.doc.docstatus == 0 && (frm.doc.ewaybill === undefined || frm.doc.ewaybill == null) && frm.doc.eway_bill_cancelled ==0) {
+		frm.layout.show_message("To Create EWAY Bill (If Applicable), Update Transport Information First & then Submit","blue");
+	} UNCOMMENT ONCE FULLY IMPLEMENTED --- EWAYBILL FROM JSON */
 	let negative_check = await custom.check_if_sales_invoice_will_result_in_negative_stock(frm.doc);
 	if (negative_check.result) {
 		frm.layout.show_message("On Submission, This Invoice will Result in Negative Stock. Check Item "+negative_check.item,"red");
@@ -184,8 +186,9 @@ frappe.ui.form.on("Sales Invoice", "delayed_payment", function (frm) {
 });
 
 frappe.ui.form.on("Sales Invoice", "delayed_payment_reason", function (frm) {
-	frm.set_df_property("referred_by", "reqd", frm.doc.delayed_payment_reason.toLowerCase() == "reference");
-	frm.set_df_property("delayed_payment_remarks", "reqd", frm.doc.delayed_payment_reason.toLowerCase() == "other");
+	let reason = frm.doc.delayed_payment_reason.toLowerCase();
+	frm.set_df_property("referred_by", "reqd", (reason == "reference" || reason == "distribution channel"));
+	frm.set_df_property("delayed_payment_remarks", "reqd", reason == "other");
 	frm.refresh_field("delayed_payment_remarks");
 	frm.refresh_field("referred_by");
 });

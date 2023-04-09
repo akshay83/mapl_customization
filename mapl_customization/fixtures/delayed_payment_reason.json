@@ -78,5 +78,15 @@
   "parentfield": null,
   "parenttype": null,
   "reason": "Expense Claim"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Delayed Payment Reason",
+  "modified": "2023-03-30 19:45:11.929033",
+  "name": "Distribution Channel",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "reason": "Distribution Channel"
  }
 ]

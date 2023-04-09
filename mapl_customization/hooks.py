@@ -256,7 +256,8 @@ print_fs = [
 		"ICICI Bank",
 		"Credit Note",
 		"Quotation Standard",
-		"Sales Invoice Standard"
+		"Sales Invoice Standard",
+		"E-Way Bill"
 ]
 
 ps_fields = [
@@ -402,7 +403,8 @@ jenv = {
 	"methods" : [
 		"render_template:mapl_customization.customizations_for_mapl.jinja.render_template",
 		"table_exists:mapl_customization.customizations_for_mapl.jinja.table_exists",
-		"doc_exists:mapl_customization.customizations_for_mapl.jinja.doc_exists"
+		"doc_exists:mapl_customization.customizations_for_mapl.jinja.doc_exists",
+		"get_eway_bill_details:mapl_customization.customizations_for_mapl.jinja.get_eway_bill_details"
 		],
 	"filters": [
 		"date_to_code:mapl_customization.customizations_for_mapl.jinja.date_to_code",
@@ -415,7 +417,8 @@ jinja = {
 	"methods" : [
 				"mapl_customization.customizations_for_mapl.jinja.render_template",
 				"mapl_customization.customizations_for_mapl.jinja.table_exists",
-				"mapl_customization.customizations_for_mapl.jinja.doc_exists"
+				"mapl_customization.customizations_for_mapl.jinja.doc_exists",
+				"mapl_customization.customizations_for_mapl.jinja.get_eway_bill_details"
 			],
 	"filters": [
 		"mapl_customization.customizations_for_mapl.jinja.date_to_code",

@@ -27,13 +27,18 @@ class TaxproGSP(GSPConnector):
         self.base_url = 'https://einvapi.charteredinfo.com' if not self.e_invoice_settings.sandbox_mode else 'http://gstsandbox.charteredinfo.com'
         self.authenticate_url = self.base_url + '/eivital/dec/v1.04/auth'
 
+        self.base_eway_bill_url = self.base_url + ("/v1.03/dec" if not self.e_invoice_settings.sandbox_mode else "/ewaybillapi/dec/v1.03")
+        self.eway_auth_url = self.base_eway_bill_url + "/auth?action=ACCESSTOKEN" #NOT USED
+        self.base_url_eway_bill_actions = self.base_eway_bill_url + '/ewayapi'
+
         self.cancel_irn_url = self.base_url + '/eicore/dec/v1.03/Invoice/Cancel'
         self.irn_details_url = self.base_url + '/eicore/dec/v1.03/Invoice/irn'
         self.generate_irn_url = self.base_url + '/eicore/dec/v1.03/Invoice'
-        self.gstin_details_url = self.base_url + '/eivital/dec/v1.04/Master/gstin'
-        self.cancel_ewaybill_url = self.base_url + '/ewaybillapi/dec/v1.03/ewayapi?action=CANEWB' if not self.e_invoice_settings.sandbox_mode else '/v1.03/dec/ewayapi?action=CANEWB'
-        self.generate_ewaybill_url = self.base_url + '/eiewb/dec/v1.03/ewaybill'
-        self.eway_bill_by_irn = self.base_url + '/eiewb/dec/v1.03/ewaybill/irn'
+
+        #self.gstin_details_url = self.base_url + '/eivital/dec/v1.04/Master/gstin'        
+        #self.cancel_ewaybill_url = self.base_url + '/ewaybillapi/dec/v1.03/ewayapi?action=CANEWB' if not self.e_invoice_settings.sandbox_mode else '/v1.03/dec/ewayapi?action=CANEWB'
+        self.generate_ewaybill_by_irn_url = self.base_url + '/eiewb/dec/v1.03/ewaybill'
+        #self.eway_bill_by_irn = self.base_url + '/eiewb/dec/v1.03/ewaybill/irn'
 
     def make_request(self, request_type, url, headers=None, data=None):
         if request_type == 'post':
@@ -45,7 +50,7 @@ class TaxproGSP(GSPConnector):
         ##--DEBUG--print ('-------------REQUEST RESULT--------------')
         ##--DEBUG--print (frappe.flags.integration_request.json())
         ##--DEBUG--print ('-----------------------------------------')
-        return res
+        return res        
 
     def fetch_auth_token(self):
         headers = self.get_headers(withAuthToken=False)
@@ -67,7 +72,7 @@ class TaxproGSP(GSPConnector):
             log_error(res)
             self.raise_error(True)
 
-    def get_headers(self, withAuthToken=True):
+    def get_headers(self, withAuthToken=True, forEwayBill=False):
         headers = {
 			'Content-Type': 'application/json; charset=utf-8',
 			'user_name': self.credentials.username if not self.e_invoice_settings.sandbox_mode else 'TaxProEnvPON',
@@ -76,9 +81,14 @@ class TaxproGSP(GSPConnector):
 			'requestid': str(base64.b64encode(os.urandom(18))),
         }
         client_id, client_secret = self.get_client_credentials()
-        headers.update({"aspid":client_id,"password":client_secret})
+        headers.update({"aspid":client_id,"password":client_secret})        
         if withAuthToken:
             headers.update({'AuthToken': self.get_auth_token()})
+        if forEwayBill:
+            headers.update({
+                "username":self.credentials.username if not self.e_invoice_settings.sandbox_mode else 'TaxProEnvPON',
+                "ewbpwd":self.credentials.get_password() if not self.e_invoice_settings.sandbox_mode else 'abc34*',
+            })
         return headers
 
     def generate_irn(self):
@@ -125,7 +135,6 @@ class TaxproGSP(GSPConnector):
 
     def get_irn_details(self, irn):
         headers = self.get_headers()
-
         try:
             params = '/{irn}'.format(irn=irn)
             res = self.make_request('get', self.irn_details_url + params, headers)
@@ -133,18 +142,15 @@ class TaxproGSP(GSPConnector):
                 return res.get('Data')
             else:
                 raise RequestFailed
-
         except RequestFailed:
             errors = self.sanitize_error_message(res)
             self.raise_error(errors=errors)
-
         except Exception:
             log_error()
             self.raise_error(True)
 
     def get_eway_bill_by_irn_details(self, irn):
         headers = self.get_headers()
-
         try:
             params = '/{irn}'.format(irn=irn)
             res = self.make_request('get', self.irn_details_url + params, headers)
@@ -152,11 +158,9 @@ class TaxproGSP(GSPConnector):
                 return res.get('Data')
             else:
                 raise RequestFailed
-
         except RequestFailed:
             errors = self.sanitize_error_message(res)
             self.raise_error(errors=errors)
-
         except Exception:
             log_error()
             self.raise_error(True)
@@ -212,9 +216,56 @@ class TaxproGSP(GSPConnector):
             log_error(data)
             self.raise_error(True)
 
-    def generate_eway_bill(self, **kwargs):
+    def generate_eway_bill_by_json(self, **kwargs):
+        from erpnext.regional.india.utils import generate_ewb_json
+        from requests import request
         args = frappe._dict(kwargs)
+        if args:
+            self.invoice.update(args)
+            self.invoice.flags.updater_reference = {
+                    'doctype': self.invoice.doctype,
+					'docname': self.invoice.reporting_name,
+					'label': _('Transport Details Updated')
+            }
+            self.update_invoice()            
+        data = generate_ewb_json('Sales Invoice', json.dumps([self.invoice.name]))['billLists'][0]
+        data = make_supporting_request_data(data)
+        #--DEBUG--data1 = {'action':'GENEWAYBILL','data':base64.b64encode(str(data).encode('utf-8'))}
+        #--DEBUG--return data
+        headers = self.get_headers(forEwayBill=True)
+        try:
+            res = request(
+                        'POST', 
+                        self.build_url_with_params_for_ewaybill(self.base_url_eway_bill_actions+"?action=GENEWAYBILL",headers),
+                        headers={"Content-Type":"application/json"}, 
+                        data=json.dumps(data)
+                )
+            self.log_request(
+                    self.build_url_with_params_for_ewaybill(self.base_url_eway_bill_actions+"?action=GENEWAYBILL",headers),
+                    {"Content-Type":"application/json"}, 
+                    json.dumps(data), 
+                    res.text
+                )
+            res_json = json.loads(res.text)
+            #--DEBUG--print ('----------------Generate EWAY JSON----------------')
+            #--DEBUG--print (res.text)
+            #--DEBUG--print (cint(res_json.get("status_cd",1)), res_json.get('ewayBillNo'))
+            #--DEBUG--print ('-----------------------------------------')            
+            if cint(res_json.get("status_cd",1))==1 and res_json.get('ewayBillNo'):
+                self.update_eway_bill_details_by_json(res_json)
+            else:
+                raise RequestFailed
 
+        except RequestFailed:
+            self.raise_error(errors=res_json.get("error").get("message"))
+
+        except Exception:
+            log_error(data)
+            self.raise_error(True)
+
+    def generate_eway_bill_by_irn(self, **kwargs):
+        args = frappe._dict(kwargs)
+        self.validate_sales_invoice_for_ewaybill()
         headers = self.get_headers()
         eway_bill_details = get_eway_bill_details(args)
         data = json.dumps({
@@ -230,16 +281,16 @@ class TaxproGSP(GSPConnector):
         }, indent=4)
 
         try:
-            res = self.make_request('post', self.generate_ewaybill_url, headers, data)
+            res = self.make_request('post', self.generate_ewaybill_by_irn_url, headers, data)
             ##--DEBUG--print ('----------------Generate EWAY----------------')
             ##--DEBUG--print (res)
             ##--DEBUG--print ('-----------------------------------------')
             if res.get('Status') == "1":
                 res = json.loads(res.get("Data"))
-                self.update_eway_bill_details(res, args)
+                self.update_eway_bill_details_by_irn(res, args)
             elif res.get('Status') == "0" and res.get('ErrorDetails')[0].get('ErrorCode') == "4002":
                 res = json.loads(self.get_eway_bill_by_irn_details(self.invoice.irn))
-                self.update_eway_bill_details(res, args)
+                self.update_eway_bill_details_by_irn(res, args)
             else:
                 raise RequestFailed
 
@@ -251,7 +302,7 @@ class TaxproGSP(GSPConnector):
             log_error(data)
             self.raise_error(True)
 
-    def update_eway_bill_details(self, eway_bill_data, args):
+    def update_eway_bill_details_by_irn(self, eway_bill_data, args):
         self.invoice.ewaybill = eway_bill_data.get('EwbNo')
         self.invoice.eway_bill_validity = eway_bill_data.get('EwbValidTill')
         self.invoice.eway_bill_cancelled = 0
@@ -263,25 +314,35 @@ class TaxproGSP(GSPConnector):
         }
         self.update_invoice()
 
+    def update_eway_bill_details_by_json(self, eway_bill_data):
+        self.invoice.ewaybill = eway_bill_data.get('ewayBillNo')
+        self.invoice.eway_bill_validity = eway_bill_data.get('validUpto')
+        self.invoice.eway_bill_cancelled = 0
+        self.invoice.flags.updater_reference = {
+					'doctype': self.invoice.doctype,
+					'docname': self.invoice.reporting_name,
+					'label': _('E-Way Bill Generated')
+        }
+        self.update_invoice()
+
     def cancel_eway_bill(self, reason, remark):
-        headers = self.get_headers()
+        headers = self.get_headers(forEwayBill=True)
         data = json.dumps({
 			'ewbNo': self.invoice.ewaybill,
 			'cancelRsnCode': reason,
 			'cancelRmrk': remark
-        }, indent=4)
-        headers["UserName"] = headers["user_name"]        
-        #del headers["user_name"]
-        headers["action"] = "CANEWB"
-        ##--DEBUG--print ('------------Cancel EWB Headers------------')
-        ##--DEBUG--print (headers)
-        ##--DEBUG--print ('------------------------------------------')
+        }, indent=4)     
         try:
-            res = self.make_request('post', self.get_url_with_params(self.cancel_ewaybill_url), headers, data)
+            res = self.make_request(
+                        'post', 
+                        self.build_url_with_params_for_ewaybill(self.base_url_eway_bill_actions+"?action=CANEWB", headers), 
+                        headers={"Content-Type":"application/json"}, 
+                        data=data
+                    )
             ##--DEBUG--print ('----------------Cancel EWAY----------------')
             ##--DEBUG--print (res)
             ##--DEBUG--print ('-----------------------------------------')
-            if res.get('Status') == "1" or (res.get('status_cd') == '0' and res.get('error').get('error_cd') == "312"):
+            if res.get('cancelDate'):
                 self.invoice.ewaybill = None
                 self.invoice.eway_bill_cancelled = 1
                 self.invoice.eway_bill_validity = None
@@ -301,20 +362,51 @@ class TaxproGSP(GSPConnector):
         except Exception:
             log_error(data)
             self.raise_error(True)
-    
-    def get_url_with_params(self,base_url):
-        url_params = "aspid={0}&password={1}&gstin={2}&AuthToken={3}&user_name={4}&eInvPwd={5}".format(
-            headers.get('aspid'),
-            headers.get('password'),
-            headers.get('Gstin'),
-            headers.get('AuthToken'),
-            headers.get('user_name'),
-            headers.get('eInvPwd'))
+
+    def get_eway_bill_details(self, **kwargs):
+        args = frappe._dict(kwargs)
+        headers = self.get_headers()
+        #headers.update({'ewbNo':self.invoice.ewaybill or args.ewaybill_no})
+        try:
+            ewbNo = getattr(self, 'invoice',None)
+            ewbNo = ewbNo.ewaybill if ewbNo else args.ewaybill_no
+            res = self.make_request(
+                    'get', 
+                    self.build_url_with_params_for_ewaybill(self.base_url_eway_bill_actions+"?action=GetEwayBill", headers)+"&ewbNo="+ewbNo, 
+                    headers={}
+                )
+            ##--DEBUG--print ('----------------Print EWAY----------------')
+            ##--DEBUG--print (headers)
+            ##--DEBUG--print (res)
+            ##--DEBUG--print ('-----------------------------------------')
+            return res
+        except RequestFailed:
+            errors = self.sanitize_error_message(res)
+            self.raise_error(errors=errors)
+        except Exception:
+            log_error()
+            self.raise_error(True)
+           
+    def build_url_with_params_for_ewaybill(self,base_url, headers):
+        url_params = "aspid={0}&password={1}&gstin={2}&AuthToken={3}".format(
+                headers.get('aspid'),
+                headers.get('password'),
+                headers.get('Gstin'),
+                headers.get('AuthToken'))
         if "?" in base_url:
             url_params = "&"+url_params
         else:
             url_params = "?"+url_params
+        #--DEBUG--print (base_url+url_params)
         return base_url+url_params
+
+    def validate_sales_invoice_for_ewaybill(self):
+        if self.invoice.docstatus != 1:
+            frappe.throw(_('E-Way Bill JSON can only be generated from submitted document'))
+        if self.invoice.is_return:
+            frappe.throw(_('E-Way Bill JSON cannot be generated for Sales Return as of now'))
+        if self.invoice.ewaybill:
+            frappe.throw(_('e-Way Bill already exists for this document'))
 
     @staticmethod
     def bulk_generate_irn(invoices):
@@ -338,6 +430,22 @@ class TaxproGSP(GSPConnector):
 
         return failed
 
+def make_supporting_request_data(ewb):
+    # TODO: check if this is common for all gsp's 
+    # Note: so far all these changes are due to diff in ewb upload json and ewb api json formats
+    mapping_keys = {'actualFromStateCode':'actFromStateCode', 'actualToStateCode':'actToStateCode', 'transType':'transactionType', 'OthValue':'otherValue'}
+    for key in mapping_keys:
+        if key in ewb:
+            ewb[mapping_keys[key]] = ewb[key]
+            del ewb[key]
+    if 'transporterId' in ewb and ewb['transporterId']:
+        if 'transDocNo' in ewb:
+            del ewb['transDocNo']
+        if 'transMode' in ewb:
+            del ewb['transMode']
+        if 'vehicleNo' in ewb:
+            del ewb['vehicleNo']
+    return ewb
 
 @frappe.whitelist()
 def get_einvoice(doctype, docname):
@@ -355,9 +463,19 @@ def cancel_irn(doctype, docname, irn, reason, remark):
     gsp_connector.cancel_irn(irn, reason, remark)
 
 @frappe.whitelist()
-def generate_eway_bill(doctype, docname, **kwargs):
+def generate_eway_bill_by_json(doctype, docname, **kwargs):
 	gsp_connector = TaxproGSP(doctype, docname)
-	gsp_connector.generate_eway_bill(**kwargs)
+	gsp_connector.generate_eway_bill_by_json(**kwargs)
+
+@frappe.whitelist()
+def generate_eway_bill_by_irn(doctype, docname, **kwargs):
+	gsp_connector = TaxproGSP(doctype, docname)
+	gsp_connector.generate_eway_bill_by_irn(**kwargs)
+
+@frappe.whitelist()
+def get_eway_bill_details(doctype, docname, **kwargs):
+	gsp_connector = TaxproGSP(doctype, docname)
+	return gsp_connector.get_eway_bill_details(**kwargs)
 
 @frappe.whitelist()
 def cancel_eway_bill(doctype, docname, reason, remark):
