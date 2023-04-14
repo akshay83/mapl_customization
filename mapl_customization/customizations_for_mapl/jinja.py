@@ -50,5 +50,5 @@ def doc_exists(*args, **kwargs):
 	return frappe.db.exists(*args, **kwargs)
 
 def get_eway_bill_details(eway_bill_no):
-	from mapl_customization.customizations_for_mapl.einvoice.taxpro_einvoice import get_eway_bill_details as ewbdetails
+	from mapl_customization.customizations_for_mapl.einvoice.taxpro_einvoice import get_eway_bill_details_for_printing as ewbdetails
 	return ewbdetails(doctype=None, docname=None, ewaybill_no=eway_bill_no)

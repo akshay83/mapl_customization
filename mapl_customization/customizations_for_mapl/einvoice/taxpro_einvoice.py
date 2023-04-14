@@ -3,11 +3,12 @@ import base64
 import os
 import json
 from frappe import _
-from erpnext.regional.india.e_invoice.utils import GSPConnector, log_error, RequestFailed, make_einvoice, get_eway_bill_details, CancellationNotAllowed, show_bulk_action_failure_message
+from erpnext.regional.india.e_invoice.utils import GSPConnector, log_error, RequestFailed, make_einvoice, CancellationNotAllowed, show_bulk_action_failure_message
 from frappe.utils.data import add_to_date, time_diff_in_hours, now_datetime
 from frappe.utils import cint
 from frappe.exceptions import CharacterLengthExceededError
 from frappe.integrations.utils import make_get_request, make_post_request
+from frappe.utils.data import format_date
 
 @frappe.whitelist()
 def validate_eligibility(doc, taxpro=0):
@@ -267,7 +268,7 @@ class TaxproGSP(GSPConnector):
         args = frappe._dict(kwargs)
         self.validate_sales_invoice_for_ewaybill()
         headers = self.get_headers()
-        eway_bill_details = get_eway_bill_details(args)
+        eway_bill_details = get_ewaybill_details(args)
         data = json.dumps({
 			'Irn': args.irn,
 			'Distance': cint(eway_bill_details.distance),
@@ -430,6 +431,26 @@ class TaxproGSP(GSPConnector):
 
         return failed
 
+def get_ewaybill_details(invoice):
+	if invoice.is_return:
+		frappe.throw(_('E-Way Bill cannot be generated for Credit Notes & Debit Notes. Please clear fields in the Transporter Section of the invoice.'),
+			title=_('Invalid Fields'))
+
+
+	mode_of_transport = { '': '', 'Road': '1', 'Air': '2', 'Rail': '3', 'Ship': '4' }
+	vehicle_type = { 'Regular': 'R', 'Over Dimensional Cargo (ODC)': 'O' }
+
+	return frappe._dict(dict(
+		gstin=invoice.gst_transporter_id,
+		name=invoice.transporter_name,
+		mode_of_transport=mode_of_transport[invoice.mode_of_transport] if not invoice.gst_transporter_id else None,
+		distance=invoice.distance or 0,
+		document_name=invoice.lr_no,
+		document_date=format_date(invoice.lr_date, 'dd/mm/yyyy'),
+		vehicle_no=invoice.vehicle_no,
+		vehicle_type=vehicle_type[invoice.gst_vehicle_type] if not invoice.gst_transporter_id else None
+	))
+
 def make_supporting_request_data(ewb):
     # TODO: check if this is common for all gsp's 
     # Note: so far all these changes are due to diff in ewb upload json and ewb api json formats
@@ -473,7 +494,7 @@ def generate_eway_bill_by_irn(doctype, docname, **kwargs):
 	gsp_connector.generate_eway_bill_by_irn(**kwargs)
 
 @frappe.whitelist()
-def get_eway_bill_details(doctype, docname, **kwargs):
+def get_eway_bill_details_for_printing(doctype, docname, **kwargs):
 	gsp_connector = TaxproGSP(doctype, docname)
 	return gsp_connector.get_eway_bill_details(**kwargs)
 
