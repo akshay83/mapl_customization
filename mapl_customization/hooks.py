@@ -286,7 +286,8 @@ ps_fields = [
 	"E Invoice Request Log-url-fieldtype",
 	"Contact-main-allow_rename",
 	"GST HSN Code-main-allow_rename",
-	"Quotation Item-item_code-reqd"
+	"Quotation Item-item_code-reqd",
+	"Lead-mobile_no-depends_on"
 ]
 
 wf_names = [
@@ -393,7 +394,8 @@ app_include_js = ["/assets/mapl_customization/js/core.js",
 		]
 
 override_doctype_class = {
-    "Payment Entry": "mapl_customization.customizations_for_mapl.payment_entry_validation.CustomPaymentEntry"
+    "Payment Entry": "mapl_customization.customizations_for_mapl.payment_entry_validation.CustomPaymentEntry",
+	"Lead": "mapl_customization.customizations_for_mapl.lead_hooks.CustomLead"
 }
 
 doctype_list_js = {"Customer" : "/public/js/customer_list.js"}
