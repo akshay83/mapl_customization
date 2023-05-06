@@ -257,7 +257,8 @@ print_fs = [
 		"Credit Note",
 		"Quotation Standard",
 		"Sales Invoice Standard",
-		"E-Way Bill"
+		"E-Way Bill",
+		"Modified POS Invoice"
 ]
 
 ps_fields = [
@@ -443,7 +444,9 @@ doctype_js = {
 		"Supplier": "/public/js/scripts/supplier.js",
 		"Salary Slip": "/public/js/scripts/salary_slip.js",
 		"Accounts Settings": "/public/js/scripts/accounts_settings.js",
-		"Loan": "/public/js/scripts/loan.js"
+		"Loan": "/public/js/scripts/loan.js",
+		"POS Invoice": "/public/js/scripts/pos_invoice.js",
+		"POS Closing Entry": "/public/js/scripts/pos_closing_entry.js"
 }
 
 standard_queries = {
