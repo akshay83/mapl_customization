@@ -3,6 +3,9 @@ erpnext.setup_einvoice_actions = (doctype) => {
 		async refresh(frm) {
 			//--DEBUG--console.log("TaxPro Overriden");
 			if (frm.doc.docstatus == 2) return;
+			
+			const einvoice_enabled = await frappe.db.get_single_value('E Invoice Settings', 'enable');
+			if (!einvoice_enabled) return;
 
 			const invoice_eligible = await custom.einvoice_eligibility(frm.doc);
 			//--DEBUG--console.log(invoice_eligible);
