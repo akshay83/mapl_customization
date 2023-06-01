@@ -220,6 +220,10 @@ def validate_pin_with_state(doc, method, raise_error=False):
 
 		pincode_state = data[0]["PostOffice"][0]["State"]
 
+		#Pincode API Returns Spelling which is not Equal to GST Spelling
+		if pincode_state.lower() == "chattisgarh":
+			pincode_state = "Chhattisgarh"
+
 		if pincode_state.lower() != doc.state.lower():
 			frappe.throw("""<div> Please Select Correct Pincode along with Correct State. </br>Current State:<B>'{0}'</B> GST State:<B>'{1}'</B> State By Pincode:<B>'{2}'</B></div>""".format(doc.state, doc.gst_state, pincode_state))
 

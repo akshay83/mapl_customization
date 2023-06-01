@@ -189,7 +189,7 @@ def validate_hsn_code(doc, method, raise_error=False, show_message=1):
 		doc = json.loads(doc)
 	if isinstance(doc, Document):
 		doc = doc.as_dict()
-	length_check = frappe.db.get_single_value("Stock Settings", "check_hsn_code_length")
+	length_check = cint(frappe.db.get_single_value("Stock Settings", "check_hsn_code_length"))
 	for i in doc["items"]:
 		if not i.get("gst_hsn_code"):
 			if raise_error:

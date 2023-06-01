@@ -111,6 +111,8 @@ erpnext.setup_einvoice_actions = (doctype) => {
 						fields: get_ewaybill_fields(frm),
 						primary_action: function() {
 							const data = d.get_values();
+							_custom_validate(data, true);
+							return;
 							frappe.call({
 								method: 'mapl_customization.customizations_for_mapl.einvoice.taxpro_einvoice.generate_eway_bill_by_json',
 								args: {
@@ -248,3 +250,20 @@ const _custom_cancel_fields = [
 		"reqd": 1
 	}
 ];
+
+const _custom_validate = function(data, is_urp) {
+	if (is_urp) {
+		if (!data.distance) {
+			frappe.throw("Distance Required");
+		}
+		if (!data.mode_of_transport) {
+			frappe.throw("Mode of Transport Required");
+		}
+		if (!data.gst_transporter_id && !data.vehicle_no) {
+			frappe.throw("Transporter GST ID/Vehicle No Required");
+		}
+	} else {
+		//TO DO
+	}
+	console.log(data);
+};
