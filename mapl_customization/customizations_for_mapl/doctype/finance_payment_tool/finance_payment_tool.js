@@ -8,7 +8,7 @@ cur_frm.set_query("internal_customer", "payment_details", function (doc, cdt, cd
 	}
 });
 frappe.ui.form.on("Finance Payment Tool", "refresh", function (frm) {
-	if (!frm.doc.__islocal && !cur_frm.is_dirty()) {
+	if (!frm.doc.__islocal && !frm.is_dirty()) {
 		frm.add_custom_button(__('Fetch Customers'), function () {
 			if (cur_frm.is_dirty()) {
 				frappe.msgprint(__("Please Save Changes Before Updating"));
@@ -28,7 +28,7 @@ frappe.ui.form.on("Finance Payment Tool", "refresh", function (frm) {
 			});
 		});
 		frm.add_custom_button(__('Make Journal Entries'), function () {
-			if (cur_frm.is_dirty()) {
+			if (frm.is_dirty()) {
 				frappe.msgprint(__("Please Save Changes Before Updating"));
 				return;
 			}
