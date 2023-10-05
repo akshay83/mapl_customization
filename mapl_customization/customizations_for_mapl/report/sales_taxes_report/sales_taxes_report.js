@@ -25,8 +25,9 @@ frappe.query_reports["Sales Taxes Report"] = {
 		{
 		"fieldname":"document_type",
 		"label": "Report Type",
-		"options": "Sales\nPurchase",
-		"fieldtype": "Select"
+		"options": "Sales Detailed\nPurchase Detailed\nPurchase Summary",
+		"fieldtype": "Select",
+		"default": "Purchase Summary"
 		},
 	]
 }

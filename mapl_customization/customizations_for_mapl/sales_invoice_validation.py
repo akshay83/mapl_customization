@@ -161,9 +161,9 @@ def negative_stock_validation(doc, method, raise_error=False):
 	negative_check = check_if_invoice_will_end_up_in_negative_stock(doc)
 	if negative_check.result:
 		if not raise_error:
-			frappe.msgprint("Negative Stock for {0}, Please verify before Submitting".format(negative_check.item_code))
+			frappe.msgprint("Negative Stock for {0}, Please verify before Submitting".format(negative_check.item))
 		else:
-			frappe.throw("Negative Stock for {0}, Please verify before Submitting".format(negative_check.item_code))
+			frappe.throw("Negative Stock for {0}, Please verify before Submitting".format(negative_check.item))
 
 def taxes_and_charges_validation(doc, method):
 	if not (frappe.session.user == "Administrator" or "System Manager" in frappe.get_roles()):

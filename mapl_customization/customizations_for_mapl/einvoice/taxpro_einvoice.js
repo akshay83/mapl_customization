@@ -112,7 +112,7 @@ erpnext.setup_einvoice_actions = (doctype) => {
 						primary_action: function() {
 							const data = d.get_values();
 							_custom_validate(data, true);
-							return;
+							//return;
 							frappe.call({
 								method: 'mapl_customization.customizations_for_mapl.einvoice.taxpro_einvoice.generate_eway_bill_by_json',
 								args: {
@@ -129,11 +129,11 @@ erpnext.setup_einvoice_actions = (doctype) => {
 					});
 					d.show();
 				};
-				if (frappe.user_roles.includes("System Manager") || frappe.user_roles.includes("Administrator")) {
+				//if (frappe.user_roles.includes("System Manager") || frappe.user_roles.includes("Administrator")) {
 					if (frm.doc.docstatus == 1) {
 						add_custom_button(__("Generate E-Way Bill - Taxpro"), action);
 					}
-				}
+				//}
 			}
 
 			if ((irn && ewaybill && !irn_cancelled && !eway_bill_cancelled) || (!invoice_eligible && ewaybill)) {

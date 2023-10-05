@@ -41,6 +41,8 @@ def get_data(filters):
   					`tabLoan` loans	
 				where
 					loans.status in ('Partially Disbursed','Disbursed')
+					and loans.docstatus=1
+					and (loans.total_principal_paid+loans.written_off_amount)<>loans.total_payment
 				{0}
 				order by
 					loans.applicant

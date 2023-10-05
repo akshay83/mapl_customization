@@ -50,18 +50,18 @@ def validate(args):
 		if not is_valid_email(args.get("primary_email")):
 			frappe.throw("Invalid Email Address")
 
-	re = frappe.db.get_single_value("Accounts Settings", "enable_postal_code_check")
-	validate_pin_with_state(frappe._dict({
-		"gst_state": args.get("billing_gst_state"),
-		"state": args.get("billing_state"),
-		"pincode": args.get("billing_pin")
-	}), None, raise_error=re)
-	if args.get("shipping_address_1") or args.get("shipping_address_2"):
+	if cint(frappe.db.get_single_value("Accounts Settings", "enable_postal_code_check")):
 		validate_pin_with_state(frappe._dict({
-			"gst_state": args.get("shipping_gst_state"),
-			"state": args.get("shipping_state"),
-			"pincode": args.get("shipping_pin")
-		}), None, raise_error=re)
+			"gst_state": args.get("billing_gst_state"),
+			"state": args.get("billing_state"),
+			"pincode": args.get("billing_pin")
+		}), None, raise_error=True)
+		if args.get("shipping_address_1") or args.get("shipping_address_2"):
+			validate_pin_with_state(frappe._dict({
+				"gst_state": args.get("shipping_gst_state"),
+				"state": args.get("shipping_state"),
+				"pincode": args.get("shipping_pin")
+			}), None, raise_error=True)
 
 	validate_gstid(args)
 
@@ -192,7 +192,8 @@ def enter_shipping_address(args, customer):
 def validate_address(doc, method):
 	if doc.get('ignore_validate_hook'):
 		return	
-	validate_pin_with_state(doc, method)
+	if cint(frappe.db.get_single_value("Accounts Settings", "enable_postal_code_check")):
+		validate_pin_with_state(doc, method)
 	validate_address_creation(doc, method)
 
 def validate_pin_with_state(doc, method, raise_error=False):

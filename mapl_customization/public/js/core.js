@@ -184,10 +184,15 @@ custom.hide_print_button = async function (doctype, frm) {
 			if (doctype == 'Sales Invoice' && (negative_stock_check.result	|| hsn_check.result)) {
 					print_doc = false; 
 			}
+			if (doctype == 'Sales Invoice' && frm.doc.address_display.includes("GSTIN") && frm.doc.gst_category.toUpperCase()=="UNREGISTERED") {
+				print_doc = false; 
+			}			
 			custom.hide_show_print_buttons(print_doc);
 		} else {
 			custom.hide_show_print_buttons(false);
 		}
+	} else if (doctype == 'Sales Invoice' && frm.doc.address_display.includes("GSTIN") && frm.doc.gst_category.toUpperCase()=="UNREGISTERED") {
+		custom.hide_show_print_buttons(false);
 	} else {
 		custom.handle_default_print_action(doctype, frm);
 	}

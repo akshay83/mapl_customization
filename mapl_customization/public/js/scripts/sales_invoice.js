@@ -3,25 +3,34 @@ erpnext.setup_einvoice_actions('Sales Invoice');
 
 frappe.ui.form.on("Sales Invoice", "refresh", async function (frm) {
 	let einvoice = await custom.einvoice_eligibility(frm.doc);
+	let einvoice_made = !(frm.doc.irn === undefined || frm.doc.irn == null);
 	//--DEBUG--console.log(einvoice);
-	if (einvoice && (frm.doc.irn === undefined || frm.doc.irn == null)) {
+	if (einvoice && !einvoice_made) {
 		if (custom.is_workflow_active_on("Sales Invoice") && frm.doc.workflow_state != "Approved") return;
 		frm.layout.show_message("Create an E-Invoice to Continue Printing","yellow");
-	} /*else if (!einvoice && frm.doc.docstatus == 0 && (frm.doc.ewaybill === undefined || frm.doc.ewaybill == null) && frm.doc.eway_bill_cancelled ==0) {
-		frm.layout.show_message("To Create EWAY Bill (If Applicable), Update Transport Information First & then Submit","blue");
-	} UNCOMMENT ONCE FULLY IMPLEMENTED --- EWAYBILL FROM JSON */
+	} 
 	let negative_check = await custom.check_if_sales_invoice_will_result_in_negative_stock(frm.doc);
 	if (negative_check.result) {
 		frm.layout.show_message("On Submission, This Invoice will Result in Negative Stock. Check Item "+negative_check.item,"red");
+		return;
 	}
 	let hsn_length_check = await custom.check_sales_invoice_hsn_length(frm.doc);
 	if (hsn_length_check.result) {
 		frm.layout.show_message("HSN Code Needs to be at least "+hsn_length_check.hsn_digits_failed+" Digits for Item "+hsn_length_check.item_code,"red");
+		return;
 	}
 	if (frm.doc.docstatus == 0 && frm.doc.workflow_state === 'Pending' && frm.doc.delayed_payment === 1 
 			&& ["other", "reference"].includes(frm.doc.delayed_payment_reason.toLowerCase())) {
 				frm.layout.show_message("Reference Sale, Requires Approval","yellow");
 	}
+	if (frm.doc.__is_local==0 && frm.doc.docstatus <2 && frm.doc.address_display.includes("GSTIN") && frm.doc.gst_category.toUpperCase()=="UNREGISTERED") {
+		frm.layout.show_message("GST Details Incorrect, please correct them to move Forward","red");
+		return;
+	}
+	if (einvoice && !einvoice_made) return;
+	if (frm.doc.docstatus == 0 && (frm.doc.ewaybill === undefined || frm.doc.ewaybill == null) && frm.doc.eway_bill_cancelled ==0) {
+		frm.layout.show_message(`TIP: To Create EWAY Bill (<b>If Applicable</b>), First Check & Submit the Invoice. Then use E Invoice Button to Create an Eway Bill`,"blue");
+	} 
 });
 
 frappe.ui.form.on("Sales Invoice", "before_cancel", function (frm) {

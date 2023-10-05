@@ -106,17 +106,19 @@ def update_allow_on_submit(custom_fields, doctype):
 			f.update({'allow_on_submit':1})
 	return cf
 
-def create_index_on_address_title():
+def create_additional_indexes():
 	"""This Index is Important"""
 	try:
 		frappe.db.sql("""create index address_title on `tabAddress` (address_title)""")
+		frappe.db.sql("""create index posting_date on `tabPayment Entry` (posting_date)""")
+		frappe.db.sql("""create index party on `tabPayment Entry` (party)""")
 	except Exception:
 		pass
 
 def after_install():
 	rebuild_regional_custom_fields()	
 	set_default_series()	
-	create_index_on_address_title()
+	create_additional_indexes()
 	set_default_options()
 	set_view_permissions()
 	set_report_permissions()
