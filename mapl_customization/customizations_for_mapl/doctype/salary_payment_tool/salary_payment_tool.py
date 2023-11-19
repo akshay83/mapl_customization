@@ -6,7 +6,7 @@ from __future__ import unicode_literals
 import frappe
 import json
 from frappe.model.document import Document
-from frappe.utils import cint
+from frappe.utils import cint, flt
 from mapl_customization.customizations_for_mapl.report.custom_salary_register.custom_salary_register import get_employee_details
 
 class SalaryPaymentTool(Document):
@@ -31,7 +31,7 @@ class SalaryPaymentTool(Document):
 	def validate_total_amount(self):
 		total_rows_salary = 0
 		for i in self.payment_details:
-			total_rows_salary += i.amount_paid
+			total_rows_salary += flt(i.amount_paid)
 		if total_rows_salary != (self.total_payment or 0):
 			frappe.throw("Total Paid Amount Does Not Match Total of Individual Payment")
 

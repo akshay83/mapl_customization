@@ -45,10 +45,10 @@ class TaxesReport():
                             cast(avg(item.net_rate) as decimal(17,2)) as `Net Rate:Currency:100`,   
                             cast(sum(item.net_amount) as decimal(17,2)) as `Net Amount:Currency:100`,   
                             
-                            ((gst_state_number<>0 and gst_state_number<>23) or
+                            (((gst_state_number<>0 and gst_state_number<>23) or
                             ((gstin is not null and gstin<>'' and left(gstin,2)<>23) or
                             (state is not null and state not regexp ('MADHYA PRADESH|M.P.|M.P|MP')) and
-                            (state is not null and state<>''))) as flag
+                            (state is not null and state<>''))) or left(place_of_supply,2)<>'23') as flag
                         from
                             `tab{doctype} Invoice Item` item use index (parent),
                             `tab{doctype} Invoice` doc use index (PRIMARY),
@@ -116,15 +116,15 @@ class TaxesReport():
                         sum(if(flag=1 and `Tax Rate:Float:50`=18,cast((`Net Amount:Currency:100`*`Tax Rate:Float:50`/100) as decimal(17,2)),0)) as `IGST-18%:Currency:100`,
                         sum(if(flag=1 and `Tax Rate:Float:50`=28,cast((`Net Amount:Currency:100`*`Tax Rate:Float:50`/100) as decimal(17,2)),0)) as `IGST-28%:Currency:100`,
 
-                        sum(if(flag=0 and `Tax Rate:Float:50`=5,cast(((`Net Amount:Currency:100`*`Tax Rate Alt:Float:50`/100)/2) as decimal(17,2)),0)) as `SGST-2.5%:Currency:100`,
-                        sum(if(flag=0 and `Tax Rate:Float:50`=12,cast(((`Net Amount:Currency:100`*`Tax Rate Alt:Float:50`/100)/2) as decimal(17,2)),0)) as `SGST-6%:Currency:100`,
-                        sum(if(flag=0 and `Tax Rate:Float:50`=18,cast(((`Net Amount:Currency:100`*`Tax Rate Alt:Float:50`/100)/2) as decimal(17,2)),0)) as `SGST-9%:Currency:100`,
-                        sum(if(flag=0 and `Tax Rate:Float:50`=28,cast(((`Net Amount:Currency:100`*`Tax Rate Alt:Float:50`/100)/2) as decimal(17,2)),0)) as `SGST-14%:Currency:100`,
+                        sum(if(flag=0 and `Tax Rate:Float:50`=5,cast(((`Net Amount:Currency:100`*`Tax Rate:Float:50`/100)/2) as decimal(17,2)),0)) as `SGST-2.5%:Currency:100`,
+                        sum(if(flag=0 and `Tax Rate:Float:50`=12,cast(((`Net Amount:Currency:100`*`Tax Rate:Float:50`/100)/2) as decimal(17,2)),0)) as `SGST-6%:Currency:100`,
+                        sum(if(flag=0 and `Tax Rate:Float:50`=18,cast(((`Net Amount:Currency:100`*`Tax Rate:Float:50`/100)/2) as decimal(17,2)),0)) as `SGST-9%:Currency:100`,
+                        sum(if(flag=0 and `Tax Rate:Float:50`=28,cast(((`Net Amount:Currency:100`*`Tax Rate:Float:50`/100)/2) as decimal(17,2)),0)) as `SGST-14%:Currency:100`,
                   
-                        sum(if(flag=0 and `Tax Rate:Float:50`=5,cast(((`Net Amount:Currency:100`*`Tax Rate Alt:Float:50`/100)/2) as decimal(17,2)),0)) as `CGST-2.5%:Currency:100`,
-                        sum(if(flag=0 and `Tax Rate:Float:50`=12,cast(((`Net Amount:Currency:100`*`Tax Rate Alt:Float:50`/100)/2) as decimal(17,2)),0)) as `CGST-6%:Currency:100`,
-                        sum(if(flag=0 and `Tax Rate:Float:50`=18,cast(((`Net Amount:Currency:100`*`Tax Rate Alt:Float:50`/100)/2) as decimal(17,2)),0)) as `CGST-9%:Currency:100`,
-                        sum(if(flag=0 and `Tax Rate:Float:50`=28,cast(((`Net Amount:Currency:100`*`Tax Rate Alt:Float:50`/100)/2) as decimal(17,2)),0)) as `CGST-14%:Currency:100`
+                        sum(if(flag=0 and `Tax Rate:Float:50`=5,cast(((`Net Amount:Currency:100`*`Tax Rate:Float:50`/100)/2) as decimal(17,2)),0)) as `CGST-2.5%:Currency:100`,
+                        sum(if(flag=0 and `Tax Rate:Float:50`=12,cast(((`Net Amount:Currency:100`*`Tax Rate:Float:50`/100)/2) as decimal(17,2)),0)) as `CGST-6%:Currency:100`,
+                        sum(if(flag=0 and `Tax Rate:Float:50`=18,cast(((`Net Amount:Currency:100`*`Tax Rate:Float:50`/100)/2) as decimal(17,2)),0)) as `CGST-9%:Currency:100`,
+                        sum(if(flag=0 and `Tax Rate:Float:50`=28,cast(((`Net Amount:Currency:100`*`Tax Rate:Float:50`/100)/2) as decimal(17,2)),0)) as `CGST-14%:Currency:100`
                     from ( 
                         {dump_query}
                     ) a 
@@ -132,14 +132,15 @@ class TaxesReport():
                         `Name:Link/{doctype} Invoice:125`
                     order by
                         `Bill Date:Date:100`,
-                        `Posting Date:Date:100`
+                        `Posting Date:Date:100`,
+                        `Name:Link/{doctype} Invoice:125`
             """.format(**{
                 "dump_query": dump_query,
                 "doctype": self.doctype,
                 "partytype": self.party_type
             })
         
-        #--DEBUG--print (query)
+        print (query)
         return query
     
     def generate_raw_data(self):        
@@ -158,7 +159,7 @@ class TaxesReport():
     def get_document_specific_columns(self):
         if self.doctype == "Purchase":
                 return "doc.bill_no as `Bill No:Data:100`, doc.bill_date as `Bill Date:Date:100`, doc.supplier_name as `Supplier Name:Data:125`"
-        return "doc.customer_name as `Customer Name:Data:125`, doc.special_invoice as `Special Invoice:Data:100`"
+        return "doc.customer_name as `Customer Name:Data:125`, doc.special_invoice as `Special Invoice:Data:100`, doc.place_of_supply as `Place of Supply:Data:75`"
     
     def do_post_fetch_calculations(self):
         for row in self.raw_data:

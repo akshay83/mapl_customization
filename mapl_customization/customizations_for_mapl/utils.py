@@ -277,6 +277,15 @@ def check_result_against_items(balance_stk, doc_items):
 			return {"result":True, "item":m.get("item_code")}
 	return {"result":False}
 
+def get_dynamic_links(doctype, docname, link_doctype=None):
+	filters = {
+		"parenttype": doctype,
+		"parent": docname
+	}
+	if link_doctype:
+		filters.update({"link_doctype":link_doctype})
+	return frappe.get_all("Dynamic Link", fields=["link_name", "link_doctype"], filters = filters)
+
 @frappe.whitelist()
 def get_party_balance(party, party_type, company):
 	outstanding_amount = frappe.db.sql("""select sum(debit) - sum(credit)

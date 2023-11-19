@@ -223,7 +223,7 @@ def validate_pin_with_state(doc, method, raise_error=False):
 		pincode_state = data[0]["PostOffice"][0]["State"]
 
 		#Pincode API Returns Spelling which is not Equal to GST Spelling
-		if pincode_state.lower() == "chattisgarh":
+		if pincode_state.lower() == "chattisgarh" or pincode_state.lower() == "chhattisgarh":
 			pincode_state = "Chhattisgarh"
 
 		if pincode_state.lower() != doc.state.lower():

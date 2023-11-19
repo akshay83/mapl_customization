@@ -2,17 +2,38 @@ import frappe
 import html
 import json
 from frappe.utils import cint, flt, getdate
+from .utils import get_dynamic_links
 
 def sales_invoice_validate(doc, method):
 	if doc.get('ignore_validate_hook'):
 		return	
 	negative_stock_validation(doc, method)
 	validate_serial_purchase(doc, method)
+	validate_address_link(doc, method)
 	validate_hsn_code(doc, method)
 	validate_stock_entry_serial_no(doc, method)
 	validate_serial_no(doc, method)
 	validate_gst_state(doc, method)
 	validate_customer_balance(doc, method)
+
+def validate_address_link(doc, method):
+	def get_link_list(links):
+		if not links or len(links)<=0:
+			frappe.throw("Check Correct Address Selection")
+		return [d['link_name'] for d in links]
+
+	def check_billing_address():
+		links = get_link_list(get_dynamic_links("Address", doc.customer_address, link_doctype="Customer"))
+		if not doc.customer in links:
+			frappe.throw("Address {0} does not belongs to Customer {1}".format(doc.customer_address,doc.customer))
+
+	def check_shipping_address():
+		links = get_link_list(get_dynamic_links("Address", doc.shipping_address_name, link_doctype="Customer"))
+		if not doc.customer in links:
+			frappe.throw("Address {0} does not belongs to Customer {1}".format(doc.shipping_address_name,doc.customer))
+
+	check_billing_address()
+	check_shipping_address()
 
 def sales_on_submit_validation(doc, method):
 	if doc.get('ignore_validate_hook'):

@@ -242,7 +242,9 @@ cf_fields = [
 		"Stock Settings-check_hsn_code_length",
 		"Payment Entry-cash_back_amount",
 		"Payment Entry-instant_cash_back_provider",
-		"Accounts Settings-enable_postal_code_check"
+		"Accounts Settings-enable_postal_code_check",
+		"Payroll Settings-bonus_calculation_percentage",
+		"Payroll Settings-enable_bonus_calculation"
 ]
 
 print_fs = [
