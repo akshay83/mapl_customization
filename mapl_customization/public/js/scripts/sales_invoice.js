@@ -4,6 +4,18 @@ erpnext.setup_einvoice_actions('Sales Invoice');
 frappe.ui.form.on("Sales Invoice", "refresh", async function (frm) {
 	let einvoice = await custom.einvoice_eligibility(frm.doc);
 	let einvoice_made = !(frm.doc.irn === undefined || frm.doc.irn == null);
+
+	let gst_category = ['Registered Regular', 'SEZ', 'Registered Composition'];
+	let gst_address_added_later = (frm.doc.billing_address_gstin !== undefined && frm.doc.billing_address_gstin != null) &&	!gst_category.includes(frm.doc.gst_category);
+	let gst_registered_address_wrong = (frm.doc.billing_address_gstin === undefined || frm.doc.billing_address_gstin == null) && gst_category.includes(frm.doc.gst_category);
+	if ((gst_registered_address_wrong || gst_address_added_later) && !einvoice_made) {
+		frm.layout.show_message(`
+			Customer is Registered as GST-IN Enabled, but Selected Address does not contain GST ID. </br>
+			Incase GST ID was Added to Address after creating the Invoice, Please select Correct GST Category under GST Section. </br>
+			Or Choose Correct Address(s).
+		`,"red");	
+		return;
+	}
 	//--DEBUG--console.log(einvoice);
 	if (einvoice && !einvoice_made) {
 		if (custom.is_workflow_active_on("Sales Invoice") && frm.doc.workflow_state != "Approved") return;

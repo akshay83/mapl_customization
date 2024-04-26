@@ -121,6 +121,8 @@ class TaxproGSP(GSPConnector):
                 frappe.throw("Customer GSTIN is Cancelled or Wrong")
             elif res.get('Status') == "0" and res.get('ErrorDetails')[0].get("ErrorCode") == "3028":
                 frappe.throw("Customer GSTIN is Wrong")
+            elif res.get('Status') == "0" and res.get('ErrorDetails')[0].get("ErrorCode") == "2176":
+                frappe.throw("HSN Code for an Item is Wrong")                
             else:
                 raise RequestFailed
 

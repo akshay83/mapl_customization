@@ -291,7 +291,11 @@ ps_fields = [
 	"Contact-main-allow_rename",
 	"GST HSN Code-main-allow_rename",
 	"Quotation Item-item_code-reqd",
-	"Lead-mobile_no-depends_on"
+	"Lead-mobile_no-depends_on",
+	"Purchase Invoice-bill_no-reqd",
+	"Purchase Invoice-bill_date-reqd",
+	"Fiscal Year-column_break_5",
+	"Fiscal Year-lut_number"
 ]
 
 wf_names = [
@@ -410,7 +414,8 @@ jenv = {
 		"render_template:mapl_customization.customizations_for_mapl.jinja.render_template",
 		"table_exists:mapl_customization.customizations_for_mapl.jinja.table_exists",
 		"doc_exists:mapl_customization.customizations_for_mapl.jinja.doc_exists",
-		"get_eway_bill_details:mapl_customization.customizations_for_mapl.jinja.get_eway_bill_details"
+		"get_eway_bill_details:mapl_customization.customizations_for_mapl.jinja.get_eway_bill_details",
+		"get_fiscal_year:mapl_customization.customizations_for_mapl.jinja.get_fiscal_year"
 		],
 	"filters": [
 		"date_to_code:mapl_customization.customizations_for_mapl.jinja.date_to_code",
@@ -424,7 +429,8 @@ jinja = {
 				"mapl_customization.customizations_for_mapl.jinja.render_template",
 				"mapl_customization.customizations_for_mapl.jinja.table_exists",
 				"mapl_customization.customizations_for_mapl.jinja.doc_exists",
-				"mapl_customization.customizations_for_mapl.jinja.get_eway_bill_details"
+				"mapl_customization.customizations_for_mapl.jinja.get_eway_bill_details",
+				"mapl_customization.customizations_for_mapl.jinja.get_fiscal_year"
 			],
 	"filters": [
 		"mapl_customization.customizations_for_mapl.jinja.date_to_code",

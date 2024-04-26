@@ -83,24 +83,29 @@ custom.customer_quick_entry = function (doc) {
 	dialog.set_primary_action(__("Save"), async function () {
 		args = dialog.get_values();
 		if (!args) return;
-		dialog.get_primary_btn().addClass('hide');
-		let res = await frappe.call({
-			method: "mapl_customization.customizations_for_mapl.quick_customer.do_quick_entry",
-			args: { "args": dialog.get_values() }
-		});
-		if (res.message) {
-			dialog.hide();
-			var inline_doc = res.message;
-			if (frappe._from_link) {
-				frappe.ui.form.update_calling_link(inline_doc);
-			} else if (custom._customer_called_from != null) {
-				doc.set_value(custom._customer_called_from, inline_doc.name);
-				custom.customer_quick_entry.unset_called_from();
-			} else {
-				frappe.set_route("Form", doc.doctype, inline_doc.name);
+		let save_button = dialog.get_primary_btn();
+		save_button.addClass('hide');
+		try {
+			let res = await frappe.call({
+				method: "mapl_customization.customizations_for_mapl.quick_customer.do_quick_entry",
+				args: { "args": dialog.get_values() }
+			});
+			if (res.message) {
+				dialog.hide();
+				var inline_doc = res.message;
+				if (frappe._from_link) {
+					frappe.ui.form.update_calling_link(inline_doc);
+				} else if (custom._customer_called_from != null) {
+					doc.set_value(custom._customer_called_from, inline_doc.name);
+					custom.customer_quick_entry.unset_called_from();
+				} else {
+					frappe.set_route("Form", doc.doctype, inline_doc.name);
+				}
 			}
+		} catch (e) {
+			console.log("Reopen Save Button");
+			save_button.removeClass('hide');
 		}
-		dialog.get_primary_btn().removeClass('hide');
 	});
 
 	custom.customer_quick_entry.set_default_values(dialog, dialog.fields);

@@ -50,18 +50,19 @@ def validate(args):
 		if not is_valid_email(args.get("primary_email")):
 			frappe.throw("Invalid Email Address")
 
+	re = False if (frappe.session.user == "Administrator" or "System Manager" in frappe.get_roles()) else True
 	if cint(frappe.db.get_single_value("Accounts Settings", "enable_postal_code_check")):
 		validate_pin_with_state(frappe._dict({
 			"gst_state": args.get("billing_gst_state"),
 			"state": args.get("billing_state"),
 			"pincode": args.get("billing_pin")
-		}), None, raise_error=True)
+		}), None, raise_error=re)
 		if args.get("shipping_address_1") or args.get("shipping_address_2"):
 			validate_pin_with_state(frappe._dict({
 				"gst_state": args.get("shipping_gst_state"),
 				"state": args.get("shipping_state"),
 				"pincode": args.get("shipping_pin")
-			}), None, raise_error=True)
+			}), None, raise_error=re)
 
 	validate_gstid(args)
 
@@ -234,9 +235,9 @@ def validate_pin_with_state(doc, method, raise_error=False):
 
 	except (requests.ConnectionError, requests.Timeout, ValueError):
 		if raise_error:
-			frappe.throw("""Unable to Verify Pincode with GST State""")
+			frappe.throw("""Postal Server Error, Unable to Verify Pincode with GST State""")
 		else:
-			frappe.msgprint("""Unable to Verify Pincode with GST State. Continuing for Now""")
+			frappe.msgprint("""Postal Server Error, Unable to Verify Pincode with GST State. Continuing for Now""")
 
 def validate_address_creation(doc, method):
 	if doc.is_new():

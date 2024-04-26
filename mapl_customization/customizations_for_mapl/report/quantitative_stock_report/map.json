@@ -1,0 +1,238 @@
+{
+    "Accessory": {
+        "Category": "ELECTRONICS",
+        "Sub Category": "Accessories"
+    },
+    "Air Conditioner": {
+        "Category": "ELECTRONICS",
+        "Sub Category": "Air Conditioner"
+    },
+    "AIR PURIFIER": {
+        "Category": "ELECTRONICS",
+        "Sub Category": "Water & Air Purifier"
+    },
+    "ARTIFACTS": {
+        "Category": "Artifacts",
+        "Sub Category": null
+    },
+    "Audio System": {
+        "Category": "ELECTRONICS",
+        "Sub Category": "Audio, Disc & Camera"
+    },
+    "BATTERY": {
+        "Category": "BATTERIES",
+        "Sub Category": null
+    },
+    "Blue Ray Player": {
+        "Category": "ELECTRONICS",
+        "Sub Category": "Audio, Disc & Camera"
+    },
+    "CABLES": {
+        "Category": "ELECTRONICS",
+        "Sub Category": "Electricals Cables & Switches"
+    },
+    "Camcorder": {
+        "Category": "ELECTRONICS",
+        "Sub Category": "Audio, Disc & Camera"
+    },
+    "Camera": {
+        "Category": "ELECTRONICS",
+        "Sub Category": "Audio, Disc & Camera"
+    },
+    "CASSETTE AIR CONDITIONER": {
+        "Category": "ELECTRONICS",
+        "Sub Category": "Air Conditioner"
+    },
+    "CBU": {
+        "Category": "ELECTRONICS",
+        "Sub Category": "Refrigerator"
+    },
+    "Commercial LED TV": {
+        "Category": "ELECTRONICS",
+        "Sub Category": "LED Television"
+    },
+    "Convection": {
+        "Category": "ELECTRONICS",
+        "Sub Category": "Microwave"
+    },
+    "COOKERY": {
+        "Category": "ELECTRONICS",
+        "Sub Category": "Home Appliances"
+    },
+    "COOLER": {
+        "Category": "ELECTRONICS",
+        "Sub Category": "COOLER"
+    },
+    "Cordless Phones": {
+        "Category": "ELECTRONICS",
+        "Sub Category": "Mobile, Phones & Tabs"
+    },
+    "Deep Freezer": {
+        "Category": "ELECTRONICS",
+        "Sub Category": "Deep Freezers & Water Cooler"
+    },
+    "DESKTOP": {
+        "Category": "ELECTRONICS",
+        "Sub Category": "IT"
+    },
+    "Direct Cool": {
+        "Category": "ELECTRONICS",
+        "Sub Category": "Refrigerator"
+    },
+    "Dish Washer": {
+        "Category": "ELECTRONICS",
+        "Sub Category": "Dish Washer"
+    },
+    "DVD Player": {
+        "Category": "ELECTRONICS",
+        "Sub Category": "Audio, Disc & Camera"
+    },
+    "E-Cycle": {
+        "Category": "TWO WHEELERS",
+        "Sub Category": "E-Cycle"
+    },
+    "Electric Scooters": {
+        "Category": "TWO WHEELERS",
+        "Sub Category": "Scooter"
+    },
+    "Frost Free": {
+        "Category": "ELECTRONICS",
+        "Sub Category": "Refrigerator"
+    },
+    "Fully Automatic FL": {
+        "Category": "ELECTRONICS",
+        "Sub Category": "Washing Machine"
+    },
+    "Fully Automatic TL": {
+        "Category": "ELECTRONICS",
+        "Sub Category": "Washing Machine"
+    },
+    "Handsets": {
+        "Category": "ELECTRONICS",
+        "Sub Category": "Mobile, Phones & Tabs"
+    },
+    "Home Appliances": {
+        "Category": "ELECTRONICS",
+        "Sub Category": "Home Appliances"
+    },
+    "IT": {
+        "Category": "ELECTRONICS",
+        "Sub Category": "IT"
+    },
+    "INVERTER": {
+        "Category": "ELECTRONICS",
+        "Sub Category": "INVERTERS"
+    },    
+    "Laptops": {
+        "Category": "ELECTRONICS",
+        "Sub Category": "IT"
+    },
+    "LED Television": {
+        "Category": "ELECTRONICS",
+        "Sub Category": "LED Television"
+    },
+    "MCB": {
+        "Category": "ELECTRONICS",
+        "Sub Category": "Electricals Cables & Switches"
+    },
+    "Microwave": {
+        "Category": "ELECTRONICS",
+        "Sub Category": "Microwave"
+    },
+    "Normal Phones": {
+        "Category": "ELECTRONICS",
+        "Sub Category": "Mobile, Phones & Tabs"
+    },
+    "Others": {
+        "Category": "ELECTRONICS",
+        "Sub Category": "Others"
+    },
+    "Peripherals": {
+        "Category": "ELECTRONICS",
+        "Sub Category": "IT"
+    },
+    "Personal Care": {
+        "Category": "ELECTRONICS",
+        "Sub Category": "Others"
+    },
+    "Phones": {
+        "Category": "ELECTRONICS",
+        "Sub Category": "Mobile, Phones & Tabs"
+    },
+    "Printer & Fax": {
+        "Category": "ELECTRONICS",
+        "Sub Category": "IT"
+    },
+    "PROJECTOR": {
+        "Category": "ELECTRONICS",
+        "Sub Category": "LED Television"
+    },
+    "Refrigerator": {
+        "Category": "ELECTRONICS",
+        "Sub Category": "Refrigerator"
+    },
+    "SBS": {
+        "Category": "ELECTRONICS",
+        "Sub Category": "Refrigerator"
+    },
+    "Semi Automatic": {
+        "Category": "ELECTRONICS",
+        "Sub Category": "Washing Machine"
+    },
+    "Solo": {
+        "Category": "ELECTRONICS",
+        "Sub Category": "Microwave"
+    },
+    "Spare Parts": {
+        "Category": "SPARES",
+        "Sub Category": null
+    },
+    "Split A/c": {
+        "Category": "ELECTRONICS",
+        "Sub Category": "Air Conditioner"
+    },
+    "STABILIZER": {
+        "Category": "ELECTRONICS",
+        "Sub Category": "STABILIZER"
+    },
+    "SWITCHES": {
+        "Category": "ELECTRONICS",
+        "Sub Category": "Electricals Cables & Switches"
+    },
+    "Tablets": {
+        "Category": "ELECTRONICS",
+        "Sub Category": "Mobile, Phones & Tabs"
+    },
+    "Two Wheelers": {
+        "Category": "TWO WHEELERS",
+        "Sub Category": "Two Wheelers"
+    },
+    "Ups": {
+        "Category": "UPS",
+        "Sub Category": null
+    },
+    "Washing Machine": {
+        "Category": "ELECTRONICS",
+        "Sub Category": "Washing Machine"
+    },
+    "WATER COOLER": {
+        "Category": "ELECTRONICS",
+        "Sub Category": "Deep Freezers & Water Cooler"
+    },
+    "WATER DESPENSER": {
+        "Category": "ELECTRONICS",
+        "Sub Category": "Deep Freezers & Water Cooler"
+    },
+    "Water Heater": {
+        "Category": "ELECTRONICS",
+        "Sub Category": "Water Heater"
+    },
+    "WATER PURIFIER": {
+        "Category": "ELECTRONICS",
+        "Sub Category": "Water & Air Purifier"
+    },
+    "Window A/c": {
+        "Category": "ELECTRONICS",
+        "Sub Category": "Air Conditioner"
+    }
+}

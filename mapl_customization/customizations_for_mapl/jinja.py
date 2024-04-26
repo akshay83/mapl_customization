@@ -52,3 +52,7 @@ def doc_exists(*args, **kwargs):
 def get_eway_bill_details(eway_bill_no):
 	from mapl_customization.customizations_for_mapl.einvoice.taxpro_einvoice import get_eway_bill_details_for_printing as ewbdetails
 	return ewbdetails(doctype=None, docname=None, ewaybill_no=eway_bill_no)
+
+def get_fiscal_year(dt):
+	from erpnext.accounts.utils import get_fiscal_year
+	return str(get_fiscal_year(date=dt)[0])
