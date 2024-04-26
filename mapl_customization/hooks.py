@@ -244,7 +244,9 @@ cf_fields = [
 		"Payment Entry-instant_cash_back_provider",
 		"Accounts Settings-enable_postal_code_check",
 		"Payroll Settings-bonus_calculation_percentage",
-		"Payroll Settings-enable_bonus_calculation"
+		"Payroll Settings-enable_bonus_calculation",
+		"Fiscal Year-column_break_5",
+		"Fiscal Year-lut_number"		
 ]
 
 print_fs = [
@@ -293,9 +295,7 @@ ps_fields = [
 	"Quotation Item-item_code-reqd",
 	"Lead-mobile_no-depends_on",
 	"Purchase Invoice-bill_no-reqd",
-	"Purchase Invoice-bill_date-reqd",
-	"Fiscal Year-column_break_5",
-	"Fiscal Year-lut_number"
+	"Purchase Invoice-bill_date-reqd"
 ]
 
 wf_names = [
