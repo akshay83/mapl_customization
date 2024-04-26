@@ -239,6 +239,23 @@
  },
  {
   "default_value": null,
+  "doc_type": "Purchase Invoice",
+  "docstatus": 0,
+  "doctype": "Property Setter",
+  "doctype_or_field": "DocField",
+  "field_name": "bill_no",
+  "modified": "2022-03-03 12:48:25.438350",
+  "name": "Purchase Invoice-bill_no-reqd",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "property": "reqd",
+  "property_type": "Check",
+  "row_name": null,
+  "value": "1"
+ },
+ {
+  "default_value": null,
   "doc_type": "Journal Entry",
   "docstatus": 0,
   "doctype": "Property Setter",
@@ -321,6 +338,23 @@
   "property_type": "Check",
   "row_name": null,
   "value": "0"
+ },
+ {
+  "default_value": null,
+  "doc_type": "Purchase Invoice",
+  "docstatus": 0,
+  "doctype": "Property Setter",
+  "doctype_or_field": "DocField",
+  "field_name": "bill_date",
+  "modified": "2022-03-19 13:47:27.158755",
+  "name": "Purchase Invoice-bill_date-reqd",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "property": "reqd",
+  "property_type": "Check",
+  "row_name": null,
+  "value": "1"
  },
  {
   "default_value": null,

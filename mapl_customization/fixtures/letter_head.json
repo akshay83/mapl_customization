@@ -46,5 +46,21 @@
   "parentfield": null,
   "parenttype": null,
   "source": "Image"
+ },
+ {
+  "content": "<table style=\"width: 100%;\">\n    <tbody>\n        <tr style=\"width: 100%; display: flex;\">\n            <td style=\"width: 100%;\">\n                <b>\n                    <span style=\"color: blue; line-height: 20px; font-size: 22px;\">{{ doc.company or frappe.db.get_single_value('Global Defaults', 'default_company') }} </span>\n                </b>\n                <b>\n                    <span style=\"font-size: 12px;\">\n                        <div>366 Alok Nagar, Kanadia Road,</div>\n                        <div>Indore. PH: 0731 - 4998832</div>\n                    </span>\n                </b>\n            </td>\n\n            <td rowspan=\"100%\" style=\"text-align: right; vertical-align: middle !important;\">\n                <svg height=\"60px\" viewBox=\"0 0 139 64\">\n                    <g id=\"layer1\">\n                        <g id=\"Layer1000\">\n                            <path id=\"path10\" style=\"\"></path>\n                            <g id=\"Layer1001\">\n                                <g id=\"Layer1002\">\n                                    <path id=\"path12\" style=\"\"></path>\n                                    <path id=\"path14\" style=\"\"></path>\n                                </g>\n                                <path id=\"path17\" style=\"\"></path>\n                                <path id=\"path19\" style=\"\"></path>\n                            </g>\n                        </g>\n                    </g>\n                </svg>\n            </td>\n        </tr>\n    </tbody>\n</table>",
+  "disabled": 0,
+  "docstatus": 0,
+  "doctype": "Letter Head",
+  "footer": null,
+  "image": null,
+  "is_default": 0,
+  "letter_head_name": "Kanadia Road",
+  "modified": "2024-04-01 12:41:12.631752",
+  "name": "Kanadia Road",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "source": "HTML"
  }
 ]
