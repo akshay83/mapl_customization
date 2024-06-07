@@ -35,7 +35,7 @@ frappe.ui.form.on("Salary Slip", "calculate_actual_salary", function(frm) {
 			}
 	});
 
-	console.log(calculation_dialog);
+	//-DEBUG--console.log(calculation_dialog);
 	calculation_dialog.fields_dict.calculate_button.$input.on("click", function (e) {
 		calculation_dialog.set_value("reporting_payment_days",
 			Math.round(calculation_dialog.get_value('actual_payment_days') * calculation_dialog.get_value('actual_salary') / calculation_dialog.get_value('reporting_salary')));
@@ -74,6 +74,10 @@ frappe.ui.form.on("Salary Slip", "refresh", function (frm) {
         		}, __("View"));		
     	}
 	});
+});
+
+frappe.ui.form.on("Salary Slip", "onload", function (frm) {
+	fetch_actual_reporting_salary(frm);
 });
 
 function fetch_payroll_payable_account(frm) {
@@ -120,12 +124,17 @@ function fetch_actual_reporting_salary(frm) {
 						if (val.no_pf_deduction != 0) {
 				            frm.set_df_property("reporting_salary", "hidden", 0);
 							frm.set_df_property("actual_salary", "hidden", 0);
+							frm.set_df_property("calculate_actual_salary", "hidden", 0);
+							$("button[data-fieldname=calculate_actual_salary]").css("background","#2490ef")
 						} else {
 							frm.set_df_property("reporting_salary", "hidden", 1);
 							frm.set_df_property("actual_salary", "hidden", 1);
+							frm.set_df_property("calculate_actual_salary", "hidden", 1);
+							$("button[data-fieldname=calculate_actual_salary]").css("background","initial");
 						}
 						frm.refresh_field("actual_salary");
 						frm.refresh_field("reporting_salary");
+						frm.refresh_field("calculate_actual_salary");
 					}
 		);
 	}
