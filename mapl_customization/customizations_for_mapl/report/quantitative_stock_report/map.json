@@ -171,6 +171,10 @@
         "Category": "ELECTRONICS",
         "Sub Category": "Refrigerator"
     },
+    "Small Home Applainces": {
+        "Category": "ELECTRONICS",
+        "Sub Category": "Home Appliances"
+    },
     "SBS": {
         "Category": "ELECTRONICS",
         "Sub Category": "Refrigerator"

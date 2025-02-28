@@ -6,7 +6,7 @@ frappe.ui.form.on("Sales Invoice", "refresh", async function (frm) {
 	let einvoice_made = !(frm.doc.irn === undefined || frm.doc.irn == null);
 
 	let gst_category = ['Registered Regular', 'SEZ', 'Registered Composition'];
-	let gst_address_added_later = (frm.doc.billing_address_gstin !== undefined && frm.doc.billing_address_gstin != null) &&	!gst_category.includes(frm.doc.gst_category);
+	let gst_address_added_later = (frm.doc.billing_address_gstin !== undefined && frm.doc.billing_address_gstin != null && !frm.doc.billing_address_gstin == '') && !gst_category.includes(frm.doc.gst_category);
 	let gst_registered_address_wrong = (frm.doc.billing_address_gstin === undefined || frm.doc.billing_address_gstin == null) && gst_category.includes(frm.doc.gst_category);
 	if ((gst_registered_address_wrong || gst_address_added_later) && !einvoice_made) {
 		frm.layout.show_message(`

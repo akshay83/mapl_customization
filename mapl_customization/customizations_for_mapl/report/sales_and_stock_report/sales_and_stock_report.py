@@ -3,7 +3,7 @@
 
 import frappe
 from frappe.utils import flt, getdate
-from mapl_customization.customizations_for_mapl.report.sales_taxes_report.sales_taxes_report import extract_columns
+from mapl_customization.customizations_for_mapl.report.quantitative_stock_report.quantitative_stock_report import insert_categories, extract_columns
 from mapl_customization.customizations_for_mapl.utils import get_effective_stock_at_all_warehouse
 
 def execute(filters=None):

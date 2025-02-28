@@ -12065,7 +12065,7 @@
   "name": "Sales Invoice Item-battery_chemistry",
   "no_copy": 0,
   "non_negative": 0,
-  "options": "\nLithium-Ion (LI-ION)\nLithium-Ion (LI-ION) / NCM",
+  "options": "\nLithium-Ion (LI-ION)\nLithium-Ion (LI-ION) / NCM\nLithium-Ion (LI-ION) / NMC",
   "parent": null,
   "parentfield": null,
   "parenttype": null,

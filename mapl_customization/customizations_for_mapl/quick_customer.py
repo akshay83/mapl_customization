@@ -113,6 +113,7 @@ def make_customer(args):
 	customer_doc.vehicle_no = args.get("vehicle_no")
 	customer_doc.relation_to = args.get("relation_to")
 	customer_doc.relation_name = args.get("relation_name")
+	#Dummy Variables in Customer_doc to Validate Before Insert Hook
 	customer_doc.primary_contact_no = args.get("primary_contact_no") #To Validate In Before Insert Hook
 	customer_doc.secondary_contact_no = args.get("secondary_contact_no") #To Validate In Before Insert Hook
 	validate_contact_nos(customer_doc)
@@ -352,6 +353,10 @@ def validate_customer(doc, method):
 	validate_customer_creation(doc, method)
 
 def validate_contact_nos(doc):
+	pcn, scn = strip_contact_nos(doc.primary_contact_no, doc.secondary_contact_no)
+	if len(pcn.replace("|","")) < 10 or (scn and len(scn.replace("|","")) < 10):
+		frappe.throw("""Check Primary / Secondary Contact Numbers""")
+
 	if re.findall('[^0-9,/-]', doc.primary_contact_no.replace(" ", "")):
 		frappe.throw("""Check Primary Contact No""")
 
@@ -386,6 +391,7 @@ def validate_customer_before_save(doc, method):
 	#		return
 
 	doc.customer_name = doc.customer_name.strip()
+	#Primary_Contact_no is dummy Variable being set in make_customer function
 	if not hasattr(doc,"primary_contact_no"):
 		return
 	pcn, scn = strip_contact_nos(doc.primary_contact_no, doc.secondary_contact_no)

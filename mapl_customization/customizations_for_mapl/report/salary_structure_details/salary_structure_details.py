@@ -69,7 +69,13 @@ def get_default_columns(filters):
 			"label":"Applicable From",
 			"fieldtype":"Date",
 			"width":120
-		},		
+		},
+		{
+			"fieldname":"last_salary_date",
+			"label":"Last Salary Slip",
+			"fieldtype":"Date",
+			"width":120
+		},
 		{
 			"fieldname":"base",
 			"label":"Reported Salary",
@@ -153,6 +159,7 @@ def get_employee_details(filters):
 					  employee.bank_ac_no,
 					  struct.name as struct_name,
 					  struct_emp.from_date,
+					  (select max(posting_date) from `tabSalary Slip` where employee=employee.name) as last_salary_date,
 					  struct_emp.base,
 					  struct_emp.actual_salary
 					from
@@ -185,6 +192,7 @@ def get_employee_details(filters):
 		build_row["ifsc"] = e.ifsc_code
 		build_row["account_no"] = e.bank_ac_no
 		build_row["from_date"] = e.from_date
+		build_row["last_salary_date"] = e.last_salary_date
 
 		build_row.update(get_earnings_and_deductions(e.struct_name))
 

@@ -4,7 +4,6 @@
 import frappe
 import json
 import os
-from mapl_customization.customizations_for_mapl.report.sales_taxes_report.sales_taxes_report import extract_columns
 
 def execute(filters=None):
 	columns, data = [], []
@@ -19,10 +18,17 @@ def load_map():
 	lowercase_map = {k.lower():v for k,v in map_json.items()}
 	return lowercase_map
 
-def insert_categories(data):
+def insert_categories(data, group_key="item_group"):
+	#group_key identifies the column name returned by SQL Query
+	#As Categories depend on Item_Group, Check whether it exits in data or not
+	if not any(group_key in i for i in data[0].keys()):
+		return
+	#Insert Default Values for the First Data Row, other wise "extract_columns" won't handle the Category & Sub Category Columns well
+	data[0].update({"Category":None})
+	data[0].update({"Sub Category":None})
 	category_map = load_map()	
 	for d in data:
-		item_group = category_map.get(d.get("item_group").lower())
+		item_group = category_map.get(d.get(group_key).lower())
 		if not item_group:
 			continue
 		d.update({"Category":item_group.get("Category")})
@@ -165,3 +171,23 @@ def execute_query(filters=None):
                     })
 	return frappe.db.sql(query, as_dict=1)
 
+def extract_columns(query_result):
+    list_keys = query_result[0].keys()
+    columns = []
+    for key in list_keys:
+        broken_key = key.split(":")
+        link = None
+        try:
+            link = broken_key[1].split("/")
+        except:
+            pass
+        columns.append({
+			"fieldname":key,
+			"label":broken_key[0],
+			"fieldtype:":link[0] if link else "Data",
+            "options": link[1] if (link and len(link)>1) else None,
+			"width": broken_key[2] if len(broken_key)>1 else 100,
+            "default": 0 if (link and link[0].lower() in ("currency","float")) else None
+        })
+    #--DEBUG--print (columns)
+    return columns

@@ -1,25 +1,30 @@
 from __future__ import unicode_literals
 import frappe
 import json
-from frappe.utils import flt, getdate
+from frappe.utils import flt, getdate, cint
+from mapl_customization.customizations_for_mapl.report.quantitative_stock_report.quantitative_stock_report import insert_categories, extract_columns
 
 def execute(filters=None):
     columns, data = [], []
     report_type = filters.get("document_type") or "Purchase Summary"
     dt = "Purchase" if "Purchase" in report_type else "Sales"
-    report = TaxesReport(dt, filters.get("from_date"), filters.get("to_date"), report_type)
+    report = TaxesReport(dt, filters.get("from_date"), filters.get("to_date"), report_type, filters.get("include_zero_tax"), filters.get("include_stock_columns"))
     #columns.extend(get_columns(filter))
     data = report.get_data()
+    if len(data) > 0 and cint(filters.get("include_stock_columns")):
+        insert_categories(data,group_key="Item Group:Link/Item Group:75")
     columns = extract_columns(data) if len(data) > 0 else []
     return columns, data
 
 class TaxesReport():
-    def __init__(self, doctype, from_date, to_date, report_type):
+    def __init__(self, doctype, from_date, to_date, report_type, zero_tax=0, include_stock_columns=0):
         self.doctype = doctype
         self.from_date = from_date
         self.to_date = to_date
         self.party_type = "Customer" if (self.doctype=="Sales") else "Supplier"
         self.report_type = report_type
+        self.include_zero_tax = cint(zero_tax)
+        self.include_stock_columns = cint(include_stock_columns)
 
     def get_dump_query(self):
         dump_query = """
@@ -37,6 +42,7 @@ class TaxesReport():
                             item.item_code as `Item Code:Link/Item:100`,
                             item.description as `Description:Data:150`,
                             item.item_group as `Item Group:Link/Item Group:75`,
+                            item.brand as `Brand:Link/Brand:75`,
                             item.gst_hsn_code as `HSN Code:Data:75`,
                             item.item_tax_rate as `Item Tax Rate:Data:100`,
                             cast(left(right(item.item_tax_rate,5),4) as decimal(5,2)) as `Tax Rate Alt:Float:50`,
@@ -49,20 +55,23 @@ class TaxesReport():
                             ((gstin is not null and gstin<>'' and left(gstin,2)<>23) or
                             (state is not null and state not regexp ('MADHYA PRADESH|M.P.|M.P|MP')) and
                             (state is not null and state<>''))) or left(place_of_supply,2)<>'23') as flag
+                            {stock_columns}
                         from
                             `tab{doctype} Invoice Item` item use index (parent),
                             `tab{doctype} Invoice` doc use index (PRIMARY),
                             `tabAddress` addr,
-                            `tab{partytype}` party use index (PRIMARY)
+                            `tab{partytype}` party use index (PRIMARY),
+                            `tabItem` item_master use index (PRIMARY)
                         where
                             doc.docstatus=1
                             and doc.name=item.parent
+                            and item_master.name=item.item_code
                             and addr.address_title=party.name
                             and doc.posting_date between '{from_date}' and '{to_date}'
                             and doc.name in (select parent from `tab{doctype} Taxes and Charges` taxes where taxes.account_head regexp ('SGST|CGST|IGST') {additional_tax_conditions})
                             {doc_specific_conditions}
                         group by
-                            item.gst_hsn_code,  
+                            item.item_code,  
                             item.parent,
                             `Tax Rate:Float:50`
                         order by
@@ -77,7 +86,9 @@ class TaxesReport():
                     "address_column": self.party_type.lower(),
                     "doc_columns": self.get_document_specific_columns(),
                     "from_date": self.from_date,
-                    "to_date": self.to_date
+                    "to_date": self.to_date,
+                    "stock_columns": """,item_master.is_stock_item as `Maintain Stock:Int:1`,
+                            item_master.item_group as `Master Group:Data:75`""" if self.include_stock_columns else ""
                     })
         return dump_query
     
@@ -152,7 +163,7 @@ class TaxesReport():
         return "and doc.shipping_address_name=addr.name"
 
     def get_additional_tax_conditions(self):
-        if self.doctype == "Purchase":
+        if self.doctype == "Purchase" and not cint(self.include_zero_tax):
             return "and tax_amount<>0"
         return ""
 
@@ -230,24 +241,4 @@ class TaxesReport():
             self.do_post_fetch_calculations()
         return self.raw_data
 
-def extract_columns(query_result):
-    list_keys = query_result[0].keys()
-    columns = []
-    for key in list_keys:
-        broken_key = key.split(":")
-        link = None
-        try:
-            link = broken_key[1].split("/")
-        except:
-            pass
-        columns.append({
-			"fieldname":key,
-			"label":broken_key[0],
-			"fieldtype:":link[0] if link else "Data",
-            "options": link[1] if (link and len(link)>1) else None,
-			"width": broken_key[2] if len(broken_key)>1 else 100,
-            "default": 0 if (link and link[0].lower() in ("currency","float")) else None
-        })
-    #--DEBUG--print (columns)
-    return columns
         

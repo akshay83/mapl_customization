@@ -238,9 +238,9 @@ def check_stage_2_for_negative_stock(doc):
 	#--DEBUG--print (query)
 	item_effective_qty_map = []
 	for i in doc.get("items"):
-		if not any(e.get('item_code') == i.get("item_code") for e in item_effective_qty_map):
+		if not any(e.get('item_warehouse_combo') == i.get("item_code")+"@"+i.get("warehouse") for e in item_effective_qty_map):
 			qtys = frappe.db.sql(query, { "parent":doc.get('name'), "warehouse":i.get("warehouse"), "item": i.get("item_code")}, as_dict=1)
-			item_effective_qty_map.append({"item_code":i.get("item_code"),"effective_qty":qtys[0].effective_qty})
+			item_effective_qty_map.append({"item_code":i.get("item_code"),"effective_qty":qtys[0].effective_qty,"item_warehouse_combo":i.get("item_code")+"@"+i.get("warehouse")})
 	#--DEBUG--print (item_effective_qty_map)
 	return check_result_against_items(item_effective_qty_map, doc.get("items"))
 
@@ -265,17 +265,31 @@ def check_stage_1_for_negative_stock(doc):
 	return check_result_against_items(qtys, doc.get("items"))
 
 def check_result_against_items(balance_stk, doc_items):
+	#--DEBUG--print (balance_stk)
 	for m in balance_stk:
-		balance_qty = m.get("effective_qty")
+		balance_qty = get_combined_balance_qty(balance_stk, m.get("item_warehouse_combo"))
 		for i in doc_items:
 			if not cint(frappe.db.get_value("Item", i.get("item_code"),"is_stock_item")):
 				continue
-			if m.get("item_code") == i.get("item_code"):
+			#--DEBUG--print ("---------------------------------------------")
+			#--DEBUG--print ("Item Code:"+i.get("item_code"))
+			#--DEBUG--print ("Warehouse:"+i.get("warehouse"))
+			#--DEBUG--print ("Balance Qty:"+str(balance_qty))
+			#--DEBUG--print ("---------------------------------------------")
+			if m.get("item_warehouse_combo") == i.get("item_code")+"@"+i.get("warehouse"):
 				balance_qty = balance_qty - i.get("qty")
 		if balance_qty < 0:
 			#--DEBUG--print (m["item_code"], balance_qty)
 			return {"result":True, "item":m.get("item_code")}
 	return {"result":False}
+
+def get_combined_balance_qty(balance_stk, item_warehouse_combo):
+	balance_qty = 0
+	for b in balance_stk:
+		#If called VIA check_stage_1_for_negative_stock then this passes as None == None
+		if b.get("item_warehouse_combo") == item_warehouse_combo:
+			balance_qty = balance_qty + b.get("effective_qty")
+	return balance_qty
 
 def get_dynamic_links(doctype, docname, link_doctype=None):
 	filters = {

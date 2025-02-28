@@ -543,12 +543,12 @@
   "description": null,
   "docstatus": 0,
   "doctype": "Custom SQL Queries",
-  "modified": "2023-09-25 17:11:56.948714",
+  "modified": "2024-09-25 17:42:51.126887",
   "name": "Customer Ageing Report",
   "parent": null,
   "parentfield": null,
   "parenttype": null,
-  "query": "select\r\n  name as `Customer Code`,\r\n  customer_name as `Customer Name`,\r\n  last_sale_date as `Last Sale Date`,\r\n  abs(datediff(dump.last_sale_date,'2023-03-31')) as `Days`,\r\n  balance as `Current Balance`,\r\n  if(abs(datediff(dump.last_sale_date,'2023-03-31'))<=180, balance, null) as `Upto 6 Months`,\r\n  if(abs(datediff(dump.last_sale_date,'2023-03-31')) between 181 and 365, balance, null) as `Upto 1 Year`,  \r\n  if(abs(datediff(dump.last_sale_date,'2023-03-31')) between 366 and 730, balance, null) as `Upto 2 Year`,  \r\n  if(abs(datediff(dump.last_sale_date,'2023-03-31')) between 731 and 1095, balance, null) as `Upto 3 Year`,  \r\n  if(abs(datediff(dump.last_sale_date,'2023-03-31')) > 1095, balance, null) as `More than 3 Years`\r\nfrom (\r\nselect\r\n  cust.name,\r\n  cust.customer_name,\r\n  max(if(gl_entry.voucher_type='Sales Invoice',gl_entry.posting_date,null)) as last_sale_date,\r\n  sum(debit-credit) as balance\r\nfrom\r\n  `tabCustomer` cust,\r\n  `tabGL Entry` gl_entry\r\nwhere\r\n  gl_entry.party=cust.name\r\n  and gl_entry.party_type='Customer'\r\n  and gl_entry.posting_date<='2023-03-31'\r\ngroup by\r\n  cust.name\r\nhaving\r\n  sum(debit-credit)<>0\r\norder by\r\n  cust.customer_name) dump\r\n  \r\n  \r\n  \r\n  \r\nselect\r\n  name as `Supplier Code`,\r\n  supplier_name as `Supplier Name`,\r\n  last_purchase_date as `Last Sale Date`,\r\n  abs(datediff(dump.last_purchase_date,'2023-03-31')) as `Days`,\r\n  balance as `Current Balance`,\r\n  if(abs(datediff(dump.last_purchase_date,'2023-03-31'))<=180, balance, null) as `Upto 6 Months`,\r\n  if(abs(datediff(dump.last_purchase_date,'2023-03-31')) between 181 and 365, balance, null) as `Upto 1 Year`,  \r\n  if(abs(datediff(dump.last_purchase_date,'2023-03-31')) between 366 and 730, balance, null) as `Upto 2 Year`,  \r\n  if(abs(datediff(dump.last_purchase_date,'2023-03-31')) between 731 and 1095, balance, null) as `Upto 3 Year`,  \r\n  if(abs(datediff(dump.last_purchase_date,'2023-03-31')) > 1095, balance, null) as `More than 3 Years`\r\nfrom (\r\nselect\r\n  supp.name,\r\n  supp.supplier_name,\r\n  max(if(gl_entry.voucher_type='Purchase Invoice',gl_entry.posting_date,null)) as last_purchase_date,\r\n  sum(debit-credit) as balance\r\nfrom\r\n  `tabSupplier` supp,\r\n  `tabGL Entry` gl_entry\r\nwhere\r\n  gl_entry.party=supp.name\r\n  and gl_entry.party_type='Supplier'\r\n  and gl_entry.posting_date<='2023-03-31'\r\ngroup by\r\n  supp.name\r\nhaving\r\n  sum(debit-credit)<>0\r\norder by\r\n  supp.supplier_name) dump\r\n  ",
+  "query": "select\r\n  name as `Customer Code`,\r\n  customer_name as `Customer Name`,\r\n  last_sale_date as `Last Sale Date`,\r\n  abs(datediff(dump.last_sale_date,'2024-03-31')) as `Days`,\r\n  balance as `Current Balance`,\r\n  if(abs(datediff(dump.last_sale_date,'2024-03-31'))<=180, balance, null) as `Upto 6 Months`,\r\n  if(abs(datediff(dump.last_sale_date,'2024-03-31')) between 181 and 365, balance, null) as `Upto 1 Year`,  \r\n  if(abs(datediff(dump.last_sale_date,'2024-03-31')) between 366 and 730, balance, null) as `Upto 2 Year`,  \r\n  if(abs(datediff(dump.last_sale_date,'2024-03-31')) between 731 and 1095, balance, null) as `Upto 3 Year`,  \r\n  if(abs(datediff(dump.last_sale_date,'2024-03-31')) > 1095, balance, null) as `More than 3 Years`\r\nfrom (\r\nselect\r\n  cust.name,\r\n  cust.customer_name,\r\n  ifnull(max(if(gl_entry.voucher_type='Sales Invoice',gl_entry.posting_date,null)),\r\n        max(if(gl_entry.voucher_type='Payment Entry' or gl_entry.voucher_type='Journal Entry',gl_entry.posting_date,null))) as last_sale_date,\r\n  sum(debit-credit) as balance\r\nfrom\r\n  `tabCustomer` cust,\r\n  `tabGL Entry` gl_entry\r\nwhere\r\n  gl_entry.party=cust.name\r\n  and gl_entry.party_type='Customer'\r\n  and gl_entry.posting_date<='2024-03-31'\r\ngroup by\r\n  cust.name\r\nhaving\r\n  sum(debit-credit)<>0\r\norder by\r\n  cust.customer_name) dump\r\n  \r\n  \r\n  \r\n  \r\nselect\r\n  name as `Supplier Code`,\r\n  supplier_name as `Supplier Name`,\r\n  last_purchase_date as `Last Sale Date`,\r\n  abs(datediff(dump.last_purchase_date,'2023-03-31')) as `Days`,\r\n  balance as `Current Balance`,\r\n  if(abs(datediff(dump.last_purchase_date,'2023-03-31'))<=180, balance, null) as `Upto 6 Months`,\r\n  if(abs(datediff(dump.last_purchase_date,'2023-03-31')) between 181 and 365, balance, null) as `Upto 1 Year`,  \r\n  if(abs(datediff(dump.last_purchase_date,'2023-03-31')) between 366 and 730, balance, null) as `Upto 2 Year`,  \r\n  if(abs(datediff(dump.last_purchase_date,'2023-03-31')) between 731 and 1095, balance, null) as `Upto 3 Year`,  \r\n  if(abs(datediff(dump.last_purchase_date,'2023-03-31')) > 1095, balance, null) as `More than 3 Years`\r\nfrom (\r\nselect\r\n  supp.name,\r\n  supp.supplier_name,\r\n  ifnull(max(if(gl_entry.voucher_type='Purchase Invoice',gl_entry.posting_date,null)),\r\n       max(if(gl_entry.voucher_type='Payment Entry' or gl_entry.voucher_type='Journal Entry',gl_entry.posting_date,null))) as last_purchase_date,\r\n  sum(debit-credit) as balance\r\nfrom\r\n  `tabSupplier` supp,\r\n  `tabGL Entry` gl_entry\r\nwhere\r\n  gl_entry.party=supp.name\r\n  and gl_entry.party_type='Supplier'\r\n  and gl_entry.posting_date<='2023-03-31'\r\ngroup by\r\n  supp.name\r\nhaving\r\n  sum(debit-credit)<>0\r\norder by\r\n  supp.supplier_name) dump\r\n  ",
   "query_name": "Customer Ageing Report"
  },
  {
@@ -562,5 +562,41 @@
   "parenttype": null,
   "query": "select\r\n  inv.reporting_name,\r\n  inv.posting_date as `Date`,\r\n  inv.customer_name as `Customer Name`,\r\n  addr.city as `City`,\r\n  item.brand as `Brand`,\r\n  item.name as `Item Code`,\r\n  split_serials.serial_no as `Serial No`,\r\n  serial_no.supplier_name as `Supplier Name`,\r\n  if(salesitem.qty<0,-1,1) as `Qty`,\r\n  serial_no.purchase_rate as `Purchase Rate W/o Tax`,\r\n  salesitem.net_rate as `Sales Rate W/o Tax`\r\nfrom\r\n  `tabSales Invoice` inv,\r\n  `tabSales Invoice Item` salesitem cross join json_table(\r\n                    replace(json_array(replace(salesitem.serial_no,'\\n',',')), ',', '\",\"'),\r\n                    '$[*]' columns (serial_no varchar(50) path '$')\r\n                ) as split_serials,\r\n  `tabItem` item,\r\n  `tabSerial No` serial_no,\r\n  `tabAddress` addr\r\nwhere\r\n  item.item_group like 'Commerci%'\r\n  and salesitem.item_code = item.name\r\n  and salesitem.parent=inv.name\r\n  and inv.docstatus=1\r\n  and inv.posting_date between '2024-01-01' and '2024-02-29'\r\n  and serial_no.name=split_serials.serial_no COLLATE utf8mb4_general_ci\r\n  and addr.name = inv.customer_address\r\norder by\r\n  inv.posting_date,\r\n  inv.name",
   "query_name": "Samsung Commercial LED Sales Report"
+ },
+ {
+  "description": null,
+  "docstatus": 0,
+  "doctype": "Custom SQL Queries",
+  "modified": "2024-07-05 19:48:30.975158",
+  "name": "Effective Serial Nos List",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "query": "select\r\n  s_no.item_code,\r\n  s_no.name\r\nfrom\r\n  `tabSerial No` s_no join\r\n  `tabItem` item on s_no.item_code=item.name\r\nwhere\r\n  item.name regexp ('RKL50UV16VA|ATKL50UV16VA')\r\n  and s_no.status='Active'\r\n  and s_no.name not in (\r\n(select  \r\n  split_serials.serial_no COLLATE utf8mb4_general_ci\r\nfrom\r\n  `tabSales Invoice Item` salesitem cross join\r\n  json_table(\r\n        replace( json_array( replace(salesitem.serial_no,'\\n',',') ), ',', '\",\"'),\r\n        '$[*]' columns (serial_no varchar(50) path '$')\r\n  ) as split_serials join\r\n  `tabSerial No` serial on serial.name=split_serials.serial_no COLLATE utf8mb4_general_ci\r\nwhere\r\n  salesitem.serial_no is not null\r\n  and split_serials.serial_no <> ''\r\n  and salesitem.docstatus=0\r\n  and serial.item_code=item.name)\r\nunion all\r\n(select  \r\n  split_serials.serial_no COLLATE utf8mb4_general_ci\r\nfrom\r\n  `tabDelivery Note Item` deliveryitem cross join\r\n  json_table(\r\n        replace( json_array( replace(deliveryitem.serial_no,'\\n',',') ), ',', '\",\"'),\r\n        '$[*]' columns (serial_no varchar(50) path '$')\r\n  ) as split_serials join\r\n  `tabSerial No` serial on serial.name=split_serials.serial_no COLLATE utf8mb4_general_ci\r\nwhere\r\n  deliveryitem.serial_no is not null\r\n  and split_serials.serial_no <> ''\r\n  and deliveryitem.docstatus=0\r\n  and serial.item_code=item.name)\r\n)",
+  "query_name": "Effective Serial Nos List"
+ },
+ {
+  "description": null,
+  "docstatus": 0,
+  "doctype": "Custom SQL Queries",
+  "modified": "2024-08-13 16:48:59.732228",
+  "name": "Jawa GST Mismatch",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "query": "select \r\n  posting_date,  \r\n  reporting_name,\r\n  model,\r\n  chassis_no,\r\n  engine_no,\r\n  job_card_no,\r\n  job_card_date,\r\n  dms_invoice_reference,\r\n  delayed_payment_reason,\r\n  notes,\r\n  net_total,\r\n  grand_total\r\nfrom\r\n  `tabSales Invoice` \r\nwhere\r\n  docstatus=1\r\n  and customer='CUST-13033'\r\n  and posting_date between '2023-04-01' and '2024-03-31'\r\norder by\r\n  posting_date,\r\n  reporting_name",
+  "query_name": "Jawa GST Mismatch"
+ },
+ {
+  "description": null,
+  "docstatus": 0,
+  "doctype": "Custom SQL Queries",
+  "modified": "2025-01-25 12:36:41.054707",
+  "name": "Mahindra Service Invoice",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "query": "select concat('MMI/24-25/',lpad(@a:=@a+1,3,'0')),a.name, a.reporting_name, a.customer_name, a.posting_date, a.grand_total from `tabSales Invoice` a, (SELECT @a := 0) AS b where a.customer='CUST-09131' and a.name like '%24-25%' order by name\n\nupdate `tabSales Invoice` as a, (SELECT @a := 0) as b set a.reporting_name = concat('MMI/24-25/',lpad(@a:=@a+1,3,'0')) where a.customer='CUST-09131' and a.name like '%24-25%' order by a.name",
+  "query_name": "Mahindra Service Invoice"
  }
 ]
