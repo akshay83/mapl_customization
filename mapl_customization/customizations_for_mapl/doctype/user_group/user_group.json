@@ -7,7 +7,8 @@
  "engine": "InnoDB",
  "field_order": [
   "group",
-  "abbreviation"
+  "abbreviation",
+  "default_letter_head"
  ],
  "fields": [
   {
@@ -24,10 +25,17 @@
    "label": "Abbreviation",
    "reqd": 1,
    "set_only_once": 1
+  },
+  {
+   "fieldname": "default_letter_head",
+   "fieldtype": "Link",
+   "label": "Default Letter Head",
+   "options": "Letter Head",
+   "reqd": 1
   }
  ],
  "links": [],
- "modified": "2022-04-05 17:31:30.688052",
+ "modified": "2025-04-22 18:15:19.202393",
  "modified_by": "Administrator",
  "module": "Customizations for MAPL",
  "name": "User Group",

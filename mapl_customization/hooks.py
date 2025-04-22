@@ -295,7 +295,8 @@ ps_fields = [
 	"Quotation Item-item_code-reqd",
 	"Lead-mobile_no-depends_on",
 	"Purchase Invoice-bill_no-reqd",
-	"Purchase Invoice-bill_date-reqd"
+	"Purchase Invoice-bill_date-reqd",
+	"Payment Entry-mode_of_payment-reqd"
 ]
 
 wf_names = [

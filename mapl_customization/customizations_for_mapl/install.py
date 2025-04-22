@@ -126,8 +126,9 @@ def after_install():
 def on_login(login_manager):
 	warehouse_map = {"Vijay Nagar":"Main Location - MAPL","Geeta Bhawan":"Geeta Bhawan - MAPL","Ranjeet Hanuman":"Ranjeet Hanuman - MAPL"}
 	try:
-		letter_head = frappe.db.get_value("User", login_manager.user, "user_group")
-		letter_head = frappe.db.get_value("Letter Head",letter_head,"name") or \
+		user_group = frappe.db.get_value("User", login_manager.user, "user_group")
+		default_letter_head = frappe.db.get_value("User Group", user_group, "default_letter_head")
+		letter_head = frappe.db.get_value("Letter Head",default_letter_head,"name") or \
 						frappe.db.get_value("Letter Head",{"is_default":1},"name")
 		frappe.defaults.set_user_default("letter_head",letter_head, login_manager.user)
 		#frappe.defaults.set_user_default("warehouse", warehouse_map.get(letter_head), login_manager.user)
