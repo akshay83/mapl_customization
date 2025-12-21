@@ -9,6 +9,9 @@ from frappe.utils import cint
 from frappe.exceptions import CharacterLengthExceededError
 from frappe.integrations.utils import make_get_request, make_post_request
 from frappe.utils.data import format_date
+from mapl_customization.customizations_for_mapl.sales_invoice_validation import is_hero_invoice
+from mapl_customization.customizations_for_mapl.quick_customer import get_pincode_data
+from erpnext.regional.india import state_numbers, states, number_state_mapping
 
 @frappe.whitelist()
 def validate_eligibility(doc, taxpro=0):
@@ -35,8 +38,9 @@ class TaxproGSP(GSPConnector):
         self.cancel_irn_url = self.base_url + '/eicore/dec/v1.03/Invoice/Cancel'
         self.irn_details_url = self.base_url + '/eicore/dec/v1.03/Invoice/irn'
         self.generate_irn_url = self.base_url + '/eicore/dec/v1.03/Invoice'
+        self.irn_by_doc_details = self.base_url + '/eicore/dec/v1.03/Invoice/irnbydocdetails?QrCodeSize=250'
 
-        #self.gstin_details_url = self.base_url + '/eivital/dec/v1.04/Master/gstin'        
+        self.gstin_details_url = self.base_url + '/eivital/dec/v1.04/Master/gstin'
         #self.cancel_ewaybill_url = self.base_url + '/ewaybillapi/dec/v1.03/ewayapi?action=CANEWB' if not self.e_invoice_settings.sandbox_mode else '/v1.03/dec/ewayapi?action=CANEWB'
         self.generate_ewaybill_by_irn_url = self.base_url + '/eiewb/dec/v1.03/ewaybill'
         #self.eway_bill_by_irn = self.base_url + '/eiewb/dec/v1.03/ewaybill/irn'
@@ -106,15 +110,11 @@ class TaxproGSP(GSPConnector):
             if res.get('Status') == "1":
                 self.set_einvoice_data(json.loads(res.get('Data')))
 
-            elif res.get('Status') == "0" and res.get('ErrorDetails')[0].get("ErrorCode") == "2150":
+            elif res.get('Status') == "0" and res.get('ErrorDetails')[0].get("ErrorCode") in ("2150", "2295"):
                 # IRN already generated but not updated in invoice
                 # Extract the IRN from the response description and fetch irn details
                 irn = res.get('InfoDtls')[0].get('Desc').get('Irn')
-                irn_details = json.loads(self.get_irn_details(irn))
-                if irn_details:
-                    self.set_einvoice_data(irn_details)
-                else:
-                    raise RequestFailed('IRN has already been generated for the invoice but cannot fetch details for it.')
+                self.set_duplicate_einvoice_details(irn, original_call=res)
             elif res.get('Status') == "0" and res.get('ErrorDetails')[0].get("ErrorCode") == "2278":
                 frappe.throw("IRN Already Generated or Cancelled")
             elif res.get('Status') == "0" and res.get('ErrorDetails')[0].get("ErrorCode") == "3074":
@@ -136,15 +136,58 @@ class TaxproGSP(GSPConnector):
             log_error(data)
             self.raise_error(True)
 
-    def get_irn_details(self, irn):
+    def get_irn_details_by_document(self):
         headers = self.get_headers()
         try:
-            params = '/{irn}'.format(irn=irn)
-            res = self.make_request('get', self.irn_details_url + params, headers)
+            invoice_details = self.get_reported_invoice_details()
+            invoice_type = 'CRN' if self.invoice.is_return else 'INV'
+            params = '&doctype={doctype}&docnum={docnum}&docdate={docdate}'.format(doctype=invoice_type,docnum=invoice_details[0],docdate=format_date(invoice_details[1],'dd/mm/yyyy'))
+            print (self.irn_by_doc_details + params)
+            res = self.make_request('get', self.irn_by_doc_details + params, headers)
             if res.get('Status') == "1":
                 return res.get('Data')
             else:
                 raise RequestFailed
+        except RequestFailed:
+            errors = self.sanitize_error_message(res)
+            self.raise_error(errors=errors)
+        except Exception:
+            log_error()
+            self.raise_error(True)
+
+    def set_basic_einvoice_details(self, res):
+        self.invoice.irn = res.get('Irn')
+        self.invoice.ack_no = res.get('AckNo')
+        self.invoice.ack_date = res.get('AckDt')
+        self.invoice.einvoice_status = 'Generated'
+        self.invoice.flags.updater_reference = {
+			'doctype': self.invoice.doctype,
+			'docname': self.invoice.name,
+			'label': _('IRN Generated')
+		}
+        self.update_invoice()        
+
+    def set_duplicate_einvoice_details(self, irn, original_call=None):
+        try:
+            response = self.get_irn_details(irn)
+            if response.get('Status') == "1":
+                self.set_einvoice_data(json.loads(response.get('Data')))
+            elif response.get('Status') == "0" and response.get('ErrorDetails')[0].get("ErrorCode") == "2283" and original_call:
+                self.set_basic_einvoice_details(original_call.get("InfoDtls")[0].get("Desc"))
+            else:
+                raise RequestFailed('IRN has already been generated for the invoice but cannot fetch details for it.')
+        except RequestFailed:
+            errors = self.sanitize_error_message(response)
+            self.raise_error(errors=errors)
+        except Exception:
+            log_error()
+            self.raise_error(True)
+
+    def get_irn_details(self, irn):
+        headers = self.get_headers()
+        try:
+            params = '/{irn}'.format(irn=irn)
+            return self.make_request('get', self.irn_details_url + params, headers)
         except RequestFailed:
             errors = self.sanitize_error_message(res)
             self.raise_error(errors=errors)
@@ -197,7 +240,7 @@ class TaxproGSP(GSPConnector):
                 self.invoice.einvoice_status = 'Cancelled'
                 self.invoice.flags.updater_reference = {
                     'doctype': self.invoice.doctype,
-                    'docname': self.invoice.reporting_name,
+                    'docname': self.get_reported_invoice_details()[0],
                     'label': _('IRN Cancelled - {}').format(remark)
                 }
                 self.update_invoice()
@@ -227,7 +270,7 @@ class TaxproGSP(GSPConnector):
             self.invoice.update(args)
             self.invoice.flags.updater_reference = {
                     'doctype': self.invoice.doctype,
-					'docname': self.invoice.reporting_name,
+					'docname': self.get_reported_invoice_details()[0],
 					'label': _('Transport Details Updated')
             }
             self.update_invoice()            
@@ -312,7 +355,7 @@ class TaxproGSP(GSPConnector):
         self.invoice.update(args)
         self.invoice.flags.updater_reference = {
 					'doctype': self.invoice.doctype,
-					'docname': self.invoice.reporting_name,
+					'docname': self.get_reported_invoice_details()[0],
 					'label': _('E-Way Bill Generated')
         }
         self.update_invoice()
@@ -323,7 +366,7 @@ class TaxproGSP(GSPConnector):
         self.invoice.eway_bill_cancelled = 0
         self.invoice.flags.updater_reference = {
 					'doctype': self.invoice.doctype,
-					'docname': self.invoice.reporting_name,
+					'docname': self.get_reported_invoice_details()[0],
 					'label': _('E-Way Bill Generated')
         }
         self.update_invoice()
@@ -351,7 +394,7 @@ class TaxproGSP(GSPConnector):
                 self.invoice.eway_bill_validity = None
                 self.invoice.flags.updater_reference = {
 					'doctype': self.invoice.doctype,
-					'docname': self.invoice.reporting_name,
+					'docname': self.get_reported_invoice_details()[0],
 					'label': _('E-Way Bill Cancelled - {}').format(remark)
                 }
                 self.update_invoice()
@@ -411,6 +454,52 @@ class TaxproGSP(GSPConnector):
         if self.invoice.ewaybill:
             frappe.throw(_('e-Way Bill already exists for this document'))
 
+    def get_gstin_details(self, gstin):
+        headers = self.get_headers()
+        try:
+            params = '/{gstin}'.format(gstin=gstin)
+            res = self.make_request('get', self.gstin_details_url + params, headers)
+            if res.get('Status') == "1":
+                data_json = json.loads(res.get('Data'))
+                #--DEBUG--print ('--------------------EINVOICE GSTIN FETCH---------------------')
+                #--DEBUG--print (data_json)
+                #--DEBUG--print ('---------------------EXTRACTED PINCODE-----------------------')
+                #--DEBUG--print (data_json["AddrPncd"])
+                pincode_data = None
+                try:
+                    pincode_data = get_pincode_data(data_json["AddrPncd"], raise_error=True)
+                    #--DEBUG--print (pincode_data)
+                    #--DEBUG--print ('--------------------EINVOICE GSTIN FETCH---------------------')
+                except Exception as e:
+                    #--DEBUG--print (str(e))
+                    pass
+                    
+                if pincode_data and pincode_data[0]["Status"] == "Success":
+                    pincode_block = pincode_data[0]["PostOffice"][0]["Block"]
+                    pincode_district = pincode_data[0]["PostOffice"][0]["District"]
+                    pincode_state = pincode_data[0]["PostOffice"][0]["State"]
+                    data_json.update({"City":pincode_district,"Block":pincode_block})
+                #--DEBUG--print (number_state_mapping)
+                data_json.update({"State":number_state_mapping.get(str(data_json["StateCode"]))})
+                return_data = json.dumps({"Status":1,"Data":json.dumps(data_json)})
+                return return_data
+            elif res.get('Status') == "0":
+                return json.dumps({"Status":0})
+            else:
+                raise RequestFailed
+        except RequestFailed:
+            errors = self.sanitize_error_message(res)
+            self.raise_error(errors=errors)
+        except Exception:
+            log_error()
+            self.raise_error(True)
+
+    #Following Module was Added in April 2025, This is an Optional Patch
+    def get_reported_invoice_details(self):
+        if is_hero_invoice(self.invoice):
+            return self.invoice.dms_invoice_reference, self.invoice.dms_invoice_date
+        return self.invoice.reporting_name, self.invoice.posting_date
+
     @staticmethod
     def bulk_generate_irn(invoices):
         gsp_connector = TaxproGSP()
@@ -469,6 +558,11 @@ def make_supporting_request_data(ewb):
         if 'vehicleNo' in ewb:
             del ewb['vehicleNo']
     return ewb
+
+@frappe.whitelist()
+def get_gstin_details(gstin):
+    gsp_connector = TaxproGSP()
+    return gsp_connector.get_gstin_details(gstin)
 
 @frappe.whitelist()
 def get_einvoice(doctype, docname):

@@ -198,6 +198,19 @@ def validate_address(doc, method):
 		validate_pin_with_state(doc, method)
 	validate_address_creation(doc, method)
 
+def get_pincode_data(pincode, raise_error=False):
+	try:
+		req = requests.get(url = 'https://api.postalpincode.in/pincode/'+str(pincode), timeout = 5, verify=False)
+		#--DEBUG-- print '-----------------------VALIDATE STATE-----------------------'
+		data = req.json()
+		#--DEBUG-- print data
+		#--DEBUG-- print '=========================STRATE=================='
+		#--DEBUG-- print data[0]["PostOffice"][0]
+		return data
+	except (requests.ConnectionError, requests.Timeout, ValueError):
+		if raise_error:
+			raise
+
 def validate_pin_with_state(doc, method, raise_error=False):
 	if not doc.gst_state:
 		frappe.throw("""Please Select GST State""")
@@ -209,12 +222,7 @@ def validate_pin_with_state(doc, method, raise_error=False):
 		frappe.throw("""Please Select Pin Code""")
 
 	try:
-		req = requests.get(url = 'https://api.postalpincode.in/pincode/'+doc.pincode, timeout = 5, verify=False)
-		#DEBUG print '-----------------------VALIDATE STATE-----------------------'
-		data = req.json()
-		#DEBUG print data
-		#DEBUG print '=========================STRATE=================='
-		#DEBUG print data[0]["PostOffice"][0]
+		data = get_pincode_data(doc.pincode, raise_error=True)
 		if data[0]["Status"] != "Success":
 			if (frappe.session.user == "Administrator" or "System Manager" in frappe.get_roles()):
 				frappe.msgprint("""<div>Could Not Find Pin Code</div><div>Continuing for Now</div>""")
@@ -249,31 +257,39 @@ def validate_address_creation(doc, method):
 
 	existing = frappe.get_doc("Address", doc.name)
 
-	if existing.address_line1.lower() == doc.address_line1.lower() \
-		and existing.city.lower() == doc.city.lower():
-		if (not existing.address_line2 and not doc.address_line2) \
-			and (not existing.gstin and not doc.gstin):
-				return
+	violates_creation_date = check_creation_date(existing, "Address", raise_error=False, return_flag=True)
+	violates_freeze_date = check_freeze_date(existing, "Address", raise_error=False, return_flag=True)
 
-		if  (existing.address_line2 and doc.address_line2):
-			if (existing.gstin and doc.gstin):
-				if existing.address_line2.lower() == doc.address_line2.lower() \
-					and existing.gstin.lower() == doc.gstin.lower():
-					return
-			else:
-				if existing.address_line2.lower() == doc.address_line2.lower():
-					return
+	if (existing.gstin and doc.gstin) and existing.gstin.lower() != doc.gstin.lower():
+		frappe.throw("""Change of GSTIN not Allowed""")
 
-		if (existing.gstin and doc.gstin):
-			if existing.gstin.lower() == doc.gstin.lower():
-				return
+	if (violates_creation_date or violates_freeze_date):
+		frappe.throw("""Date change Violation, Change of {0} not Allowed""".format("Address"))
+	else:
+		check_submitted_invoices_for_gst_change_in_address(existing, doc)
+		if existing.state and existing.state.lower() != doc.state.lower():
+			frappe.throw("""Change of State in {0} not Allowed""".format("Address"))
+		if existing.gst_state and existing.gst_state.lower() != doc.gst_state.lower():
+			frappe.throw("""Change of State in {0} not Allowed""".format("Address"))
+		if doc.gst_state.lower() != doc.state.lower():
+			frappe.throw("""GST State and State not Same""")		
 
-	check_creation_date(existing, "Address")
-	check_freeze_date(existing, "Address")
-
-def check_creation_date(existing, doc):
+def check_creation_date(existing, doc, raise_error=True, return_flag=False):
 	if abs((getdate(today())-getdate(existing.creation)).days) >= 15:
-		frappe.throw("""Change of {0} not Allowed""".format(doc))
+		if raise_error:
+			frappe.throw("""Change of {0} not Allowed""".format(doc))
+		if return_flag:
+			return True
+	if return_flag:
+		return False
+
+def check_submitted_invoices_for_gst_change_in_address(existing, doc):
+	if (not existing.gstin and not doc.gstin):
+		return
+	if (existing.gstin and doc.gstin) and existing.gstin.lower() == doc.gstin.lower():
+		return
+	from mapl_customization.customizations_for_mapl.update_address import validate_gst_update
+	validate_gst_update(doc.name)
 
 def strDistance(s1, s2):
     if len(s1) > len(s2):
@@ -378,10 +394,15 @@ def validate_customer_creation(doc, method):
 	check_creation_date(existing, "Name")
 	check_freeze_date(existing, "Customer")
 
-def check_freeze_date(existing, doc):
+def check_freeze_date(existing, doc, raise_error=True, return_flag=False):
 	freeze_date = frappe.db.get_single_value("Accounts Settings", "acc_frozen_upto")
 	if freeze_date and getdate(existing.creation)<getdate(freeze_date):
-		throw("Accounts have been freezed till {0}, {1} cannot be Modified as it was created before this date".format(freeze_date, doc))
+		if raise_error:
+			frappe.throw("Accounts have been freezed till {0}, {1} cannot be Modified as it was created before this date".format(freeze_date, doc))
+		if return_flag:
+			return True
+	if return_flag:
+		return False
 
 def validate_customer_before_save(doc, method):
 	if doc.get('ignore_validate_hook'):

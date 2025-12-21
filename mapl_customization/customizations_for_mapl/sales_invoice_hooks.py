@@ -3,6 +3,13 @@ import json
 import time
 from frappe.utils import today, getdate, date_diff
 from frappe.utils import cstr, cint
+from erpnext.accounts.doctype.sales_invoice.sales_invoice import SalesInvoice
+
+class CustomSalesInvoice(SalesInvoice):
+	def get_print_settings(self):
+		print_setting_fields = super(SalesInvoice, self).get_print_settings()
+		print_setting_fields += ['print_company_invoice_no']
+		return print_setting_fields
 
 def on_submit(doc, method):
 	pass 

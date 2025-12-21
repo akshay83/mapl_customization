@@ -2,6 +2,10 @@ import frappe
 import erpnext
 from frappe.contacts.doctype.address.address import get_address_display
 
+def validate_gst_update(address_name):
+	submitted_invoices = frappe.db.sql("""select ifnull(count(*),0) from `tabSales Invoice` where docstatus=1 and customer_address='{address}'""".format(**{"address":address_name}))
+	if submitted_invoices[0][0] > 0:
+		frappe.throw("Submitted Invoices found against the Associated Address, Cannot Modify GST")
 
 @frappe.whitelist()
 def update_address(address_name):

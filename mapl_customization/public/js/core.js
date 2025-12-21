@@ -286,3 +286,13 @@ custom.check_sales_invoice_hsn_length = async function (doc) {
 	//--DEBUG--console.log("Length Check Failed:" + length_check_failed);
 	return length_check_failed;
 };
+
+custom.is_hero_invoice = function(doc) {
+	let hero_brands = ["hero", "vida", "harley"];
+	for (let i=0;i<doc.items.length;i++) {
+		if (doc.items[i].brand !== undefined && hero_brands.includes(doc.items[i].brand.toLowerCase())) {
+			return true;
+		}
+	}
+	return false;
+}

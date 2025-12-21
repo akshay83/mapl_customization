@@ -3,7 +3,7 @@ erpnext.setup_einvoice_actions = (doctype) => {
 		async refresh(frm) {
 			//--DEBUG--console.log("TaxPro Overriden");
 			if (frm.doc.docstatus == 2) return;
-			
+
 			const einvoice_enabled = await frappe.db.get_single_value('E Invoice Settings', 'enable');
 			if (!einvoice_enabled) return;
 
@@ -22,10 +22,7 @@ erpnext.setup_einvoice_actions = (doctype) => {
 			};
 
 			if (invoice_eligible && !irn && !__unsaved) {
-				const action = () => {
-					if (frm.doc.__unsaved) {
-						frappe.throw(__('Please save the document to generate IRN.'));
-					}
+				const call_create_einvoice = function () {
 					frappe.call({
 						method: 'erpnext.regional.india.e_invoice.utils.get_einvoice',
 						args: { doctype, docname: name },
@@ -35,6 +32,12 @@ erpnext.setup_einvoice_actions = (doctype) => {
 							_custom_show_einvoice_preview(frm, einvoice);
 						}
 					});
+				}
+				const action = () => {
+					if (frm.doc.__unsaved) {
+						frappe.throw(__('Please save the document to generate IRN.'));
+					}
+					call_create_einvoice();
 				};
 				let negative_check = await custom.check_if_sales_invoice_will_result_in_negative_stock(frm.doc);
 				let hsn_code_length_check = await custom.check_sales_invoice_hsn_length(frm.doc);
@@ -48,7 +51,7 @@ erpnext.setup_einvoice_actions = (doctype) => {
 					const d = new frappe.ui.Dialog({
 						title: __("Cancel IRN"),
 						fields: _custom_cancel_fields,
-						primary_action: function() {
+						primary_action: function () {
 							const data = d.get_values();
 							frappe.call({
 								method: 'mapl_customization.customizations_for_mapl.einvoice.taxpro_einvoice.cancel_irn',
@@ -79,7 +82,7 @@ erpnext.setup_einvoice_actions = (doctype) => {
 						title: __('Generate E-Way Bill'),
 						size: "large",
 						fields: get_ewaybill_fields(frm),
-						primary_action: function() {
+						primary_action: function () {
 							const data = d.get_values();
 							frappe.call({
 								method: 'mapl_customization.customizations_for_mapl.einvoice.taxpro_einvoice.generate_eway_bill_by_irn',
@@ -109,7 +112,7 @@ erpnext.setup_einvoice_actions = (doctype) => {
 						title: __('Generate E-Way Bill'),
 						size: "large",
 						fields: get_ewaybill_fields(frm),
-						primary_action: function() {
+						primary_action: function () {
 							const data = d.get_values();
 							_custom_validate(data, true);
 							//return;
@@ -130,9 +133,9 @@ erpnext.setup_einvoice_actions = (doctype) => {
 					d.show();
 				};
 				//if (frappe.user_roles.includes("System Manager") || frappe.user_roles.includes("Administrator")) {
-					if (frm.doc.docstatus == 1) {
-						add_custom_button(__("Generate E-Way Bill - Taxpro"), action);
-					}
+				if (frm.doc.docstatus == 1) {
+					add_custom_button(__("Generate E-Way Bill - Taxpro"), action);
+				}
 				//}
 			}
 
@@ -141,7 +144,7 @@ erpnext.setup_einvoice_actions = (doctype) => {
 					const d = new frappe.ui.Dialog({
 						title: __("Cancel IRN"),
 						fields: _custom_cancel_fields,
-						primary_action: function() {
+						primary_action: function () {
 							const data = d.get_values();
 							frappe.call({
 								method: 'mapl_customization.customizations_for_mapl.einvoice.taxpro_einvoice.cancel_eway_bill',
@@ -251,7 +254,7 @@ const _custom_cancel_fields = [
 	}
 ];
 
-const _custom_validate = function(data, is_urp) {
+const _custom_validate = function (data, is_urp) {
 	if (is_urp) {
 		if (!data.distance) {
 			frappe.throw("Distance Required");

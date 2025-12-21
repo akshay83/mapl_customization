@@ -1,0 +1,75 @@
+<h2>Attendance Report</h2>
+{% if (filters.employee) { %}
+    <h3>{%= filters.employee_name %}</h3>
+{% } %}
+<h3>From Date: {%= dateutil.str_to_user(filters.from_date) %} To: {%= dateutil.str_to_user(filters.to_date) %}</h3>
+<table class="table-bordered" style="width:100%;">
+    <thead style="display:table-header-group">
+        {% if (filters.employee) { %}
+        <tr>
+            <th style="width: 10%">{%= __("Date") %}</th>
+            <th style="width: 8%">{%= __("In Time") %}</th>
+            <th style="width: 8%">{%= __("Out Time") %}</th>
+            <th style="width: 12%">{%= __("In Lat/Long") %}</th>
+            <th style="width: 10%">{%= __("In Place") %}</th>
+            <th style="width: 12%">{%= __("Out Lat/Long") %}</th>
+            <th style="width: 10%">{%= __("Out Place") %}</th>
+            {% if (filters.include_images==1) { %}
+                <th style="width: 15%">{%= __("In Image") %}</th>
+                <th style="width: 15%">{%= __("Out Image") %}</th>
+            {% } %}    
+        </tr>
+        {% } else { %}
+        <tr>
+            <th style="width: 8%">{%= __("Date") %}</th>
+            <th style="width: 6%">{%= __("Employee Code") %}</th>
+            <th style="width: 12%">{%= __("Employee Name") %}</th>
+            <th style="width: 6%">{%= __("In Time") %}</th>
+            <th style="width: 6%">{%= __("Out Time") %}</th>
+            <th style="width: 8%">{%= __("In Lat/Long") %}</th>
+            <th style="width: 10%">{%= __("In Place") %}</th>
+            <th style="width: 8%">{%= __("Out Lat/Long") %}</th>
+            <th style="width: 10%">{%= __("Out Place") %}</th>
+            {% if (filters.include_images==1) { %}
+                <th style="width: 15%">{%= __("In Image") %}</th>
+                <th style="width: 15%">{%= __("Out Image") %}</th>
+            {% } %}
+        </tr>
+        {% } %}
+    </thead>
+    <tbody>
+        {% for(let i=0; i<data.length; i++) { %}
+            {% if (filters.employee) { %}
+                <tr>
+                    <td>{%= dateutil.str_to_user(data[i]["attendance_date"]) %}</td>
+                    <td>{%= data[i]["in_time"] %}</td>
+                    <td>{%= data[i]["out_time"] %}</td>
+                    <td>{%= data[i]["in_lat_long"] %}</td>
+                    <td>{%= data[i]["in_place"] %}</td>
+                    <td>{%= data[i]["out_lat_long"] %}</td>
+                    <td>{%= data[i]["out_place"] %}</td>
+                    {% if (filters.include_images==1) { %}
+                        <td><img src="{%= data[i]['in_image'] %}" style="max-width: 100px;max-height: 100px;border-radius: 8px;border: 1px solid #ccc;margin:5px;"/></td>
+                        <td><img src="{%= data[i]['out_image'] %}" style="max-width: 100px;max-height: 100px;border-radius: 8px;border: 1px solid #ccc;margin:5px;"/></td>
+                    {% } %}
+                </tr>
+            {% } else { %}
+                <tr>
+                    <td>{%= dateutil.str_to_user(data[i]["attendance_date"]) %}</td>
+                    <td>{%= data[i]["employee_code"] %}</td>
+                    <td>{%= data[i]["employee_name"] %}</td>
+                    <td>{%= data[i]["in_time"] %}</td>
+                    <td>{%= data[i]["out_time"] %}</td>
+                    <td style="overflow-wrap: anywhere;">{%= data[i]["in_lat_long"] %}</td>
+                    <td>{%= data[i]["in_place"] %}</td>
+                    <td style="overflow-wrap: anywhere;">{%= data[i]["out_lat_long"] %}</td>
+                    <td>{%= data[i]["out_place"] %}</td>
+                    {% if (filters.include_images==1) { %}
+                        <td><img src="{%= data[i]['in_image'] %}" style="max-width: 100px;max-height: 100px;border-radius: 8px;border: 1px solid #ccc;margin:5px;"/></td>
+                        <td><img src="{%= data[i]['out_image'] %}" style="max-width: 100px;max-height: 100px;border-radius: 8px;border: 1px solid #ccc;margin:5px;"/></td>
+                    {% } %}
+                </tr>
+            {% } %}
+        {% } %}
+    </tbody>
+</table>

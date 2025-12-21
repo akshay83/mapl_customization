@@ -1,0 +1,25 @@
+{
+ "content": null,
+ "creation": "2025-12-20 16:50:47.415819",
+ "docstatus": 0,
+ "doctype": "Page",
+ "idx": 0,
+ "modified": "2025-12-20 16:50:47.415819",
+ "modified_by": "Administrator",
+ "module": "Customizations for MAPL",
+ "name": "attendance-location-",
+ "owner": "Administrator",
+ "page_name": "Attendance Location History",
+ "roles": [
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "HR Manager"
+  }
+ ],
+ "script": null,
+ "standard": "Yes",
+ "style": null,
+ "system_page": 0
+}

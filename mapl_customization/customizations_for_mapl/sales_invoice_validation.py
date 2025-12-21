@@ -15,6 +15,22 @@ def sales_invoice_validate(doc, method):
 	validate_serial_no(doc, method)
 	validate_gst_state(doc, method)
 	validate_customer_balance(doc, method)
+	validate_dms_for_hero(doc, method)
+	vehicle_validation(doc, method)
+	validate_sundry_parts(doc, method)
+
+def validate_sundry_parts(doc, method):
+	for item in doc.items:
+		if "sundry" in item.item_code.lower() and item.rate > 250:
+			frappe.throw("Select Correct Part Against Row No:{row}".format(item.idx))
+
+def validate_gst_added_later(doc, method):
+	einvoice_made = (doc.irn and doc.irn != '')
+	gst_category = ('Registered Regular', 'SEZ', 'Registered Composition')
+	gst_address_added_later = (doc.billing_address_gstin and doc.billing_address_gstin != '') and (doc.gst_category not in gst_category)
+	gst_registered_address_wrong = not doc.billing_address_gstin and (doc.gst_category in gst_category)
+	if ((gst_registered_address_wrong or gst_address_added_later) and not einvoice_made):
+		frappe.throw("It Seems GST Number was Added Later, Check Complete Document, Cannot Go Forward")
 
 def validate_address_link(doc, method):
 	def get_link_list(links):
@@ -39,10 +55,10 @@ def sales_on_submit_validation(doc, method):
 	if doc.get('ignore_validate_hook'):
 		return	
 	negative_stock_validation(doc, method, raise_error=True)
-	vehicle_validation(doc, method)
 	validate_hsn_code(doc, method, raise_error=True)
 	taxes_and_charges_validation(doc, method)
 	validate_grand_total(doc, method)
+	validate_gst_added_later(doc, method)
 
 def validate_serial_purchase(doc, method):
 	if (frappe.session.user == "Administrator" or "System Manager" in frappe.get_roles()) or doc.docstatus == 2:
@@ -188,7 +204,7 @@ def negative_stock_validation(doc, method, raise_error=False):
 
 def taxes_and_charges_validation(doc, method):
 	if not (frappe.session.user == "Administrator" or "System Manager" in frappe.get_roles()):
-		if doc.total_taxes_and_charges == 0:
+		if doc.total_taxes_and_charges == 0 and sum(abs(x.get('tax_amount',0)) for x in doc.taxes) == 0:
 			frappe.throw("No Taxes and Charges Applied, Please ensure if this is Ok!!")
 		else:
 			taxes_inclusive = False
@@ -248,3 +264,15 @@ def validate_stock_entry_serial_no(doc, method):
 			for s in snos:
 				if warehouse != frappe.db.get_value("Serial No", s, "warehouse"):
 					frappe.throw("""Item {0} with Serial No {1} Not in Warehouse {2}""".format(i.item_code, s, warehouse))
+
+def validate_dms_for_hero(doc, method):
+	if (not doc.dms_invoice_reference or doc.dms_invoice_reference.strip()=="") or not doc.dms_invoice_date:
+		if is_hero_invoice(doc):
+			frappe.throw("DMS Invoice & DMS Date Required for HERO Invoices")
+
+def is_hero_invoice(doc):
+	hero_brands = ("hero", "vida", "harley")
+	for i in doc.items:
+		if i.brand and i.brand.lower() in hero_brands:
+			return True
+	return False

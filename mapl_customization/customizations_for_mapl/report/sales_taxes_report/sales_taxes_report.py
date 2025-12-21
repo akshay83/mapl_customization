@@ -47,6 +47,7 @@ class TaxesReport():
                             item.item_tax_rate as `Item Tax Rate:Data:100`,
                             cast(left(right(item.item_tax_rate,5),4) as decimal(5,2)) as `Tax Rate Alt:Float:50`,
                             cast(mid(item.item_tax_rate,locate(':',item.item_tax_rate,locate('IGST',item.item_tax_rate))+1,5) as decimal(5,2)) as `Tax Rate:Float:50`,
+                            cast(mid(item.item_tax_rate,locate(':',item.item_tax_rate,locate('Cess',item.item_tax_rate))+1,5) as decimal(5,2)) as `Cess Rate:Float:50`,
                             sum(item.qty) as `Qty:Float:50`,
                             cast(avg(item.net_rate) as decimal(17,2)) as `Net Rate:Currency:100`,   
                             cast(sum(item.net_amount) as decimal(17,2)) as `Net Amount:Currency:100`,   
@@ -90,16 +91,18 @@ class TaxesReport():
                     "stock_columns": """,item_master.is_stock_item as `Maintain Stock:Int:1`,
                             item_master.item_group as `Master Group:Data:75`""" if self.include_stock_columns else ""
                     })
+        #--DEBUG--print (dump_query)
         return dump_query
     
     def get_query(self):
         dump_query = self.get_dump_query()
         query = """
                     select *,
-                        cast((`Net Amount:Currency:100`*`Tax Rate:Float:50`/100) as decimal(17,2)) as `Total Tax:Currency:100`,
+                        cast((`Net Amount:Currency:100`*`Tax Rate:Float:50`/100) as decimal(17,2)) as `Total GST Tax:Currency:100`,
                         if(flag,cast((`Net Amount:Currency:100`*`Tax Rate:Float:50`/100) as decimal(17,2)),0) as `IGST:Currency:100`,
                         if(flag,0,cast(((`Net Amount:Currency:100`*`Tax Rate:Float:50`/100)/2) as decimal(17,2))) as `SGST:Currency:100`,
-                        if(flag,0,cast(((`Net Amount:Currency:100`*`Tax Rate:Float:50`/100)/2) as decimal(17,2))) as `CGST:Currency:100`
+                        if(flag,0,cast(((`Net Amount:Currency:100`*`Tax Rate:Float:50`/100)/2) as decimal(17,2))) as `CGST:Currency:100`,
+                        if(`Cess Rate:Float:50`<>0,cast(((`Net Amount:Currency:100`*`Cess Rate:Float:50`/100)) as decimal(17,2)),0) as `Cess:Currency:100`
                     from (
                         {dump_query}
                     ) a
@@ -120,7 +123,7 @@ class TaxesReport():
                         `Shipping State:Data:125`,
                         `GST State Code:Int:50`,
                         sum(`Net Amount:Currency:100`) as `Taxable Amount:Currency:100`,
-                        sum(cast((`Net Amount:Currency:100`*`Tax Rate:Float:50`/100) as decimal(17,2))) as `Total Tax:Currency:100`,
+                        sum(cast((`Net Amount:Currency:100`*`Tax Rate:Float:50`/100) as decimal(17,2))) as `Total GST Tax:Currency:100`,
 
                         sum(if(flag=1 and `Tax Rate:Float:50`=5,cast((`Net Amount:Currency:100`*`Tax Rate:Float:50`/100) as decimal(17,2)),0)) as `IGST-5%:Currency:100`,
                         sum(if(flag=1 and `Tax Rate:Float:50`=12,cast((`Net Amount:Currency:100`*`Tax Rate:Float:50`/100) as decimal(17,2)),0)) as `IGST-12%:Currency:100`,
@@ -135,7 +138,9 @@ class TaxesReport():
                         sum(if(flag=0 and `Tax Rate:Float:50`=5,cast(((`Net Amount:Currency:100`*`Tax Rate:Float:50`/100)/2) as decimal(17,2)),0)) as `CGST-2.5%:Currency:100`,
                         sum(if(flag=0 and `Tax Rate:Float:50`=12,cast(((`Net Amount:Currency:100`*`Tax Rate:Float:50`/100)/2) as decimal(17,2)),0)) as `CGST-6%:Currency:100`,
                         sum(if(flag=0 and `Tax Rate:Float:50`=18,cast(((`Net Amount:Currency:100`*`Tax Rate:Float:50`/100)/2) as decimal(17,2)),0)) as `CGST-9%:Currency:100`,
-                        sum(if(flag=0 and `Tax Rate:Float:50`=28,cast(((`Net Amount:Currency:100`*`Tax Rate:Float:50`/100)/2) as decimal(17,2)),0)) as `CGST-14%:Currency:100`
+                        sum(if(flag=0 and `Tax Rate:Float:50`=28,cast(((`Net Amount:Currency:100`*`Tax Rate:Float:50`/100)/2) as decimal(17,2)),0)) as `CGST-14%:Currency:100`,
+
+                        sum(if(`Cess Rate:Float:50`<>0,cast(((`Net Amount:Currency:100`*`Cess Rate:Float:50`/100)) as decimal(17,2)),0)) as `Cess:Currency:100`
                     from ( 
                         {dump_query}
                     ) a 
@@ -151,7 +156,7 @@ class TaxesReport():
                 "partytype": self.party_type
             })
         
-        print (query)
+        #--DEBUG--print (query)
         return query
     
     def generate_raw_data(self):        
@@ -170,7 +175,9 @@ class TaxesReport():
     def get_document_specific_columns(self):
         if self.doctype == "Purchase":
                 return "doc.bill_no as `Bill No:Data:100`, doc.bill_date as `Bill Date:Date:100`, doc.supplier_name as `Supplier Name:Data:125`"
-        return "doc.customer_name as `Customer Name:Data:125`, doc.special_invoice as `Special Invoice:Data:100`, doc.place_of_supply as `Place of Supply:Data:75`"
+        return """doc.customer_name as `Customer Name:Data:125`, doc.special_invoice as `Special Invoice:Data:100`, doc.place_of_supply as `Place of Supply:Data:75`, 
+                    doc.dms_invoice_reference as `DMS Invoice No:Data:75`, doc.dms_invoice_date as `DMS Invoice Date:Date:100`, doc.irn as `IRN:Data:125`,
+                    if(item.brand in ('Hero','Vida','Harley'),1,0) as `Is Hero Invoice:Int:25`"""
     
     def do_post_fetch_calculations(self):
         for row in self.raw_data:
@@ -219,8 +226,8 @@ class TaxesReport():
                 final_state = "ERROR"
 
             if (final_state == "SEZ Supply"):
-                row["Total Tax:Currency:100"] = row["SGST:Currency:100"] = row["IGST:Currency:100"] = row["CGST:Currency:100"] = 0
-            row["Invoice Total:Currency:125"] = row["Net Amount:Currency:100"] + row["SGST:Currency:100"] + row["IGST:Currency:100"] + row["CGST:Currency:100"]
+                row["Total GST Tax:Currency:100"] = row["SGST:Currency:100"] = row["IGST:Currency:100"] = row["CGST:Currency:100"] = 0
+            row["Invoice Total:Currency:125"] = row["Net Amount:Currency:100"] + row["SGST:Currency:100"] + row["IGST:Currency:100"] + row["CGST:Currency:100"] + row["Cess:Currency:100"]
 
             row["gstin_check"]=gstin_check
             #--DEBUG--row["state_check"]=state_check
@@ -235,6 +242,10 @@ class TaxesReport():
             row["State Code:Data:50"]=final_state_code
             row["Check GSTIN:Data:75"]="Error" if billing_gstin!=shipping_gstin else "OK"
 
+            row["Reporting B2B Invoice No:Data:75"] = row["Reporting Name:Data:100"]
+            if cint(row["Is Hero Invoice:Int:25"]) and row["IRN:Data:125"]:
+                row["Reporting B2B Invoice No:Data:75"] = row["DMS Invoice No:Data:75"]
+                
     def get_data(self):
         self.generate_raw_data()
         if self.doctype == "Sales":

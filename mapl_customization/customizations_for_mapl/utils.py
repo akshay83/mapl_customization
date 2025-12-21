@@ -340,4 +340,4 @@ def get_non_stock_sales_purchase_count(from_date, to_date):
 			query = query + " and is_cancelled=0"
 	except Exception:
 		pass
-	return frappe.db.sql(query.format(getdate(from_date),getdate(to_date)), as_list=1)	
+	return frappe.db.sql(query.format(getdate(from_date),getdate(to_date)), as_list=1)

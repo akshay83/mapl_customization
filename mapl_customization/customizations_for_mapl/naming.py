@@ -8,8 +8,6 @@ def set_auto_name(doc, method):
 
 	dt_meta = frappe.get_meta(doc.doctype)
 
-	location = "VN"
-
 	docs = 	{
 		"Sales Invoice" : "INV",
 		"Purchase Invoice" : "PINV",
@@ -28,10 +26,7 @@ def set_auto_name(doc, method):
 		if doc.doctype == "Journal Entry" and 'FIN' in doc.naming_series:
 			return
 
-		user = frappe.session.user		
-		user_group = frappe.db.get_value("User", user, "user_group")
-		if user_group:
-			location = frappe.db.get_value("User Group", user_group, "abbreviation")
+		location = get_location_abbr()
 		#print "DEBUG:"+location
 
 		abbr = frappe.db.get_value("Company", doc.company, "abbr")
@@ -75,6 +70,13 @@ def set_auto_name(doc, method):
 
 	#print "DEBUG:-------------------------------------------------------------"
 
+def get_location_abbr():
+	user = frappe.session.user		
+	user_group = frappe.db.get_value("User", user, "user_group")
+	if user_group:
+		return frappe.db.get_value("User Group", user_group, "abbreviation")
+	return "VN" #Default Location
+
 def check_series(doc, method):
 	if doc.get('ignore_validate_hook'):
 		return
@@ -83,6 +85,7 @@ def check_series(doc, method):
 			"Stock Entry", "Journal Entry", "Sales Order", "Purchase Receipt", "Quotation"):
 		return
 
+	location = get_location_abbr()
 	existing = None
 	if not doc.is_new():
 		existing = frappe.get_doc(doc.doctype, doc.name)
@@ -106,7 +109,7 @@ def check_series(doc, method):
 			return
 
 	if not existing:
-		check_new_document(doc, method, fy)
+		check_new_document(doc, method, location, fy)
 	elif (getdate(existing.posting_date) == getdate(doc.posting_date)):
 		return
 	elif abs((getdate(existing.posting_date)-getdate(doc.posting_date)).days)!=1:
@@ -117,7 +120,7 @@ def check_series(doc, method):
 
 def check_existing_document(doc, method, existing):
 	existing_name_int = int(existing.name[-6:])
-
+	location = existing.name.split("/")[1]
 	query = """
 			select
 			  min(if(posting_date=%(small_date)s,cast(right(name, 6) as Int),NULL)) as minimum_name_small_date,
@@ -129,14 +132,15 @@ def check_existing_document(doc, method, existing):
 			where
 			  docstatus < 2
 			  and letter_head = %(letter)s
+			  and name like %(abbr)s
 			  and posting_date between %(small_date)s and %(large_date)s 
 			""".format(doc.doctype)
 
 	last_series = None
 	if (getdate(existing.posting_date)>getdate(doc.posting_date)):
-		last_series = frappe.db.sql(query, {'letter': doc.letter_head, 'small_date':doc.posting_date, 'large_date':existing.posting_date}, as_dict=1)
+		last_series = frappe.db.sql(query, {'letter': doc.letter_head, 'small_date':doc.posting_date, 'large_date':existing.posting_date, 'abbr':"%%%s%%" % location}, as_dict=1)
 	elif (getdate(existing.posting_date)<getdate(doc.posting_date)):
-		last_series = frappe.db.sql(query, {'letter': doc.letter_head, 'large_date':doc.posting_date, 'small_date':existing.posting_date}, as_dict=1)
+		last_series = frappe.db.sql(query, {'letter': doc.letter_head, 'large_date':doc.posting_date, 'small_date':existing.posting_date, 'abbr':"%%%s%%" % location}, as_dict=1)
 
 	#Going From 19th to 20th
 	if (getdate(existing.posting_date)<getdate(doc.posting_date)):
@@ -148,7 +152,7 @@ def check_existing_document(doc, method, existing):
 		if (last_series[0].minimum_name_large_date != existing_name_int):
 			frappe.throw("""Date Change Not Allowed""")
 
-def check_new_document(doc, method, fy):
+def check_new_document(doc, method, location, fy):
 	query = """
 			select
 			  posting_date,
@@ -159,13 +163,14 @@ def check_new_document(doc, method, fy):
 			  docstatus < 2
 			  and posting_date between %(start_date)s and %(end_date)s
 			  and letter_head = %(letter)s
+			  and name like %(location)s 
 			order by
 			  posting_date desc,
 			  name desc
 			limit 1
 			""".format(doc.doctype)
 
-	last_series = frappe.db.sql(query, {'start_date':fy[1], 'end_date': fy[2], 'letter': doc.letter_head}, as_dict=1)
+	last_series = frappe.db.sql(query, {'start_date':fy[1], 'end_date': fy[2], 'letter': doc.letter_head, 'location':"%%%s%%" % location}, as_dict=1)
 
 	#--DEBUG--print ("DEBUG:"+doc_date, last_series[0].posting_date)
 	#--DEBUG--fy = get_fiscal_year(date=doc_date)
@@ -180,12 +185,13 @@ def check_new_document(doc, method, fy):
 			#--DEBUG--print ("DEBUG:OK")
 
 def check_letter_head(doc, method):
+	geeta_bhawan_abbr = ("GB","HR")
 	if not doc.get("letter_head") and doc.doctype not in ["Sales Invoice", "Payment Entry", "Delivery Note"]:
 		return
 	if doc.doctype not in ["Sales Invoice", "Payment Entry", "Delivery Note"]:
 		return
 	if (doc.letter_head == 'Vijay Nagar' and 'VN' not in doc.name) or \
-			(doc.letter_head == 'Geeta Bhawan' and 'GB' not in doc.name) or \
+			(doc.letter_head == 'Geeta Bhawan' and not any(x in doc.name for x in geeta_bhawan_abbr)) or \
 			(doc.letter_head == 'Ranjeet Hanuman' and 'RH' not in doc.name) or \
 			(doc.letter_head == 'Dewas Naka' and 'DN' not in doc.name) or \
 			(doc.letter_head == 'Kanadia Road' and 'KR' not in doc.name):

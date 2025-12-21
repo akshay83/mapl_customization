@@ -40,6 +40,7 @@ custom.customer_quick_entry = function (doc) {
 			{ fieldtype: "Data", fieldname: "billing_fax", label: __("Billing Fax"), reqd: 0 },
 			{ fieldtype: "Data", fieldname: "billing_email_id", label: __("Billing Email ID"), reqd: 0 },
 			{ fieldtype: "Data", fieldname: "billing_gst_id", label: __("GST ID"), reqd: 0 },
+			{ fieldtype: "Button", fieldname: "fetch_gst_details", label: __("Get GST Details"), reqd: 0 },
 			{ fieldtype: "Select", fieldname: "billing_gst_state", label: __("GST State"), reqd: 0, options: " \nAndhra Pradesh\nArunachal Pradesh\nAssam\nBihar\nChandigarh\nChhattisgarh\nDadra and Nagar Haveli\nDaman and Diu\nDelhi\nGoa\nGujarat\nHaryana\nHimachal Pradesh\nJammu and Kashmir\nJharkhand\nKarnataka\nKerala\nLakshadweep Islands\nMadhya Pradesh\nMaharashtra\nManipur\nMeghalaya\nMizoram\nNagaland\nOdisha\nPondicherry\nPunjab\nRajasthan\nSikkim\nTamil Nadu\nTelangana\nTripura\nUttar Pradesh\nUttarakhand\nWest Bengal", default: "Madhya Pradesh" },
 			{ fieldtype: "Column Break", fieldname: "column_break_1" },
 			{ fieldtype: "Data", fieldname: "shipping_address_1", label: __("Shipping Address 1"), reqd: 0 },
@@ -80,6 +81,25 @@ custom.customer_quick_entry = function (doc) {
 	});
 
 
+	fd.fetch_gst_details.$input.on("click", async function (e) {
+		if (dialog.get_value("billing_gst_id") === undefined || dialog.get_value("primary_contact_no") === undefined 
+				|| dialog.get_value("primary_contact_no") === "" || dialog.get_value("billing_gst_id") == "") {
+			frappe.msgprint(__('Please set Values for Mobile No & Billing GST-ID'));
+			return;
+		}
+		dialog.$wrapper.find('.custom_freeze_class_small').show();
+		await custom.setGSTINDetails(dialog.get_value("billing_gst_id"), dialog, {
+					"address_line_1":"billing_address_1",
+					"address_line_2":"billing_address_2",
+					"pincode":"billing_pin",
+					"city":"billing_city",
+					"customer_name": "customer_name",
+					"state": "billing_state",
+					"gst_state":"billing_gst_state"
+		});
+		dialog.$wrapper.find('.custom_freeze_class_small').hide();
+	});
+
 	dialog.set_primary_action(__("Save"), async function () {
 		args = dialog.get_values();
 		if (!args) return;
@@ -112,6 +132,8 @@ custom.customer_quick_entry = function (doc) {
 	dialog.show();
 	dialog.$wrapper.find('.modal-dialog').css("width", "1050px");
 	dialog.$wrapper.find('.modal-dialog').css("max-width", "initial");
+	dialog.$wrapper.find('.frappe-control[data-fieldname=fetch_gst_details]').find('.form-group').append('<div class="custom_freeze_class_small" style="height:20px;margin-left:100px;display:none;"></div><div style="clear:both;"></div>');
+	dialog.$wrapper.find('.frappe-control[data-fieldname=fetch_gst_details]').find('.control-input-wrapper').css({'float':'left'});
 	//$("div").find(".modal-dialog").css({"line-height":".5"});
 	//$("div[class*='modal-dialog']").find(".control-label").css({"font-size":"12px","font-weight":"500","margin-bottom":"1px"});
 	//$("div").find(".modal-dialog").attr("style","font-size: 8px !important");
@@ -141,6 +163,55 @@ custom.customer_quick_entry.set_default_values = function (doc, docfields) {
 		} else if (f.fieldtype == "Select" && f.options && typeof f.options === 'string'
 			&& !in_list(["[Select]", "Loading..."], f.options)) {
 				doc.set_value(f.fieldname, f.options.split("\n")[0]);
+		}
+	}
+}
+
+custom.trimCharacters = function(str, charsToRemove) {
+		const escapedChars = charsToRemove.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+		const regex = new RegExp(`^[${escapedChars}]+|[${escapedChars}]+$`, 'g');
+		return str.replace(regex, '');
+  }
+
+custom.setGSTINDetails = async function(gstin, field_handle, field_map) {
+	let res = await frappe.call({
+		method: "mapl_customization.customizations_for_mapl.einvoice.taxpro_einvoice.get_gstin_details",
+		args: { "gstin": gstin }
+	});
+	if (res.message) {
+		let json_message = JSON.parse(res.message);
+		if (json_message.Status == 1) {
+			let gstid_data = JSON.parse(json_message.Data);
+			console.log(gstid_data);
+			if (gstid_data.Status.toLowerCase() != 'act') {
+				frappe.msgprint(__('Inactive GST-ID'));
+				return;
+			}
+			if (gstid_data.City === undefined) {
+				frappe.msgprint(__('Could not get City Name, Enter Manually'));
+			}
+			//--DEBUG--let address_string = gstid_data.AddrBnm + " " + gstid_data.AddrBno + " " + gstid_data.AddrFlno + " " + gstid_data.AddrSt + " " + gstid_data.AddrLoc + " " + gstid_data.AddrPncd;
+			//--DEBUG--console.log(address_string);
+			if (gstid_data.AddrLoc.toLowerCase() == gstid_data.City.toLowerCase())
+				gstid_data.AddrLoc = ""
+			let billing_address1 = custom.trimCharacters(gstid_data.AddrBnm+","+gstid_data.AddrBno+","+gstid_data.AddrFlno+","+gstid_data.AddrLoc,', ');
+			field_handle.get_field(field_map.address_line_1).set_value(billing_address1);
+
+			if (gstid_data.City == gstid_data.Block) 
+				gstid_data.Block = "";
+			let billing_address2 = custom.trimCharacters(gstid_data.AddrSt+","+gstid_data.Block,', ');
+			field_handle.get_field(field_map.address_line_2).set_value(billing_address2);
+
+			field_handle.get_field(field_map.pincode).set_value(gstid_data.AddrPncd);
+			field_handle.get_field(field_map.city).set_value(gstid_data.City);
+			if (field_map.customer_name !== undefined)
+				field_handle.get_field(field_map.customer_name).set_value(gstid_data.LegalName);
+			if (field_map.state !== undefined)
+				field_handle.get_field(field_map.state).set_value(gstid_data.State);
+			if (field_map.gst_state !== undefined)
+				field_handle.get_field(field_map.gst_state).set_value(gstid_data.State);
+		} else {
+			frappe.msgprint(__('No Details Found'));
 		}
 	}
 }

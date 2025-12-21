@@ -51,6 +51,10 @@
         "Category": "ELECTRONICS",
         "Sub Category": "LED Television"
     },
+    "COMMERCIAL AIR CONDITIONER": {
+        "Category": "ELECTRONICS",
+        "Sub Category": "Air Conditioner"
+    },
     "Convection": {
         "Category": "ELECTRONICS",
         "Sub Category": "Microwave"
@@ -210,6 +214,10 @@
     "Two Wheelers": {
         "Category": "TWO WHEELERS",
         "Sub Category": "Two Wheelers"
+    },
+    "Three Wheelers": {
+        "Category": "THREE WHEELERS",
+        "Sub Category": "Three Wheelers"
     },
     "Ups": {
         "Category": "UPS",

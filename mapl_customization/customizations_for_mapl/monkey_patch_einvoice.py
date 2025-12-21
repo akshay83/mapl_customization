@@ -1,6 +1,7 @@
 import frappe
 from frappe import _
 from frappe.utils.data import getdate, format_date, flt
+from .sales_invoice_validation import is_hero_invoice
 from erpnext.regional.india.e_invoice.utils import validate_address_fields, sanitize_for_json, get_gst_accounts, update_other_charges, validate_eligibility, read_json, update_item_taxes
 
 def get_doc_details(invoice):
@@ -12,6 +13,11 @@ def get_doc_details(invoice):
     #monkey-here
     invoice_name = invoice.reporting_name
     invoice_date = format_date(invoice.posting_date, 'dd/mm/yyyy')
+
+    #Following Module was Added in April 2025, This is an Optional Patch
+    if is_hero_invoice(invoice):
+        invoice_name = invoice.dms_invoice_reference
+        invoice_date = format_date(invoice.dms_invoice_date, 'dd/mm/yyyy')
 
     return frappe._dict(dict(
         invoice_type=invoice_type,
@@ -54,6 +60,10 @@ def get_return_doc_reference(invoice):
     invoice_date = frappe.db.get_value("Sales Invoice", invoice.return_against, "posting_date")
     #monkey-here
     reporting_name = frappe.db.get_value("Sales Invoice", invoice.return_against, "reporting_name")
+    #Following Module was Added in April 2025, This is an Optional Patch
+    if is_hero_invoice(invoice):
+        reporting_name = frappe.db.get_value("Sales Invoice", invoice.return_against, "dms_invoice_reference")
+        invoice_date = frappe.db.get_value("Sales Invoice", invoice.return_against, "dms_invoice_date")
     return frappe._dict(
         dict(invoice_name=reporting_name, invoice_date=format_date(invoice_date, "dd/mm/yyyy"))
     )

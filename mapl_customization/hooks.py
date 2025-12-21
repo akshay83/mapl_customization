@@ -246,7 +246,18 @@ cf_fields = [
 		"Payroll Settings-bonus_calculation_percentage",
 		"Payroll Settings-enable_bonus_calculation",
 		"Fiscal Year-column_break_5",
-		"Fiscal Year-lut_number"		
+		"Fiscal Year-lut_number",
+		"Sales Invoice-dms_invoice_date",
+		"Print Settings-print_company_invoice_no",
+		"Employee-face_descriptor",
+		"Employee-registration_code",
+		"Employee-generate_code",
+		"Attendance-custom_html",
+		"Attendance-image_data",
+		"Attendance-latitude",
+		"Attendance-longitude",
+		"Employee-face_detector_image",
+		"Employee-custom_html"
 ]
 
 print_fs = [
@@ -330,7 +341,11 @@ fixtures = [	{
 		},
 		"Delayed Payment Reason",
 		"Letter Head", 
-		"Custom SQL Queries"
+		"Custom SQL Queries",
+		{
+			"dt": "Web Page",
+			"filters": [["title", "in", ["Capture Employee Photo", "Daily Attendance"]]]
+		}
 ]
 
 doc_events = {
@@ -399,15 +414,21 @@ after_install = "mapl_customization.customizations_for_mapl.install.after_instal
 app_include_css = "/assets/mapl_customization/css/custom_css.css"
 app_include_js = ["/assets/mapl_customization/js/core.js",
 		"/assets/mapl_customization/js/quick_customer.js",
-		"/assets/mapl_customization/js/insert_serials_dialog.js"
+		"/assets/mapl_customization/js/insert_serials_dialog.js"#,
+		#"/assets/mapl_customization/js/face-api.min.js"
 		]
 
 override_doctype_class = {
+	"Sales Invoice": "mapl_customization.customizations_for_mapl.sales_invoice_hooks.CustomSalesInvoice",
     "Payment Entry": "mapl_customization.customizations_for_mapl.payment_entry_validation.CustomPaymentEntry",
-	"Lead": "mapl_customization.customizations_for_mapl.lead_hooks.CustomLead"
+	"Lead": "mapl_customization.customizations_for_mapl.lead_hooks.CustomLead",
+	"Attendance": "mapl_customization.customizations_for_mapl.employee_gps_attendance.CustomAttendance"
 }
 
-doctype_list_js = {"Customer" : "/public/js/customer_list.js"}
+doctype_list_js = {
+	"Customer" : "/public/js/customer_list.js",
+	"Employee" : "/public/js/employee_list.js"
+}
 
 #version-13 branch supports this
 jenv = {
@@ -416,7 +437,8 @@ jenv = {
 		"table_exists:mapl_customization.customizations_for_mapl.jinja.table_exists",
 		"doc_exists:mapl_customization.customizations_for_mapl.jinja.doc_exists",
 		"get_eway_bill_details:mapl_customization.customizations_for_mapl.jinja.get_eway_bill_details",
-		"get_fiscal_year:mapl_customization.customizations_for_mapl.jinja.get_fiscal_year"
+		"get_fiscal_year:mapl_customization.customizations_for_mapl.jinja.get_fiscal_year",
+		"is_hero_invoice:mapl_customization.customizations_for_mapl.sales_invoice_validation.is_hero_invoice"
 		],
 	"filters": [
 		"date_to_code:mapl_customization.customizations_for_mapl.jinja.date_to_code",
@@ -431,7 +453,8 @@ jinja = {
 				"mapl_customization.customizations_for_mapl.jinja.table_exists",
 				"mapl_customization.customizations_for_mapl.jinja.doc_exists",
 				"mapl_customization.customizations_for_mapl.jinja.get_eway_bill_details",
-				"mapl_customization.customizations_for_mapl.jinja.get_fiscal_year"
+				"mapl_customization.customizations_for_mapl.jinja.get_fiscal_year",
+				"mapl_customization.customizations_for_mapl.sales_invoice_validation.is_hero_invoice"
 			],
 	"filters": [
 		"mapl_customization.customizations_for_mapl.jinja.date_to_code",
@@ -456,7 +479,9 @@ doctype_js = {
 		"Accounts Settings": "/public/js/scripts/accounts_settings.js",
 		"Loan": "/public/js/scripts/loan.js",
 		"POS Invoice": "/public/js/scripts/pos_invoice.js",
-		"POS Closing Entry": "/public/js/scripts/pos_closing_entry.js"
+		"POS Closing Entry": "/public/js/scripts/pos_closing_entry.js",
+		"Employee": "/public/js/scripts/employee.js",
+		"Attendance": "/public/js/scripts/attendance.js"
 }
 
 standard_queries = {
