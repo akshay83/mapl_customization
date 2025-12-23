@@ -344,7 +344,7 @@ fixtures = [	{
 		"Custom SQL Queries",
 		{
 			"dt": "Web Page",
-			"filters": [["title", "in", ["Capture Employee Photo", "Daily Attendance"]]]
+			"filters": [["title", "in", ["Capture Employee Photo", "Daily Attendance", "Attendance"]]]
 		}
 ]
 
