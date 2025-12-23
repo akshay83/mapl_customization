@@ -4,7 +4,21 @@ frappe.pages['attendance-location'].on_page_load = function(wrapper) {
 			title: 'Track Employee Location',
 			single_column: true
 		});
-	
+
+		let geo_dialog = new frappe.ui.Dialog({
+			title: 'Select Location',
+			fields: [
+				{
+					fieldtype: 'Geolocation',
+					fieldname: 'map'
+				}
+			],
+			on_page_show: function() {
+				$(".modal.fade.show").hide();		
+				$(".modal-backdrop.fade.show").hide();
+				$(".page-form.row").css({"z-index":"20","position":"relative"});
+			}
+		});		
 		// Add fields
 		let from_date_field = page.add_field({
 			"fieldname":"from_date",
@@ -28,18 +42,7 @@ frappe.pages['attendance-location'].on_page_load = function(wrapper) {
 			label: 'Employee Code',
 			fieldtype: 'Link',
 			fieldname: 'employee_code',
-			options: "Employee",
-			onchange: function() {
-				let employee = employee_code_field.get_value();
-				if(!employee) {
-					page.fields_dict.employee_name.set_value('');
-					return;
-				}
-				frappe.db.get_value("Employee", employee, "employee_name", function(value) {					
-					page.fields_dict.employee_name.set_value(value["employee_name"]);
-					showCoordinates(employee, from_date_field.get_value(), to_date_field.get_value(), geo_dialog.fields_dict.map);
-				});
-			}
+			options: "Employee"
 		});
 	
 		let employee_name_field = page.add_field({
@@ -49,6 +52,11 @@ frappe.pages['attendance-location'].on_page_load = function(wrapper) {
 			read_only: 1
 		});	
 
+		page.fields_dict.employee_code.df.onchange = function () { get_location_data(page, geo_dialog); }
+		page.fields_dict.from_date.df.onchange = function () { get_location_data(page, geo_dialog); }
+		page.fields_dict.to_date.df.onchange = function () { get_location_data(page, geo_dialog); }
+		//--DEBUG--console.log(page);
+
 		let map_container = $('<div></div>').css({
 			width: '100%',
 			height: '400px',
@@ -56,21 +64,6 @@ frappe.pages['attendance-location'].on_page_load = function(wrapper) {
 			position: 'relative', // ensure normal stacking
 			zIndex: 10
 		}).appendTo(page.body);
-	
-		let geo_dialog = new frappe.ui.Dialog({
-			title: 'Select Location',
-			fields: [
-				{
-					fieldtype: 'Geolocation',
-					fieldname: 'map'
-				}
-			],
-			on_page_show: function() {
-				$(".modal.fade.show").hide();		
-				$(".modal-backdrop.fade.show").hide();
-				$(".page-form.row").css({"z-index":"20","position":"relative"});
-			}
-		});
 	
 		// Attach dialog wrapper to the container on the page
 		$(geo_dialog.wrapper).appendTo(map_container);
@@ -106,9 +99,11 @@ function showCoordinates(employee, from_date, to_date, geo_map) {
 			  to_date: to_date
 			},
 			callback: (r) => {
-				//--DEBUG--console.log(r);				
+				//-DEBUG--console.log(r);				
 				if (r.message && r.message.length) {
 					build_geojson(r.message, geo_map);
+				} else {
+					clear_map(geo_map);
 				}
 			},
 			error: (err) => {
@@ -118,13 +113,16 @@ function showCoordinates(employee, from_date, to_date, geo_map) {
 }
 
 let geojsonLayer;  // global or page-level variable
-function build_geojson(message, geo_map_control) {
-    let map = geo_map_control.map;
-
+function clear_map(geo_map_control) {
     // Remove existing layer if any
     if (geojsonLayer) {
-        map.removeLayer(geojsonLayer);
+        geo_map_control.map.removeLayer(geojsonLayer);
     }
+}
+
+function build_geojson(message, geo_map_control) {
+    let map = geo_map_control.map;
+	clear_map(geo_map_control);
 
     let features = message.map(d => ({
         type: "Feature",
@@ -173,6 +171,20 @@ function build_geojson(message, geo_map_control) {
         map.fitBounds(bounds, { padding: [50, 50] });
     }
 }
+
+function get_location_data(page, geo_dialog) {
+	//-DEBUG--console.log(page);
+	let employee = page.fields_dict.employee_code.get_value();
+	if(!employee) {
+		page.fields_dict.employee_name.set_value('');
+		return;
+	}
+	frappe.db.get_value("Employee", employee, "employee_name", function(value) {					
+		page.fields_dict.employee_name.set_value(value["employee_name"]);
+		showCoordinates(employee, page.fields_dict.from_date.get_value(), page.fields_dict.to_date.get_value(), geo_dialog.fields_dict.map);
+	});
+}	
+
 
 /*
 	  const geojson = {

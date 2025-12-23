@@ -4,6 +4,7 @@ from frappe.utils.file_manager import save_file
 from frappe.utils import now_datetime
 from erpnext.hr.doctype.attendance.attendance import Attendance
 from frappe.utils import flt
+from datetime import timedelta
 
 class CustomAttendance(Attendance):
     def validate_duplicate_record(self):
@@ -103,6 +104,18 @@ def get_employee_descriptors():
 
 @frappe.whitelist(allow_guest=True)
 def post_attendance(employee, latitude, longitude, image_data=None):
+    last = frappe.db.get_list(
+        "Attendance",
+        filters = {"employee":employee},
+        order_by = "creation desc",
+        pluck = "creation",
+        page_length=1,
+        ignore_permissions=True
+    )
+
+    if last and now_datetime() - last[0] < timedelta(minutes=15):        
+        frappe.throw("Attendance already marked in the last 15 minutes.")    
+
     """Save daily attendance with photo & GPS"""
     # Create Attendance record
     attendance = frappe.new_doc("Attendance")
