@@ -1,5 +1,6 @@
 import frappe
 import base64
+import math
 from frappe.utils.file_manager import save_file
 from frappe.utils import now_datetime
 from erpnext.hr.doctype.attendance.attendance import Attendance
@@ -9,6 +10,70 @@ from datetime import timedelta
 class CustomAttendance(Attendance):
     def validate_duplicate_record(self):
         pass
+
+# Haversine formula to calculate distance in meters
+def haversine(lat1, lon1, lat2, lon2):
+    R = 6371000  # radius of Earth in meters
+    phi1 = math.radians(flt(lat1))
+    phi2 = math.radians(flt(lat2))
+    delta_phi = math.radians(flt(lat2) - flt(lat1))
+    delta_lambda = math.radians(flt(lon2) - flt(lon1))
+
+    a = math.sin(delta_phi/2)**2 + \
+        math.cos(phi1) * math.cos(phi2) * math.sin(delta_lambda/2)**2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+
+    return R * c  # distance in meters
+
+def get_nearby_places(emp_lat, emp_lon):
+    nearby = []
+    branches = get_branches()
+
+    for branch in branches:
+        distance = haversine(
+            emp_lat,
+            emp_lon,
+            branch["latitude"],
+            branch["longitude"]
+        )
+
+        if distance <= branch["radius_to_measure"]:
+            nearby.append({
+                "name": branch["branch"],
+                "distance_m": distance,
+                "allowed_radius": branch["radius_to_measure"]
+            })
+
+    # Sort by nearest branch
+    nearby.sort(key=lambda x: x["distance_m"])
+    return nearby
+
+@frappe.whitelist()
+def get_branches():
+    """
+    Fetch all branches with geo configuration
+    """
+    return frappe.db.sql("""
+        SELECT
+            name AS branch,
+            latitude,
+            longitude,
+            radius_to_measure
+        FROM `tabBranch`
+        WHERE (latitude IS NOT NULL AND latitude<>0)
+          AND (longitude IS NOT NULL AND longitude<>0)
+          AND (radius_to_measure IS NOT NULL AND radius_to_measure<>0)
+    """, as_dict=True)
+
+@frappe.whitelist()
+def get_employee_coordinates_with_location(employee_code, from_date, to_date):
+    from mapl_customization.customizations_for_mapl.report.mobile_attendance_report.mobile_attendance_report import execute
+    return execute(filters={
+        "from_date":from_date,
+        "to_date":to_date,
+        "include_images":False,
+        "employee":employee_code
+    })[1]
 
 @frappe.whitelist()
 def get_employee_coordinates(employee_code, from_date=None, to_date=None):

@@ -66,117 +66,133 @@ def execute(filters=None):
 
 def get_query(filters):
 	query = """
-				WITH
-				geo_places AS (
-					SELECT 'Geeta Bhawan' AS place_name, 22.719435859359304 AS lat, 75.88435020091237 AS lon
-					UNION ALL SELECT 'Vijay Nagar', 22.748301766764797, 75.89500993562747
-					UNION ALL SELECT 'Loha Mandi', 22.77281976831769, 75.89688822794902
-					UNION ALL SELECT 'Kanadia Road', 22.724539307835183, 75.92008565663858
-				),
-				first_in AS (
-					SELECT *
-					FROM (
-						SELECT attn.*,
-							ROW_NUMBER() OVER (PARTITION BY attn.employee, attn.attendance_date
-												ORDER BY attn.in_time ASC) AS rn_in
-						FROM `tabAttendance` attn
-						WHERE attn.docstatus = 1
-						AND attn.attendance_date BETWEEN '{from_date}' AND '{to_date}'
-						{particular_employee}
-					) t
-					WHERE rn_in = 1
-				),
-				last_out AS (
-					SELECT *
-					FROM (
-						SELECT attn.*,
-							ROW_NUMBER() OVER (PARTITION BY attn.employee, attn.attendance_date
-												ORDER BY attn.out_time DESC) AS rn_out
-						FROM `tabAttendance` attn
-						WHERE attn.docstatus = 1
-						AND attn.attendance_date BETWEEN '{from_date}' AND '{to_date}'
-						{particular_employee}
-					) t
-					WHERE rn_out = 1
-				),
-				attendance_daily AS (
-					SELECT
-						emp.name AS employee,
-						emp.employee_name,
-						fi.attendance_date,
-						-- IN place
-						(SELECT gp.place_name
-						FROM geo_places gp
-						WHERE 6371000*2*ASIN(
-								SQRT(
-									POWER(SIN(RADIANS(gp.lat - fi.latitude)/2),2) +
-									COS(RADIANS(fi.latitude))*COS(RADIANS(gp.lat))*
-									POWER(SIN(RADIANS(gp.lon - fi.longitude)/2),2)
-								)
-						) <= 75
-						ORDER BY 6371000*2*ASIN(
-							SQRT(
-								POWER(SIN(RADIANS(gp.lat - fi.latitude)/2),2) +
-								COS(RADIANS(fi.latitude))*COS(RADIANS(gp.lat))*
-								POWER(SIN(RADIANS(gp.lon - fi.longitude)/2),2)
-							)
-						)
-						LIMIT 1
-						) AS in_place_name,
-						-- OUT place
-						(SELECT gp.place_name
-						FROM geo_places gp
-						WHERE 6371000*2*ASIN(
-								SQRT(
-									POWER(SIN(RADIANS(gp.lat - lo.latitude)/2),2) +
-									COS(RADIANS(lo.latitude))*COS(RADIANS(gp.lat))*
-									POWER(SIN(RADIANS(gp.lon - lo.longitude)/2),2)
-								)
-						) <= 75
-						ORDER BY 6371000*2*ASIN(
-							SQRT(
-								POWER(SIN(RADIANS(gp.lat - lo.latitude)/2),2) +
-								COS(RADIANS(lo.latitude))*COS(RADIANS(gp.lat))*
-								POWER(SIN(RADIANS(gp.lon - lo.longitude)/2),2)
-							)
-						)
-						LIMIT 1
-						) AS out_place_name,
-						TIMESTAMPDIFF(MINUTE, fi.in_time, lo.out_time)/60.0 AS hours_worked
-					FROM first_in fi
-					JOIN last_out lo
-					ON fi.employee = lo.employee
-					AND fi.attendance_date = lo.attendance_date
-					JOIN `tabEmployee` emp
-					ON emp.name = fi.employee
-				),
-				attendance_daily_status AS (
-					SELECT
-						employee,
-						employee_name,
-						attendance_date,
-						CASE
-							WHEN in_place_name IS NULL AND out_place_name IS NULL THEN 'Absent'
-							WHEN in_place_name IS NOT NULL AND out_place_name IS NOT NULL AND hours_worked >= 7 THEN 'Full Day'
-							ELSE 'Half Day'
-						END AS attendance_status,
-						hours_worked
-					FROM attendance_daily
-				)
+			WITH
+			-- Use employee's branch coordinates instead of static geo_places
+			branch_geo AS (
 				SELECT
-					ds.employee,
-					ds.employee_name,
-					emp.branch,
-					COUNT(CASE WHEN ds.attendance_status = 'Full Day' THEN 1 END) AS full_day_count,
-					COUNT(CASE WHEN ds.attendance_status = 'Half Day' THEN 1 END) AS half_day_count,
-					COUNT(CASE WHEN ds.attendance_status = 'Absent' THEN 1 END) AS absent_count,
-					ROUND(SUM(ds.hours_worked),2) AS total_hours_worked
-				FROM attendance_daily_status ds, `tabEmployee` emp
-				where emp.name=ds.employee
-				GROUP BY employee, employee_name
-				ORDER BY emp.branch, employee_name;	
-			"""
+					b.name AS branch_name,
+					b.latitude,
+					b.longitude,
+					b.radius_to_measure
+				FROM `tabBranch` b
+			),
 
+			first_in AS (
+				SELECT *
+				FROM (
+					SELECT attn.*,
+						ROW_NUMBER() OVER (PARTITION BY attn.employee, attn.attendance_date
+											ORDER BY attn.in_time ASC) AS rn_in
+					FROM `tabAttendance` attn
+					WHERE attn.docstatus = 1
+					AND attn.attendance_date BETWEEN '{from_date}' AND '{to_date}'
+					{particular_employee}
+				) t
+				WHERE rn_in = 1
+			),
+
+			last_out AS (
+				SELECT *
+				FROM (
+					SELECT attn.*,
+						ROW_NUMBER() OVER (PARTITION BY attn.employee, attn.attendance_date
+											ORDER BY attn.out_time DESC) AS rn_out
+					FROM `tabAttendance` attn
+					WHERE attn.docstatus = 1
+					AND attn.attendance_date BETWEEN '{from_date}' AND '{to_date}'
+					{particular_employee}
+				) t
+				WHERE rn_out = 1
+			),
+
+			attendance_daily AS (
+				SELECT
+					emp.name AS employee,
+					emp.employee_name,
+					fi.attendance_date,
+
+					-- IN place: nearest branch within employee's branch radius
+					(
+						SELECT bg.branch_name
+						FROM branch_geo bg
+						WHERE bg.branch_name = emp.branch
+						AND 6371000 * 2 * ASIN(
+								SQRT(
+									POWER(SIN(RADIANS(bg.latitude - fi.latitude)/2), 2) +
+									COS(RADIANS(fi.latitude)) * COS(RADIANS(bg.latitude)) *
+									POWER(SIN(RADIANS(bg.longitude - fi.longitude)/2), 2)
+								)
+							) <= bg.radius_to_measure
+						ORDER BY 6371000 * 2 * ASIN(
+									SQRT(
+										POWER(SIN(RADIANS(bg.latitude - fi.latitude)/2), 2) +
+										COS(RADIANS(fi.latitude)) * COS(RADIANS(bg.latitude)) *
+										POWER(SIN(RADIANS(bg.longitude - fi.longitude)/2), 2)
+									)
+						)
+						LIMIT 1
+					) AS in_place_name,
+
+					-- OUT place: nearest branch within employee's branch radius
+					(
+						SELECT bg.branch_name
+						FROM branch_geo bg
+						WHERE bg.branch_name = emp.branch
+						AND 6371000 * 2 * ASIN(
+								SQRT(
+									POWER(SIN(RADIANS(bg.latitude - lo.latitude)/2), 2) +
+									COS(RADIANS(lo.latitude)) * COS(RADIANS(bg.latitude)) *
+									POWER(SIN(RADIANS(bg.longitude - lo.longitude)/2), 2)
+								)
+							) <= bg.radius_to_measure
+						ORDER BY 6371000 * 2 * ASIN(
+									SQRT(
+										POWER(SIN(RADIANS(bg.latitude - lo.latitude)/2), 2) +
+										COS(RADIANS(lo.latitude)) * COS(RADIANS(bg.latitude)) *
+										POWER(SIN(RADIANS(bg.longitude - lo.longitude)/2), 2)
+									)
+						)
+						LIMIT 1
+					) AS out_place_name,
+
+					TIMESTAMPDIFF(MINUTE, fi.in_time, lo.out_time)/60.0 AS hours_worked
+
+				FROM first_in fi
+				JOIN last_out lo
+				ON fi.employee = lo.employee
+				AND fi.attendance_date = lo.attendance_date
+				JOIN `tabEmployee` emp
+				ON emp.name = fi.employee
+			),
+
+			attendance_daily_status AS (
+				SELECT
+					employee,
+					employee_name,
+					attendance_date,
+					CASE
+						WHEN in_place_name IS NULL AND out_place_name IS NULL THEN 'Absent'
+						WHEN in_place_name IS NOT NULL AND out_place_name IS NOT NULL AND hours_worked >= 7 THEN 'Full Day'
+						ELSE 'Half Day'
+					END AS attendance_status,
+					hours_worked
+				FROM attendance_daily
+			)
+
+			SELECT
+				ds.employee,
+				ds.employee_name,
+				emp.branch,
+				COUNT(CASE WHEN ds.attendance_status = 'Full Day' THEN 1 END) AS full_day_count,
+				COUNT(CASE WHEN ds.attendance_status = 'Half Day' THEN 1 END) AS half_day_count,
+				COUNT(CASE WHEN ds.attendance_status = 'Absent' THEN 1 END) AS absent_count,
+				ROUND(SUM(ds.hours_worked), 2) AS total_hours_worked
+			FROM attendance_daily_status ds
+			JOIN `tabEmployee` emp
+			ON emp.name = ds.employee
+			GROUP BY ds.employee, ds.employee_name, emp.branch
+			ORDER BY emp.branch, ds.employee_name;
+			"""
 	query = query.format(**{
 				"from_date": filters.get("from_date"),
 				"to_date": filters.get("to_date"),

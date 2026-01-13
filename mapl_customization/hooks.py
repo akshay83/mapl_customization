@@ -257,7 +257,11 @@ cf_fields = [
 		"Attendance-latitude",
 		"Attendance-longitude",
 		"Employee-face_detector_image",
-		"Employee-custom_html"
+		"Employee-custom_html",
+		"Branch-radius_to_measure",
+		"Branch-longitude",
+		"Branch-column_break_3",
+		"Branch-latitude"
 ]
 
 print_fs = [

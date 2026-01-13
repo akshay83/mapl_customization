@@ -4,29 +4,7 @@
 import frappe
 import math
 from frappe.utils import format_datetime, format_time, cint
-
-GEO_PLACES = [
-	{
-		"name": "Geeta Bhawan",
-		"latitude": 22.719435859359304,
-		"longitude": 75.88435020091237
-	},
-	{
-		"name": "Vijay Nagar",
-		"latitude": 22.748301766764797,
-		"longitude": 75.89500993562747
-	},
-	{
-		"name": "Loha Mandi",
-		"latitude": 22.77281976831769,
-		"longitude": 75.89688822794902
-	},
-	{
-		"name": "Kanadia Road",
-		"latitude": 22.724539307835183,
-		"longitude": 75.92008565663858
-	}
-]
+from mapl_customization.customizations_for_mapl.employee_gps_attendance import get_nearby_places
 
 def execute(filters=None):
 	columns, data = [], []
@@ -113,23 +91,25 @@ def execute(filters=None):
 
 		# Build lat/long string
 		build_row["in_lat_long"] = f"{d.in_latitude},{d.in_longitude}"
-		# Get nearby places (list)
-		nearby_places = get_nearby_places(d.in_latitude, d.in_longitude, radius_meters=75)
-		# If at least one nearby place exists, take the first one
+		nearby_places = get_nearby_places(d.in_latitude, d.in_longitude)
 		if nearby_places:
 			place = nearby_places[0]
-			build_row["in_place"] = f"{place['name']} ({round(place['distance_m'], 2)} meters)"
+			build_row["in_place"] = (
+				f"{place['name']} "
+				f"({round(place['distance_m'], 2)} m)"
+			)
 		else:
 			build_row["in_place"] = "Unknown"
 
 		# Build lat/long string
 		build_row["out_lat_long"] = f"{d.out_latitude},{d.out_longitude}"
-		# Get nearby places (list)
-		nearby_places = get_nearby_places(d.out_latitude, d.out_longitude, radius_meters=75)
-		# If at least one nearby place exists, take the first one
+		nearby_places = get_nearby_places(d.out_latitude, d.out_longitude)
 		if nearby_places:
 			place = nearby_places[0]
-			build_row["out_place"] = f"{place['name']} ({round(place['distance_m'], 2)} meters)"
+			build_row["out_place"] = (
+				f"{place['name']} "
+				f"({round(place['distance_m'], 2)} m)"
+			)
 		else:
 			build_row["out_place"] = "Unknown"
 
@@ -204,26 +184,3 @@ def get_query(filters=None):
 				})		
 
 	return query	
-
-# Haversine formula to calculate distance in meters
-def haversine(lat1, lon1, lat2, lon2):
-    R = 6371000  # radius of Earth in meters
-    phi1 = math.radians(lat1)
-    phi2 = math.radians(lat2)
-    delta_phi = math.radians(lat2 - lat1)
-    delta_lambda = math.radians(lon2 - lon1)
-
-    a = math.sin(delta_phi/2)**2 + \
-        math.cos(phi1) * math.cos(phi2) * math.sin(delta_lambda/2)**2
-    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
-
-    return R * c  # distance in meters
-
-# Function to get places within radius
-def get_nearby_places(emp_lat, emp_lon, radius_meters=75):
-    nearby = []
-    for place in GEO_PLACES:
-        distance = haversine(emp_lat, emp_lon, place["latitude"], place["longitude"])
-        if distance <= radius_meters:
-            nearby.append({"name": place["name"], "distance_m": distance})
-    return nearby
