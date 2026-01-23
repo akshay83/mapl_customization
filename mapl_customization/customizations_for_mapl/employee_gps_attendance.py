@@ -1,6 +1,7 @@
 import frappe
 import base64
 import math
+import json
 from frappe.utils.file_manager import save_file
 from frappe.utils import now_datetime
 from erpnext.hr.doctype.attendance.attendance import Attendance
@@ -66,13 +67,14 @@ def get_branches():
     """, as_dict=True)
 
 @frappe.whitelist()
-def get_employee_coordinates_with_location(employee_code, from_date, to_date):
+def get_employee_coordinates_with_location(from_date, to_date, employee_code=None, order_by=None):
     from mapl_customization.customizations_for_mapl.report.mobile_attendance_report.mobile_attendance_report import execute
     return execute(filters={
         "from_date":from_date,
         "to_date":to_date,
         "include_images":False,
-        "employee":employee_code
+        "employee": employee_code,
+        "order_by": order_by
     })[1]
 
 @frappe.whitelist()
@@ -197,50 +199,61 @@ def post_attendance(employee, latitude, longitude, image_data=None):
     frappe.db.commit()
     return attendance.name
 
-
 @frappe.whitelist(allow_guest=True)
-def update_face_descriptor(employee, registration_code, descriptor, image_data=None):
-    """
-    Update the face_descriptor field for an employee.
-    
-    Args:
-        employee (str): Employee name or ID.
-        descriptor (list): List of 128 float numbers (face descriptor).
-    """
-    if not employee or not descriptor:
+def update_face_descriptor(employee, registration_code, descriptors, image_data=None):
+    if not employee or not descriptors:
         frappe.throw("Employee and descriptor are required")
-    
     if not registration_code:
         frappe.throw("Registration code is required")
 
-    if isinstance(descriptor, str):
-        import json
-        descriptor = json.loads(descriptor)        
-    
-    # Ensure descriptor is a list of floats
-    if not isinstance(descriptor, list) or len(descriptor) != 128:
-        frappe.throw("Descriptor must be a list of 128 numbers")
+    # Parse JSON string if needed
+    if isinstance(descriptors, str):
+        descriptors = json.loads(descriptors)
 
-    # Convert all values to float to be safe
-    descriptor = [float(x) for x in descriptor]
+    # -----------------------------
+    # NORMALIZE DESCRIPTORS
+    # -----------------------------
+    # Case 1: single descriptor [128]
+    if (
+        isinstance(descriptors, list)
+        and len(descriptors) == 128
+        and all(isinstance(x, (int, float)) for x in descriptors)
+    ):
+        descriptors = [descriptors]
 
-    # Serialize to JSON string
-    descriptor_json = json.dumps(descriptor)    
+    # Case 2: multiple descriptors [[128], [128], ...]
+    if (not isinstance(descriptors, list) or not all(isinstance(d, list) and len(d) == 128 for d in descriptors)):
+        frappe.throw("Descriptors must be a list of 128-length vectors")
 
-    # Fetch employee ignoring permissions
+    # Convert to float (safety)
+    clean_descriptors = []
+    for d in descriptors:
+        clean_descriptors.append([float(x) for x in d])
+
+    # Serialize
+    descriptor_json = json.dumps(clean_descriptors)
+
+    # -----------------------------
+    # EMPLOYEE VALIDATION
+    # -----------------------------
     emp = frappe.get_doc("Employee", employee.upper())
+
     if not emp.registration_code:
-        frappe.throw("Registration not Allowed")
-
+        frappe.throw("Registration not allowed")
     if str(emp.registration_code) != str(registration_code):
-        frappe.throw("Registration code Does Not Match!")
-    
+        frappe.throw("Registration code does not match")
+
+    # -----------------------------
+    # SAVE
+    # -----------------------------
     emp.face_descriptor = descriptor_json
-    emp.registration_code = None
     emp.face_detector_image = image_data
-
-    # Save ignoring permissions
+    emp.registration_code = None
     emp.save(ignore_permissions=True)
-    frappe.db.commit()    
+    frappe.db.commit()
 
-    return {"status": "success", "message": f"Face descriptor updated for {employee}"}
+    return {
+        "status": "success",
+        "message": f"Face descriptors updated for {employee}",
+        "count": len(clean_descriptors),
+    }

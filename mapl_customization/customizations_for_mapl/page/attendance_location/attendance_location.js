@@ -27,7 +27,8 @@ frappe.pages['attendance-location'].on_page_load = function (wrapper) {
 		label: 'Employee Code',
 		fieldtype: 'Link',
 		fieldname: 'employee_code',
-		options: "Employee"
+		options: "Employee",
+		filters: {'status':'Active'}
 	});
 
 	let emp_name = page.add_field({
@@ -44,7 +45,7 @@ frappe.pages['attendance-location'].on_page_load = function (wrapper) {
 	let canvas = $('<canvas style="width:100%; height:100%;"></canvas>').appendTo(canvas_wrapper);
 	let locationLegend = $('<div id="location-legend" style="margin-top:10px;display:flex;flex-wrap:wrap;gap:15px;"></div>').appendTo(canvas_wrapper);
 
-	let map_container_wrapper = $('<div style="flex:.35;height:500px;"></div>').appendTo(flex_container);
+	let map_container_wrapper = $('<div style="flex:.35;height:500px;position:sticky;"></div>').appendTo(flex_container);
 	let map_container = $('<div style="height:500px;"></div>').appendTo(map_container_wrapper);
 
 	let map = L.map(map_container[0]).setView([20, 77], 5);
@@ -56,27 +57,27 @@ frappe.pages['attendance-location'].on_page_load = function (wrapper) {
 		if (geojsonLayer) {
 			const bounds = geojsonLayer.getBounds();
 			if (bounds.isValid()) {
-				map.fitBounds(bounds, { padding: [50,50], maxZoom: 15 });
+				map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
 			}
 		}
 	}, 200);
-	
+
 
 	// ---------------- Point Styles ----------------
 	const POINT_STYLES = [
 		'circle', 'rect', 'triangle', 'rectRounded', 'star', 'crossRot', 'dash', 'line', 'triangleRot', 'rectRot'
-	];  
+	];
 	const _placeStyleMap = {};
 	function getPointStyleFromPlace(place) {
 		if (!place) return null;
 		if (place && place === 'Unknown') return 'cross'; // ❌ Unknown always gets X/cross
-	
+
 		if (!_placeStyleMap[place]) {
 			const idx = Object.keys(_placeStyleMap).length % POINT_STYLES.length;
 			_placeStyleMap[place] = POINT_STYLES[idx];
 		}
 		return _placeStyleMap[place];
-	}	
+	}
 
 	// ---------------- Chart Plugins ----------------
 	const absenceLinePlugin = {
@@ -87,11 +88,11 @@ frappe.pages['attendance-location'].on_page_load = function (wrapper) {
 			const yScale = chart.scales['y-left'];
 			const ds = chart.data.datasets.find(d => d.label === 'Working Hours');
 			if (!ds) return;
-	
+
 			ctx.save();
 			ctx.setLineDash([5, 5]);
 			ctx.strokeStyle = 'rgba(255,0,0,0.6)';
-	
+
 			ds.data.forEach((v, i) => {
 				if (v == null) {
 					const px = xScale.getPixelForTick(i);
@@ -102,37 +103,37 @@ frappe.pages['attendance-location'].on_page_load = function (wrapper) {
 					ctx.stroke();
 				}
 			});
-	
+
 			ctx.restore();
 		}
-	};	
+	};
 	const drawCrossPlugin = {
 		id: 'drawCross',
 		afterDatasetsDraw(chart) {
 			const ctx = chart.ctx;
-	
+
 			chart.data.datasets.forEach((dataset, datasetIndex) => {
 				if (!dataset.pointStyle) return;
-	
+
 				const meta = chart.getDatasetMeta(datasetIndex);
-	
+
 				meta.data.forEach((point, index) => {
 					const style = Array.isArray(dataset.pointStyle)
 						? dataset.pointStyle[index]
 						: dataset.pointStyle;
-	
+
 					if (style !== 'cross') return; // only draw X for 'cross'
-	
+
 					const x = point.x;
 					const y = point.y;
 					const size = dataset.pointRadius || 8;
-	
+
 					ctx.save();
 					ctx.beginPath();
-					ctx.moveTo(x - size/2, y - size/2);
-					ctx.lineTo(x + size/2, y + size/2);
-					ctx.moveTo(x - size/2, y + size/2);
-					ctx.lineTo(x + size/2, y - size/2);
+					ctx.moveTo(x - size / 2, y - size / 2);
+					ctx.lineTo(x + size / 2, y + size / 2);
+					ctx.moveTo(x - size / 2, y + size / 2);
+					ctx.lineTo(x + size / 2, y - size / 2);
 					ctx.strokeStyle = 'black';
 					ctx.lineWidth = 1.5;
 					ctx.stroke();
@@ -140,17 +141,17 @@ frappe.pages['attendance-location'].on_page_load = function (wrapper) {
 				});
 			});
 		}
-	};	
+	};
 	const referenceLinePlugin = {
 		id: 'referenceLine',
 		afterDraw(chart) {
 			const yValue = 9.5; // the reference value in hours
 			const yScale = chart.scales['y-left']; // Working Hours axis
 			const ctx = chart.ctx;
-	
+
 			// Convert value to pixel
 			const yPixel = yScale.getPixelForValue(yValue);
-	
+
 			ctx.save();
 			ctx.beginPath();
 			ctx.moveTo(chart.chartArea.left, yPixel);
@@ -160,13 +161,13 @@ frappe.pages['attendance-location'].on_page_load = function (wrapper) {
 			ctx.setLineDash([6, 4]); // optional: dashed line
 			ctx.stroke();
 			ctx.restore();
-	
+
 			// Optional: add a label
 			//ctx.fillStyle = 'blue';
 			//ctx.font = 'bold 12px Arial';
 			//ctx.fillText(`${yValue} hrs`, chart.chartArea.right - 40, yPixel - 5);
 		}
-	};	
+	};
 
 	// ---------------- Chart Init ----------------
 	frappe.require("/assets/mapl_customization/js/chart.js", () => {
@@ -221,9 +222,9 @@ frappe.pages['attendance-location'].on_page_load = function (wrapper) {
 						title: { display: true, text: 'Time (Hours)' },
 						ticks: { stepSize: 1, beginAtZero: true }
 					}
-				}				
+				}
 			},
-			plugins: [absenceLinePlugin,drawCrossPlugin,referenceLinePlugin]
+			plugins: [absenceLinePlugin, drawCrossPlugin, referenceLinePlugin]
 		});
 	});
 
@@ -331,34 +332,34 @@ frappe.pages['attendance-location'].on_page_load = function (wrapper) {
 
 	function update_chart(rows, from_date, to_date) {
 		if (!window.attendanceChartInstance) return;
-	
+
 		// Clear old styles mapping
 		for (let k in _placeStyleMap) delete _placeStyleMap[k];
-	
+
 		window._attendanceByDate = {};
 		rows.forEach(r => window._attendanceByDate[moment(r.attendance_date).format('YYYY-MM-DD')] = r);
-	
+
 		let labels = [], hours = [], inTimes = [], outTimes = [], inPlaces = [], outPlaces = [];
 		for (let d = moment(from_date); d.isSameOrBefore(to_date); d.add(1, 'day')) {
 			let key = d.format('YYYY-MM-DD'), rec = window._attendanceByDate[key];
 			labels.push(d.format('ddd DD-MM-YYYY'));
-	
+
 			if (!rec) {
 				hours.push(null); inTimes.push(null); outTimes.push(null);
 				inPlaces.push(null); outPlaces.push(null);
 				continue;
 			}
-	
+
 			let inM = moment(rec.in_time, 'HH:mm:ss');
 			let outM = moment(rec.out_time, 'HH:mm:ss');
-	
+
 			hours.push(outM.diff(inM, 'minutes') / 60);
 			inTimes.push(inM.hours() + inM.minutes() / 60);
 			outTimes.push(outM.hours() + outM.minutes() / 60);
 			inPlaces.push(normalizePlace(rec.in_place));
 			outPlaces.push(normalizePlace(rec.out_place));
 		}
-	
+
 		// Update chart
 		window.attendanceChartInstance.data = {
 			labels,
@@ -389,14 +390,14 @@ frappe.pages['attendance-location'].on_page_load = function (wrapper) {
 					pointStyle: outPlaces.map(p => getPointStyleFromPlace(p)),
 					backgroundColor: outPlaces.map(p => p === 'Unknown' ? 'transparent' : '#e74c3c'),
 					borderColor: 'transparent'
-				}				
+				}
 			]
 		};
-	
+
 		// Override cross points with real X on canvas
 		window.attendanceChartInstance.options.elements = {
 			point: {
-				pointStyle: function(ctx) {
+				pointStyle: function (ctx) {
 					const style = ctx.rawPointStyle || ctx.dataset.pointStyle[ctx.dataIndex];
 					if (style === 'cross') {
 						const size = ctx.dataset.pointRadius || 8;
@@ -404,10 +405,10 @@ frappe.pages['attendance-location'].on_page_load = function (wrapper) {
 						const x = ctx.x;
 						const y = ctx.y;
 						canvas.beginPath();
-						canvas.moveTo(x - size/2, y - size/2);
-						canvas.lineTo(x + size/2, y + size/2);
-						canvas.moveTo(x - size/2, y + size/2);
-						canvas.lineTo(x + size/2, y - size/2);
+						canvas.moveTo(x - size / 2, y - size / 2);
+						canvas.lineTo(x + size / 2, y + size / 2);
+						canvas.moveTo(x - size / 2, y + size / 2);
+						canvas.lineTo(x + size / 2, y - size / 2);
 						canvas.strokeStyle = 'black';
 						canvas.lineWidth = 1.5;
 						canvas.stroke();
@@ -417,15 +418,15 @@ frappe.pages['attendance-location'].on_page_load = function (wrapper) {
 				}
 			}
 		};
-	
+
 		window.attendanceChartInstance.update();
 		renderLocationLegend();
-	}	
+	}
 
 	// ---------------- Legend ----------------
 	function renderLocationLegend() {
 		locationLegend.empty();
-	
+
 		Object.entries(_placeStyleMap).forEach(([place, style]) => {
 			if (!place || place === 'Unknown') return;
 			locationLegend.append(`
@@ -434,7 +435,7 @@ frappe.pages['attendance-location'].on_page_load = function (wrapper) {
 				</div>
 			`);
 		});
-	
+
 		// Add Unknown if used
 		const unknownUsed = Object.values(window._attendanceByDate).some(r =>
 			!r || !normalizePlace(r.in_place) || !normalizePlace(r.out_place)
@@ -447,8 +448,7 @@ frappe.pages['attendance-location'].on_page_load = function (wrapper) {
 			`);
 		}
 	}
-	
-	
+
 	// ---------------- Normalize place ----------------
 	function normalizePlace(place) {
 		if (!place) return 'Unknown';
@@ -471,5 +471,5 @@ frappe.pages['attendance-location'].on_page_load = function (wrapper) {
 		};
 		return map[style] || '✖';
 	}
-	
+
 };

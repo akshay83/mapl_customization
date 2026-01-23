@@ -81,10 +81,14 @@ def execute(filters=None):
 			}
 		])
 
+	if not filters.get("order_by"):
+		del filters["order_by"]
+
 	for d in frappe.db.sql(get_query(filters), as_dict=1):
 		build_row = {}
 		build_row["employee_code"] = d.employee
 		build_row["employee_name"] = d.employee_name
+		build_row["branch"]  = d.branch
 		build_row["attendance_date"] = d.attendance_date
 		build_row["in_time"] = format_time(d.first_in_time)
 		build_row["out_time"] = format_time(d.last_out_time)
@@ -151,6 +155,7 @@ def get_query(filters=None):
 				SELECT
 					emp.name AS employee,
 					emp.employee_name,
+					emp.branch,
 					fi.attendance_date,
 
 					-- First IN and Last OUT times
@@ -174,13 +179,15 @@ def get_query(filters=None):
 				AND fi.attendance_date = lo.attendance_date
 				JOIN `tabEmployee` emp
 					ON emp.name = fi.employee
-				ORDER BY fi.attendance_date, emp.employee_name;
+				ORDER BY {order_by}
 			"""
 	query = query.format(**{
 				"include_images": ",fi.image_data AS in_image,lo.image_data AS out_image" if cint(filters.get("include_images")) else "",
 				"from_date": filters.get("from_date"),
 				"to_date": filters.get("to_date"),
-				"particular_employee": "and employee='{0}'".format(filters.get("employee")) if filters.get("employee") else ""
-				})		
+				"particular_employee": "and employee='{0}'".format(filters.get("employee")) if filters.get("employee") else "",
+				"order_by": filters.get("order_by", "fi.attendance_date, emp.employee_name")
+				})
 
+	#--DEBUG--print (query)
 	return query	

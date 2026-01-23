@@ -192,7 +192,7 @@ custom.setGSTINDetails = async function(gstin, field_handle, field_map) {
 			}
 			//--DEBUG--let address_string = gstid_data.AddrBnm + " " + gstid_data.AddrBno + " " + gstid_data.AddrFlno + " " + gstid_data.AddrSt + " " + gstid_data.AddrLoc + " " + gstid_data.AddrPncd;
 			//--DEBUG--console.log(address_string);
-			if (gstid_data.AddrLoc.toLowerCase() == gstid_data.City.toLowerCase())
+			if ((gstid_data.AddrLoc && gstid_data.City) && gstid_data.AddrLoc.toLowerCase() == gstid_data.City.toLowerCase())
 				gstid_data.AddrLoc = ""
 			let billing_address1 = custom.trimCharacters(gstid_data.AddrBnm+","+gstid_data.AddrBno+","+gstid_data.AddrFlno+","+gstid_data.AddrLoc,', ');
 			field_handle.get_field(field_map.address_line_1).set_value(billing_address1);
