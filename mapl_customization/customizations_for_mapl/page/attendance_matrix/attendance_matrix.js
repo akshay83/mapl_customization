@@ -10,6 +10,9 @@ frappe.pages['attendance-matrix'].on_page_load = function (wrapper) {
     const $pageWrap = $('<div class="attendance-matrix-page"></div>')
         .appendTo(page.body);
 
+    page.set_primary_action('Refresh', function() {
+        load_data();
+    });
     // ---------------- FILTERS ----------------
     const from_date = page.add_field({
         fieldtype: 'Date',
