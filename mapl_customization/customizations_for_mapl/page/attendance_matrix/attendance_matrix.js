@@ -141,17 +141,38 @@ frappe.pages['attendance-matrix'].on_page_load = function (wrapper) {
             display: none;
             z-index: 9999;
         }
+
+        /* Row hover (non-sticky cells) */
+        .attendance-matrix-page tbody tr:hover td {
+            background-color: rgba(13, 110, 253, 0.08);
+        }
+
+        /* Sticky cells on hover — stronger & opaque */
+        .attendance-matrix-page tbody tr:hover td.col-sno,
+        .attendance-matrix-page tbody tr:hover td.col-emp,
+        .attendance-matrix-page tbody tr:hover td.col-branch {
+            background-color: #e9f2ff; /* solid */
+        }
+
         
         /* ==========================================================
             Sticky Left Columns
             ========================================================== */
+
+        .attendance-matrix-page th.col-sno,
+        .attendance-matrix-page td.col-sno,
+        .attendance-matrix-page th.col-emp,
+        .attendance-matrix-page td.col-emp,
+        .attendance-matrix-page th.col-branch,
+        .attendance-matrix-page td.col-branch {
+             background-color: #fff;
+        }
         
         /* General sticky left column helper */
         .attendance-matrix-page th.sticky-col {
             position: sticky;
             left: 0;
             z-index: 3;
-            background: #fff;
         }
         
         /* S.No Column */
@@ -161,7 +182,6 @@ frappe.pages['attendance-matrix'].on_page_load = function (wrapper) {
             left: 0;
             width: 40px;
             min-width: 40px;
-            background: #fff;
         }
         
         /* Employee Name Column */
@@ -171,7 +191,6 @@ frappe.pages['attendance-matrix'].on_page_load = function (wrapper) {
             left: 40px;             /* After S.No */
             width: 160px;
             min-width: 160px;
-            background: #fff;
         }
         
         /* Branch Column */
@@ -181,7 +200,6 @@ frappe.pages['attendance-matrix'].on_page_load = function (wrapper) {
             left: 200px;            /* After S.No + Employee */
             width: 120px;
             min-width: 120px;
-            background: #fff;
         }
         
         /* ==========================================================
@@ -265,7 +283,7 @@ frappe.pages['attendance-matrix'].on_page_load = function (wrapper) {
         
             /* Attendance icons with abbreviations */
             .attendance-matrix-page .att-icon {
-                font-size: 12px !important;
+                font-size: 14px !important;
                 display: block;
                 line-height: 1em !important;
             }
