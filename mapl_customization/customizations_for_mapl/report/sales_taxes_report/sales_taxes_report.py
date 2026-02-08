@@ -214,9 +214,11 @@ class TaxesReport():
             #--DEBUG--    state_check = "Out of M.P."
 
             gst_check = "Error"
+            final_state = "ERROR"
             #--DEBUG--if (gstin_check == state_check == state_number_check):
             if (gstin_check == state_number_check):
                 gst_check = "OK"
+            #--DEBUG--print ("check",gst_check)
 
             if special_invoice and special_invoice[:3].lower() == "sez":
                 final_state = "SEZ Supply"
@@ -233,12 +235,17 @@ class TaxesReport():
             #--DEBUG--row["state_check"]=state_check
             row["state_number_check"]=state_number_check
 
+            #--DEBUG--print ("Assigning:",gst_check)
             row["GST Check:Data:75"]=gst_check
             row["Final State:Data:100"]=final_state
             row["Dealer Type:Data:100"]="Regd Dealer" if (billing_gstin and billing_gstin!="") else "Un-Regd Dealer"
             final_state_code = 23
-            if final_state != "In M.P.":
+            #--DEBUG--print ("State Code Error Check")
+            #--DEBUG--print (row["Reporting Name:Data:100"], "URP:", urp)
+            if final_state != "In M.P." and not urp:
                 final_state_code = billing_gstin[:2] if billing_gstin else "Error"
+            elif final_state != "In M.P." and urp:
+                final_state_code = state_code
             row["State Code:Data:50"]=final_state_code
             row["Check GSTIN:Data:75"]="Error" if billing_gstin!=shipping_gstin else "OK"
 

@@ -2,6 +2,7 @@ import frappe
 import base64
 import math
 import json
+import gzip
 from frappe.utils.file_manager import save_file
 from frappe.utils import now_datetime
 from erpnext.hr.doctype.attendance.attendance import Attendance
@@ -162,12 +163,28 @@ def get_employee_descriptors():
     result = []
     for e in employees:
         if e.face_descriptor:
+            try:
+                descriptor = json.loads(e.face_descriptor)
+            except Exception:
+                continue  # skip corrupt data safely
+
             result.append({
-                "employee_name": e.employee_name,
                 "employee_id": e.name,
-                "descriptor": e.face_descriptor
+                "employee_name": e.employee_name,
+                "descriptor_compressed": compress_descriptor(descriptor),
+                "descriptor_format": "gzip+base64"  # explicit metadata
             })
     return result
+
+def compress_descriptor(descriptor):
+    """
+    Compress face descriptor using gzip + base64.
+    Input : Python list ( [128] or [[128], ...] )
+    Output: base64 encoded gzip string
+    """
+    raw = json.dumps(descriptor, separators=(",", ":")).encode("utf-8")
+    compressed = gzip.compress(raw, compresslevel=6)
+    return base64.b64encode(compressed).decode("ascii")
 
 @frappe.whitelist(allow_guest=True)
 def post_attendance(employee, latitude, longitude, image_data=None):

@@ -82,7 +82,10 @@ def execute(filters=None):
 		])
 
 	if not filters.get("order_by"):
-		del filters["order_by"]
+		try:
+			del filters["order_by"]
+		except KeyError:
+			pass			
 
 	for d in frappe.db.sql(get_query(filters), as_dict=1):
 		build_row = {}

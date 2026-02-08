@@ -121,7 +121,7 @@ frappe.pages['attendance-matrix'].on_page_load = function (wrapper) {
             font-size: 12px;
             position: sticky;       /* Keeps legend visible at top */
             top: 0;
-            z-index: 10;
+            z-index: 3;
             left: 0;
             width: 100%;
         }
