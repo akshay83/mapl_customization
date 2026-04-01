@@ -21,6 +21,12 @@ frappe.query_reports["Mobile Attendance Report"] = {
 			"width": "60px"
 		},
 		{
+			"fieldname":"branch",
+			"label": __("Branch"),
+			"fieldtype": "Link",
+			"options": "Branch"
+		},
+		{
 			"fieldname":"employee",
 			"label": __("Employee"),
 			"fieldtype": "Link",

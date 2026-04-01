@@ -19,7 +19,35 @@ frappe.query_reports["Monthly Compact Mobile Attendance"] = {
 			"default": frappe.datetime.get_today(),
 			"reqd": 1,
 			"width": "60px"
-		}
+		},
+		{
+			"fieldname":"branch",
+			"label": __("Branch"),
+			"fieldtype": "Link",
+			"options": "Branch"
+		},		
+		{
+			"fieldname":"employee",
+			"label": __("Employee"),
+			"fieldtype": "Link",
+			"options": "Employee",
+			"on_change": function() {
+				let employee = frappe.query_report.get_filter_value('employee');
+				if(!employee) {
+					frappe.query_report.set_filter_value('employee_name','');
+					return;
+				}
+				frappe.db.get_value("Employee", employee, "employee_name", function(value) {
+					frappe.query_report.set_filter_value('employee_name',value["employee_name"]);
+				});
+			},
+		},
+		{
+			"fieldname":"employee_name",
+			"label": __("Employee Name"),
+			"fieldtype": "Data",
+			"read_only": 1
+		}		
 	]
 };
 

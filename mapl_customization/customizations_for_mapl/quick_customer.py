@@ -200,13 +200,23 @@ def validate_address(doc, method):
 
 def get_pincode_data(pincode, raise_error=False):
 	try:
-		req = requests.get(url = 'https://api.postalpincode.in/pincode/'+str(pincode), timeout = 5, verify=False)
+		headers = {
+    		"User-Agent": "Mozilla/5.0",
+    		"Accept": "application/json"
+		}
+		req = None
+		try:
+			req = requests.get(url = 'https://api.postalpincode.in/pincode/'+str(pincode), headers=headers, timeout = 5, verify=False)
+			data = req.json()
+			return data, "PostOffice"
+		except (requests.ConnectionError, requests.Timeout, ValueError):
+			req = requests.get(url = 'https://pincodesinfo.in/api/pincode/'+str(pincode), headers=headers, timeout = 5, verify=False)
+			data = req.json()
+			return data, "results"
 		#--DEBUG-- print '-----------------------VALIDATE STATE-----------------------'
-		data = req.json()
 		#--DEBUG-- print data
 		#--DEBUG-- print '=========================STRATE=================='
 		#--DEBUG-- print data[0]["PostOffice"][0]
-		return data
 	except (requests.ConnectionError, requests.Timeout, ValueError):
 		if raise_error:
 			raise
@@ -222,7 +232,7 @@ def validate_pin_with_state(doc, method, raise_error=False):
 		frappe.throw("""Please Select Pin Code""")
 
 	try:
-		data = get_pincode_data(doc.pincode, raise_error=True)
+		data, result_column = get_pincode_data(doc.pincode, raise_error=True)
 		if data[0]["Status"] != "Success":
 			if (frappe.session.user == "Administrator" or "System Manager" in frappe.get_roles()):
 				frappe.msgprint("""<div>Could Not Find Pin Code</div><div>Continuing for Now</div>""")
@@ -230,7 +240,7 @@ def validate_pin_with_state(doc, method, raise_error=False):
 			else:
 				frappe.throw("""Could Not Find Pin Code""")
 
-		pincode_state = data[0]["PostOffice"][0]["State"]
+		pincode_state = data[0][result_column][0]["State"]
 
 		#Pincode API Returns Spelling which is not Equal to GST Spelling
 		if pincode_state.lower() == "chattisgarh" or pincode_state.lower() == "chhattisgarh":

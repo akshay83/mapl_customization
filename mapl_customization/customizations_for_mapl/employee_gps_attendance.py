@@ -68,13 +68,14 @@ def get_branches():
     """, as_dict=True)
 
 @frappe.whitelist()
-def get_employee_coordinates_with_location(from_date, to_date, employee_code=None, order_by=None):
+def get_employee_coordinates_with_location(from_date, to_date, employee_code=None, branch=None, order_by=None):
     from mapl_customization.customizations_for_mapl.report.mobile_attendance_report.mobile_attendance_report import execute
     return execute(filters={
         "from_date":from_date,
         "to_date":to_date,
         "include_images":False,
         "employee": employee_code,
+        "branch": branch,
         "order_by": order_by
     })[1]
 

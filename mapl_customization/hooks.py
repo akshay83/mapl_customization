@@ -499,7 +499,8 @@ workflow_safe_globals = {
 override_whitelisted_methods = {
 	"erpnext.regional.india.e_invoice.utils.validate_eligibility": "mapl_customization.customizations_for_mapl.einvoice.taxpro_einvoice.validate_eligibility",
 	"erpnext.regional.india.e_invoice.utils.cancel_irns": "mapl_customization.customizations_for_mapl.einvoice.taxpro_einvoice.cancel_irns",
-	"erpnext.regional.india.e_invoice.utils.generate_einvoices": "mapl_customization.customizations_for_mapl.einvoice.taxpro_einvoice.generate_einvoices"
+	"erpnext.regional.india.e_invoice.utils.generate_einvoices": "mapl_customization.customizations_for_mapl.einvoice.taxpro_einvoice.generate_einvoices",
+	"erpnext.templates.utils.send_message": "mapl_customization.customizations_for_mapl.lead_hooks.send_message"
 }
 
 on_login = "mapl_customization.customizations_for_mapl.install.on_login"

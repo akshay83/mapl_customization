@@ -37,6 +37,14 @@ frappe.pages['attendance-matrix'].on_page_load = function (wrapper) {
         change() { load_data(); }
     });
 
+    const branch = page.add_field({
+        fieldtype: 'Link',
+        label: 'Branch',
+        fieldname: 'branch',
+        options: 'Branch',
+        change() { load_data(); }
+    });    
+
     const WORKING_HOURS = 7.5;
 
     // ---------------- CONTAINER ----------------
@@ -45,6 +53,13 @@ frappe.pages['attendance-matrix'].on_page_load = function (wrapper) {
 
     // ---------------- SCOPED CSS ----------------
     $('<style>').text(`
+        /* ==========================================================
+            Changes to Existing CSS
+        =========================================================== */
+        .awesomplete>ul {
+            z-index: 5;
+        }
+   
         /* ==========================================================
             Attendance Matrix Page Styles
         =========================================================== */
@@ -355,7 +370,8 @@ frappe.pages['attendance-matrix'].on_page_load = function (wrapper) {
             args: {
                 from_date: from_date.get_value(),
                 to_date: to_date.get_value(),
-                employee_code: employee.get_value() || null
+                employee_code: employee.get_value() || null,
+                branch: branch.get_value() || null
             },
             callback: r => render_table(r.message || [])
         });
@@ -438,10 +454,15 @@ frappe.pages['attendance-matrix'].on_page_load = function (wrapper) {
         const $tooltip = $('<div class="att-tooltip"></div>').appendTo('body');
 
         Object.values(employees)
-            .sort((a, b) =>
-                a.branch.localeCompare(b.branch) ||
-                a.name.localeCompare(b.name)
-            )
+          .sort((a, b) => {
+                const branchA = a.branch || "Geeta Bhawan";
+                const branchB = b.branch || "Geeta Bhawan";
+            
+                return (
+                    branchA.localeCompare(branchB) ||
+                    a.name.localeCompare(b.name)
+                );
+            })
             .forEach((emp, i) => {
                 const stats = {
                     total: dates.length,
@@ -570,11 +591,14 @@ frappe.pages['attendance-matrix'].on_page_load = function (wrapper) {
                 $tbody.append($tr);
 
                 // ---------- ATTENDANCE SUMMARY COLUMN ----------
-                let fullDays = 0, halfDays = 0, absentDays = 0;
+                let fullDays = 0, halfDays = 0, absentDays = 0, punchDays = 0;
 
                 dates.forEach(date => {
                     const r = emp.days[date];
                     const sym = r ? r._sym : '✖'; // ✅ use stored symbol
+
+                    // Count punch day (any record)
+                    if (r) punchDays++;
 
                     if (sym === '■' || sym === '▲') fullDays++;
                     else if (sym === '◆' || sym === '●') halfDays++;
@@ -582,8 +606,11 @@ frappe.pages['attendance-matrix'].on_page_load = function (wrapper) {
                 });
 
                 // Append summary column at the end
-                $tr.append(`<td style="font-size:10px; white-space: nowrap;">${fullDays}/${halfDays}/${absentDays}</td>`);
-
+                $tr.append(`<td style="font-size:10px; white-space: nowrap;">
+                                ${fullDays}/${halfDays}/${absentDays}
+                                <br>
+                                <span style="color:#6c757d;">Total Punch: ${punchDays}</span>
+                            </td>`);
             });
 
         $table.append($tbody);

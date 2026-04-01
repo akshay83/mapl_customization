@@ -179,15 +179,17 @@ def get_query(filters=None):
 				FROM first_in fi
 				JOIN last_out lo
 					ON fi.employee = lo.employee
-				AND fi.attendance_date = lo.attendance_date
+					   AND fi.attendance_date = lo.attendance_date
 				JOIN `tabEmployee` emp
 					ON emp.name = fi.employee
+				{where_condition}
 				ORDER BY {order_by}
 			"""
 	query = query.format(**{
 				"include_images": ",fi.image_data AS in_image,lo.image_data AS out_image" if cint(filters.get("include_images")) else "",
 				"from_date": filters.get("from_date"),
 				"to_date": filters.get("to_date"),
+				"where_condition": "where emp.branch = '{0}'".format(filters.get("branch")) if filters.get("branch") else "",
 				"particular_employee": "and employee='{0}'".format(filters.get("employee")) if filters.get("employee") else "",
 				"order_by": filters.get("order_by", "fi.attendance_date, emp.employee_name")
 				})

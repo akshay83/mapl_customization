@@ -18,11 +18,6 @@ def send_message(message, phone_list):
 def on_save_lead(doc, method):
 	message = """Thankyou for Visiting CORAL ELECTRONICS.Hope you had a pleasant Experience.Should you have any further queries.Please call 08305181711"""
 	send_message(message, str(doc.mobile_no))
-	send_follow_link(str(doc.mobile_no))
-
-def send_follow_link(phone_list):
-	message = """Follow the Coral Electronics Indore channel on WhatsApp: https://whatsapp.com/channel/0029Va9IYPsD38CWwmDtvG1V""" 
-	send_message(message, phone_list)
 
 class CustomLead(Lead):
 	#Do Not Create Address & Contact
@@ -47,3 +42,9 @@ class CustomLead(Lead):
 				"link_title": self.lead_name
 			})
 			self.contact_doc.save()		
+
+@frappe.whitelist(allow_guest=True)
+def send_message(subject="Website Query", message="", sender="", status="Open"):
+	from frappe.www.contact import send_message as website_send_message
+	website_send_message(subject, message, sender)
+	return "okay"
