@@ -194,5 +194,6 @@ def check_letter_head(doc, method):
 			(doc.letter_head == 'Geeta Bhawan' and not any(x in doc.name for x in geeta_bhawan_abbr)) or \
 			(doc.letter_head == 'Ranjeet Hanuman' and 'RH' not in doc.name) or \
 			(doc.letter_head == 'Dewas Naka' and 'DN' not in doc.name) or \
+			(doc.letter_head == 'Aranya Nagar' and 'AN' not in doc.name) or \
 			(doc.letter_head == 'Kanadia Road' and 'KR' not in doc.name):
 		frappe.throw("Letter Head Mismatch Kindly Recheck Before Continuing")

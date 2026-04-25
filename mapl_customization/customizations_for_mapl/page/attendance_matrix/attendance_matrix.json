@@ -4,7 +4,7 @@
  "docstatus": 0,
  "doctype": "Page",
  "idx": 0,
- "modified": "2026-01-21 17:09:00.128662",
+ "modified": "2026-04-05 14:13:18.413379",
  "modified_by": "Administrator",
  "module": "Customizations for MAPL",
  "name": "attendance-matrix",
@@ -16,6 +16,12 @@
   },
   {
    "role": "HR Manager"
+  },
+  {
+   "role": "HR User"
+  },
+  {
+   "role": "Report Manager"
   }
  ],
  "script": null,

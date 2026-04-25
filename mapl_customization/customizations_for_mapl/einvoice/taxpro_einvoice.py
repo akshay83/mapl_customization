@@ -28,7 +28,7 @@ class TaxproGSP(GSPConnector):
         self.set_invoice()
         self.set_credentials()
 
-        self.base_url = 'https://einvapi.charteredinfo.com' if not self.e_invoice_settings.sandbox_mode else 'http://gstsandbox.charteredinfo.com'
+        self.base_url = 'https://einvapi.charteredinfo.com' if not self.e_invoice_settings.sandbox_mode else 'https://gstsandbox.charteredinfo.com'
         self.authenticate_url = self.base_url + '/eivital/dec/v1.04/auth'
 
         self.base_eway_bill_url = self.base_url + ("/v1.03/dec" if not self.e_invoice_settings.sandbox_mode else "/ewaybillapi/dec/v1.03")
@@ -46,16 +46,23 @@ class TaxproGSP(GSPConnector):
         #self.eway_bill_by_irn = self.base_url + '/eiewb/dec/v1.03/ewaybill/irn'
 
     def make_request(self, request_type, url, headers=None, data=None):
-        if request_type == 'post':
-            res = make_post_request(url, headers=headers, data=data)
-        else:
-            res = make_get_request(url, headers=headers, data=data)
+        try:
+            if request_type == 'post':
+                res = make_post_request(url, headers=headers, data=data)
+            else:
+                res = make_get_request(url, headers=headers, data=data)
 
-        self.log_request(url, headers, data, res)
-        ##--DEBUG--print ('-------------REQUEST RESULT--------------')
-        ##--DEBUG--print (frappe.flags.integration_request.json())
-        ##--DEBUG--print ('-----------------------------------------')
-        return res        
+            self.log_request(url, headers, data, res)
+            return res                
+        except Exception as e:
+            error_response = frappe.flags.integration_request
+            if error_response is not None:
+                #--NOT DEBUG--pass
+                print ('-------------REQUEST ERROR--------------')
+                print (error_response.status_code)
+                print (error_response.text)
+                print ('-----------------------------------------')
+            raise e
 
     def fetch_auth_token(self):
         headers = self.get_headers(withAuthToken=False)
@@ -94,6 +101,7 @@ class TaxproGSP(GSPConnector):
                 "username":self.credentials.username if not self.e_invoice_settings.sandbox_mode else 'TaxProEnvPON',
                 "ewbpwd":self.credentials.get_password() if not self.e_invoice_settings.sandbox_mode else 'abc34*',
             })
+        #--DEBUG--print (headers)
         return headers
 
     def generate_irn(self):

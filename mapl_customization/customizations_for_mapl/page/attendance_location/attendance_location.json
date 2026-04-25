@@ -4,18 +4,24 @@
  "docstatus": 0,
  "doctype": "Page",
  "idx": 0,
- "modified": "2025-12-20 16:50:47.415819",
+ "modified": "2026-04-05 14:16:55.169285",
  "modified_by": "Administrator",
  "module": "Customizations for MAPL",
  "name": "attendance-location",
  "owner": "Administrator",
- "page_name": "Attendance Location History",
+ "page_name": "attendance-location",
  "roles": [
   {
    "role": "System Manager"
   },
   {
    "role": "HR Manager"
+  },
+  {
+   "role": "HR User"
+  },
+  {
+   "role": "Report Manager"
   }
  ],
  "script": null,

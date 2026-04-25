@@ -372,9 +372,44 @@
    "link_type": "Report",
    "onboard": 0,
    "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Attendance Reports",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Location Details",
+   "link_to": "attendance-location",
+   "link_type": "Page",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Attendance Matrix",
+   "link_to": "attendance-matrix",
+   "link_type": "Page",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Attendance Report",
+   "link_to": "attendance-report",
+   "link_type": "Page",
+   "onboard": 0,
+   "type": "Link"
   }
  ],
- "modified": "2023-03-17 13:38:17.607309",
+ "modified": "2026-04-05 13:44:18.701843",
  "modified_by": "akshay.mehta@mehtaautomobiles.com",
  "module": "Customizations for MAPL",
  "name": "Tailored Dashboard",
